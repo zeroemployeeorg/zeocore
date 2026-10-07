@@ -3500,6 +3500,18 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <h2 id="unreleased"><a href="https://github.com/profrodai/zeocore/compare/v0.11.0...HEAD">Unreleased</a><a class="headerlink" href="#unreleased" title="Permanent link">&para;</a></h2>
 <h3 id="added">Added<a class="headerlink" href="#added" title="Permanent link">&para;</a></h3>
 <ul>
+<li><strong>YouTube publishing for multi-GB files</strong> (<code>zeo_core.integrations.google.youtube</code>):
+  the provider client opens resumable sessions inside the custody boundary and
+  never sends bytes; <code>transfer</code> sends a file to a session link with no
+  credential, probing first so a drop, kill or reboot resumes at the exact byte;
+  <code>job</code> and <code>publish</code> are a write-once job directory (ZEO Runtime's occurrence
+  identity, Go-computed test vectors) and an executor CLI (<code>pair</code>, <code>connections</code>,
+  <code>run</code>, <code>status</code>) whose lost-final-answer path adopts one matching upload,
+  holds on several, and never uploads twice. Replaces 0.11's <code>upload_video</code>.
+  If YouTube refuses a link without a token, the job switches to a custody
+  relay (<code>relay.RelayByteHttp</code>, <code>ZEOconnectHTTPTransport.relay_youtube_chunk</code>):
+  sealed 4 MiB chunks through ZEOconnect, same session, same resume.
+  Offline contract only; no live request has been made.</li>
 <li><strong>YouTube publishing</strong> (<code>zeo_core.integrations.google.youtube</code>, extra <code>youtube</code>):
   resumable chunked upload with progress, schedule (<code>publish_at</code>), metadata,
   thumbnail, caption track, playlist item, channel identity and video state.

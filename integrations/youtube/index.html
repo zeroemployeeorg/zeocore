@@ -1292,10 +1292,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#credentials-are-injected-never-read-from-files" class="md-nav__link">
+  <a href="#how-one-upload-works" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Credentials are injected, never read from files
+        How one upload works
       
     </span>
   </a>
@@ -1303,10 +1303,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#what-the-models-refuse-before-any-call" class="md-nav__link">
+  <a href="#a-lost-answer-never-becomes-a-duplicate" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What the models refuse before any call
+        A lost answer never becomes a duplicate
       
     </span>
   </a>
@@ -1314,10 +1314,32 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#outcomes-the-service-reports-not-hides" class="md-nav__link">
+  <a href="#the-job-directory" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Outcomes the service reports, not hides
+        The job directory
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#command-line" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Command line
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#when-youtube-wants-a-token-on-every-chunk" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When YouTube wants a token on every chunk
       
     </span>
   </a>
@@ -2247,10 +2269,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#credentials-are-injected-never-read-from-files" class="md-nav__link">
+  <a href="#how-one-upload-works" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Credentials are injected, never read from files
+        How one upload works
       
     </span>
   </a>
@@ -2258,10 +2280,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#what-the-models-refuse-before-any-call" class="md-nav__link">
+  <a href="#a-lost-answer-never-becomes-a-duplicate" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What the models refuse before any call
+        A lost answer never becomes a duplicate
       
     </span>
   </a>
@@ -2269,10 +2291,32 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#outcomes-the-service-reports-not-hides" class="md-nav__link">
+  <a href="#the-job-directory" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Outcomes the service reports, not hides
+        The job directory
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#command-line" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Command line
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#when-youtube-wants-a-token-on-every-chunk" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When YouTube wants a token on every chunk
       
     </span>
   </a>
@@ -2316,101 +2360,152 @@
 
 
 <h1 id="youtube-publishing">YouTube publishing<a class="headerlink" href="#youtube-publishing" title="Permanent link">&para;</a></h1>
-<!-- Offline contract only; verified against the YouTube Data API v3 reference 2026-10-07. -->
+<!-- Offline contract only; verified against the YouTube Data API v3 resumable-upload guide 2026-10-07. -->
 
-<p><code>GoogleYouTubeService</code> publishes a finished video to one YouTube channel:</p>
-<ul>
-<li>uploads the file in resumable chunks with its title, description, tags and privacy;</li>
-<li>schedules it (<code>publish_at</code>);</li>
-<li>sets its thumbnail;</li>
-<li>adds a caption track;</li>
-<li>adds it to a playlist;</li>
-<li>reads the authorised channel and the video's processing state.</li>
-</ul>
-<p>Install the Google dependencies with <code>uv pip install -e ".[youtube]"</code>.</p>
-<h2 id="credentials-are-injected-never-read-from-files">Credentials are injected, never read from files<a class="headerlink" href="#credentials-are-injected-never-read-from-files" title="Permanent link">&para;</a></h2>
-<p>Unlike the Workspace services, this service has no local OAuth flow and reads no
-credential or configuration file. You construct it with a <code>GoogleCredentialSource</code> and,
-optionally, a <code>GoogleApiClientFactory</code> (both in <code>zeo_core.integrations.google.ports</code>).
-A channel's refresh token can therefore live only inside the custody boundary that
-injects it, such as a hosted connection. Without a credential source, every operation
-returns an error result.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">zeo_core.integrations.google.youtube</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">GoogleYouTubeService</span><span class="p">,</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">VideoMetadata</span><span class="p">,</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">VideoStatus</span><span class="p">,</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">VideoUpload</span><span class="p">,</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="p">)</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="n">service</span> <span class="o">=</span> <span class="n">GoogleYouTubeService</span><span class="p">(</span><span class="n">credential_source</span><span class="o">=</span><span class="n">my_custody_source</span><span class="p">)</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="n">channel</span> <span class="o">=</span> <span class="n">service</span><span class="o">.</span><span class="n">get_my_channel</span><span class="p">()</span>  <span class="c1"># check the identity before any upload</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="n">upload</span> <span class="o">=</span> <span class="n">VideoUpload</span><span class="p">(</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    <span class="n">file</span><span class="o">=</span><span class="s2">"episode.mp4"</span><span class="p">,</span>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    <span class="n">metadata</span><span class="o">=</span><span class="n">VideoMetadata</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">"Agent skills"</span><span class="p">,</span> <span class="n">category_id</span><span class="o">=</span><span class="s2">"27"</span><span class="p">),</span>
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>    <span class="n">status</span><span class="o">=</span><span class="n">VideoStatus</span><span class="p">(</span><span class="n">privacy</span><span class="o">=</span><span class="s2">"private"</span><span class="p">),</span>
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="p">)</span>
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="n">result</span> <span class="o">=</span> <span class="n">service</span><span class="o">.</span><span class="n">upload_video</span><span class="p">(</span><span class="n">upload</span><span class="p">,</span> <span class="n">on_progress</span><span class="o">=</span><span class="nb">print</span><span class="p">)</span>
-</code></pre></div>
-<p>The OAuth scopes are <code>youtube.upload</code>, <code>youtube</code> and <code>youtube.force-ssl</code> (captions),
-and nothing broader. They are listed on <code>GoogleYouTubeService.SCOPES</code>.</p>
-<h2 id="what-the-models-refuse-before-any-call">What the models refuse before any call<a class="headerlink" href="#what-the-models-refuse-before-any-call" title="Permanent link">&para;</a></h2>
+<p>Publishing a finished video involves three pieces. The channel's token never reaches the
+machine that has the file, and multi-GB files never pass through the hosted service.</p>
 <table>
 <thead>
 <tr>
-<th>Field</th>
-<th>Rule</th>
+<th>Piece</th>
+<th>Module</th>
+<th>Runs where</th>
+<th>Holds</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>title</code></td>
-<td>1–100 characters, no <code>&lt;</code> or <code>&gt;</code></td>
+<td>Provider client</td>
+<td><code>zeo_core.integrations.google.youtube.service</code></td>
+<td>inside ZEOconnect (custody)</td>
+<td>the channel's OAuth token, injected</td>
 </tr>
 <tr>
-<td><code>description</code></td>
-<td>at most 5,000 bytes, no <code>&lt;</code> or <code>&gt;</code></td>
+<td>Byte transfer</td>
+<td><code>zeo_core.integrations.google.youtube.transfer</code></td>
+<td>the device with the file</td>
+<td>one upload session link</td>
 </tr>
 <tr>
-<td><code>tags</code></td>
-<td>at most 500 characters in total; a tag with a space counts two extra (quotes); tags are separated by commas</td>
-</tr>
-<tr>
-<td><code>category_id</code></td>
-<td>numeric; required by <code>set_metadata</code>, since YouTube requires it on update</td>
-</tr>
-<tr>
-<td><code>publish_at</code></td>
-<td>only with privacy <code>private</code>, time-zone aware, in the future</td>
-</tr>
-<tr>
-<td>captions</td>
-<td><code>.srt</code> or <code>.vtt</code></td>
-</tr>
-<tr>
-<td>files</td>
-<td>must exist</td>
+<td>Publish executor</td>
+<td><code>zeo_core.integrations.google.youtube.publish</code></td>
+<td>the device</td>
+<td>a job directory</td>
 </tr>
 </tbody>
 </table>
-<p>A request that validates can still be refused by YouTube (quota, channel state). The
-result carries the provider's message.</p>
-<h2 id="outcomes-the-service-reports-not-hides">Outcomes the service reports, not hides<a class="headerlink" href="#outcomes-the-service-reports-not-hides" title="Permanent link">&para;</a></h2>
+<p>Install with <code>uv pip install -e ".[youtube]"</code>.</p>
+<h2 id="how-one-upload-works">How one upload works<a class="headerlink" href="#how-one-upload-works" title="Permanent link">&para;</a></h2>
+<ol>
+<li>The device asks ZEOconnect for <code>youtube.video.upload_session.create</code>, sending the
+   size, the sha256, the title, the privacy and any <code>publish_at</code>.</li>
+<li>ZEOconnect shows you the exact request and asks for approval in the browser.</li>
+<li>Once you approve, ZEOconnect opens a resumable session with the token and returns only
+   the session link.</li>
+<li>The device sends the bytes to that link in 16 MiB chunks (<code>ResumableTransfer</code>).</li>
+<li><strong>Every attempt starts by asking YouTube how many bytes it has</strong>
+     (<code>Content-Range: bytes */SIZE</code>). A dropped connection, a killed process or a reboot
+     therefore continues at the exact byte.</li>
+<li>Connection errors, timeouts, 429 and 5xx answers back off (up to 60 s) and try again
+     for as long as the session lives.</li>
+<li>The video exists only once the last byte lands, so no resend can create a second one.</li>
+<li>The thumbnail, captions and playlist follow. Each is its own approval. Captions and
+   playlists are checked first, so nothing is added twice.</li>
+<li>The executor waits for YouTube's processing, then checks that the privacy and schedule
+   are the ones you asked for. When they aren't, the job is held instead of being reported
+   done: an unverified Google Cloud project keeps uploads private.</li>
+</ol>
+<p>With <code>publish_at</code>, the video is uploaded early as private and YouTube itself makes it
+public at that time. A large upload therefore has hours or days to recover from problems.</p>
+<h2 id="a-lost-answer-never-becomes-a-duplicate">A lost answer never becomes a duplicate<a class="headerlink" href="#a-lost-answer-never-becomes-a-duplicate" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>An unverified API project.</strong> YouTube keeps every upload from an unverified API
-  project private and still answers success. When the privacy YouTube reports differs
-  from the privacy requested, the result sets <code>privacy_overridden</code> and says so. To
-  publish publicly or on a schedule, the Google Cloud project must pass YouTube's API
-  audit.</li>
-<li><strong>An upload that fails partway.</strong> The video may or may not exist. The service never
-  retries; the caller reconciles against the channel's uploads before trying again.</li>
-<li><strong>Quota.</strong> An upload costs far more quota than a read. A quota refusal is an error
-  result like any other.</li>
-<li><strong>Custom thumbnails</strong> need a channel allowed to use them (a verified channel).</li>
+<li>The job records <code>final_chunk_sent</code> before sending the request that carries the last
+  byte.</li>
+<li>If that answer is lost and the session has expired, the executor looks for the upload
+  by title and file size. File size is visible only to the channel owner.</li>
+<li><strong>One match</strong> is adopted as the upload.</li>
+<li><strong>Several matches</strong> hold the job as <code>ambiguous_upload</code> until you release it.</li>
+<li><strong>No match</strong> means a new session (and a new approval).</li>
+<li>Without <code>final_chunk_sent</code>, a lost session is always safe to replace: an unfinished
+  session creates nothing.</li>
 </ul>
+<h2 id="the-job-directory">The job directory<a class="headerlink" href="#the-job-directory" title="Permanent link">&para;</a></h2>
+<p><code>job.json</code> and <code>authorization.json</code> are written once, by the studio. After that the
+directory only grows: events are appended to <code>events/%010d.json</code>, and the executor writes
+<code>receipt.json</code> once, at the end. State is the fold of the events.</p>
+<p>The identifiers use ZEO Runtime's occurrence derivation, so Runtime can adopt the same
+files (<code>job.runtime_identity</code>; the tests carry vectors computed by Go). The executor
+refuses a job whose <code>authorization.json</code> doesn't bind the exact bytes of <code>job.json</code>.</p>
+<p>Upload links are kept in the macOS Keychain (<code>--link-store keychain</code>, the default),
+written through stdin. An owner-only file (<code>--link-store file</code>) is used only when you
+choose it explicitly.</p>
+<h2 id="command-line">Command line<a class="headerlink" href="#command-line" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>python<span class="w"> </span>-m<span class="w"> </span>zeo_core.integrations.google.youtube.publish<span class="w"> </span>pair<span class="w">          </span><span class="c1"># once: pair this device with ZEOconnect</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>python<span class="w"> </span>-m<span class="w"> </span>zeo_core.integrations.google.youtube.publish<span class="w"> </span>connections<span class="w">   </span><span class="c1"># the YouTube connection IDs</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>python<span class="w"> </span>-m<span class="w"> </span>zeo_core.integrations.google.youtube.publish<span class="w"> </span>run<span class="w"> </span>JOB_DIR<span class="w">   </span><span class="c1"># advance a job; safe to repeat</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>python<span class="w"> </span>-m<span class="w"> </span>zeo_core.integrations.google.youtube.publish<span class="w"> </span>status<span class="w"> </span>JOB_DIR
+</code></pre></div>
+<p><code>run</code> prints one JSON status line. Its exit code says what to do next:</p>
+<table>
+<thead>
+<tr>
+<th>Exit</th>
+<th>Meaning</th>
+<th>What to do</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>0</code></td>
+<td>done or cancelled</td>
+<td>nothing</td>
+</tr>
+<tr>
+<td><code>10</code></td>
+<td>waiting for your approval (<code>approval_url</code>)</td>
+<td>approve in ZEOconnect, then run again</td>
+</tr>
+<tr>
+<td><code>11</code></td>
+<td>waiting: not due yet, YouTube processing, paused, or busy</td>
+<td>run again later</td>
+</tr>
+<tr>
+<td><code>20</code></td>
+<td>held (<code>reason</code>)</td>
+<td>resolve the reason; append a <code>released</code> event</td>
+</tr>
+<tr>
+<td><code>2</code></td>
+<td>invalid or unauthorized job</td>
+<td>fix the job</td>
+</tr>
+</tbody>
+</table>
+<p>A run holds a lock on the job directory, so two runners never work on the same job. It
+stops cleanly at the next chunk boundary on SIGTERM.</p>
+<h2 id="when-youtube-wants-a-token-on-every-chunk">When YouTube wants a token on every chunk<a class="headerlink" href="#when-youtube-wants-a-token-on-every-chunk" title="Permanent link">&para;</a></h2>
+<p>Google's guide shows the token on every upload request. The design first sends chunks
+straight to the session link. If YouTube refuses the link alone (401/403), the executor
+switches that job to the <strong>custody relay</strong> (<code>relay.RelayByteHttp</code>), records
+<code>relay_engaged</code>, and continues the same session from the byte YouTube holds:</p>
+<ul>
+<li>Each chunk, at most 4 MiB (the hosting platform's request limit), goes to ZEOconnect's
+  <code>POST /v1/youtube/uploads:relay</code> with the link and the <code>relay_seal</code> that ZEOconnect
+  issued with the session.</li>
+<li>ZEOconnect checks the seal, adds the channel's token inside custody, forwards the
+  chunk, and answers with only YouTube's status, <code>Range</code>, and on completion the video's
+  id and privacy.</li>
+<li>The device still never holds the token, and ZEOconnect still stores no link.</li>
+</ul>
+<p>Later steps and runs of that job go straight to the relay. If the relay is unavailable
+too, the job is held as <code>session_link_refused</code>. The first trial on a test channel shows
+which path YouTube accepts.</p>
 <h2 id="test-track">Test track<a class="headerlink" href="#test-track" title="Permanent link">&para;</a></h2>
-<p>Use a dedicated test channel, and upload as <code>private</code> until the whole flow has been
-checked. The tests in <code>tests/test_integrations/google/youtube/</code> mock the Data API client
-at the SDK boundary; no live request has been made by this package.</p>
+<p>Use a dedicated test channel and upload as <code>private</code>. The tests in
+<code>tests/test_integrations/google/youtube/</code> run against a fake upload server that keeps real
+byte offsets: dropped connections, lost answers, expired sessions and refused links. No
+live request has been made by this package.</p>
 
 
 
