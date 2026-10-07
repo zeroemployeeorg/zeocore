@@ -53,11 +53,18 @@ class RelayByteHttp:
     """Send upload chunks through ZEOconnect instead of straight to YouTube."""
 
     def __init__(
-        self, transport: YouTubeRelayTransport, *, connection_id: str, seal: str
+        self,
+        transport: YouTubeRelayTransport,
+        *,
+        connection_id: str,
+        seal: str,
+        mime_type: str,
     ) -> None:
         self._transport = transport
         self._connection = connection_id
         self._seal = seal
+        #: Sent with every request, probes included: the relay checks it.
+        self._mime = mime_type
 
     def put(
         self, url: str, *, headers: Mapping[str, str], content: bytes, timeout: float
@@ -71,7 +78,7 @@ class RelayByteHttp:
                 link=url,
                 seal=self._seal,
                 content_range=headers["Content-Range"],
-                content_type=headers.get("Content-Type", "application/octet-stream"),
+                content_type=headers.get("Content-Type", self._mime),
                 body=content,
             )
         except HostedClientError as error:

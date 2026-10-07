@@ -186,7 +186,7 @@ class PublishExecutor:
         approval_wait: float = 270.0,
         approval_poll: float = 3.0,
         verify_hash: bool = True,
-        relay: Callable[[str], ByteHttp] | None = None,
+        relay: Callable[[str, str], ByteHttp] | None = None,
     ) -> None:
         self.dir = JobDirectory(job_dir)
         self._relay = relay
@@ -516,7 +516,7 @@ class PublishExecutor:
                 sleep=self._sleep,
             ).run()
 
-        relay = self._relay_for(seal)
+        relay = self._relay_for(seal, media.mime_type)
         if self._state().relay and relay is not None:
             outcome = attempt(relay, min(self._chunk, RELAY_CHUNK_BYTES))
         else:
@@ -532,10 +532,10 @@ class PublishExecutor:
                 outcome = attempt(relay, min(self._chunk, RELAY_CHUNK_BYTES))
         return self._settle(step, outcome, media)
 
-    def _relay_for(self, seal: str | None) -> ByteHttp | None:
+    def _relay_for(self, seal: str | None, mime_type: str) -> ByteHttp | None:
         if seal is None or self._relay is None:
             return None
-        return self._relay(seal)
+        return self._relay(seal, mime_type)
 
     def _mark_final(self, step: str) -> None:
         self.dir.append(actor="executor", type="final_chunk_sent", step=step)
@@ -877,8 +877,11 @@ def _run(args: argparse.Namespace) -> int:
         ),
         links=_link_store(args.link_store, job_dir),
         http=_byte_http(),
-        relay=lambda seal: RelayByteHttp(
-            transport, connection_id=job.destination.connection_id, seal=seal
+        relay=lambda seal, mime_type: RelayByteHttp(
+            transport,
+            connection_id=job.destination.connection_id,
+            seal=seal,
+            mime_type=mime_type,
         ),
         should_stop=lambda: stopping["now"],
         chunk_bytes=args.chunk_mib * 1024 * 1024,

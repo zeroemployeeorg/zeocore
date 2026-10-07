@@ -249,8 +249,8 @@ def test_a_refused_link_switches_to_the_custody_relay(
             yt,
             broker,
             links,
-            relay=lambda seal: RelayByteHttp(
-                relay, connection_id="con_youtube0001", seal=seal
+            relay=lambda seal, mime: RelayByteHttp(
+                relay, connection_id="con_youtube0001", seal=seal, mime_type=mime
             ),
             **kw,
         )

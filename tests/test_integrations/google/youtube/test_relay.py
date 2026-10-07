@@ -7,7 +7,7 @@ from datetime import UTC, datetime, timedelta
 
 import httpx
 import pytest
-from pydantic import SecretStr
+from pydantic import JsonValue, SecretStr
 
 from zeo_core.integrations.google.youtube.relay import RELAY_CHUNK_BYTES, RelayByteHttp
 from zeo_core.integrations.google.youtube.transfer import ByteResponse
@@ -27,19 +27,39 @@ NOW = datetime(2026, 10, 7, 12, 0, tzinfo=UTC)
 
 
 class _Transport:
-    def __init__(self, answer: dict[str, object] | Exception) -> None:
+    def __init__(self, answer: dict[str, JsonValue] | Exception) -> None:
         self.answer = answer
         self.calls: list[dict[str, object]] = []
 
-    def relay_youtube_chunk(self, **kw: object) -> dict[str, object]:
-        self.calls.append(kw)
+    def relay_youtube_chunk(
+        self,
+        *,
+        connection_id: str,
+        link: str,
+        seal: str,
+        content_range: str,
+        content_type: str,
+        body: bytes,
+    ) -> dict[str, JsonValue]:
+        self.calls.append(
+            {
+                "connection_id": connection_id,
+                "link": link,
+                "seal": seal,
+                "content_range": content_range,
+                "content_type": content_type,
+                "body": body,
+            }
+        )
         if isinstance(self.answer, Exception):
             raise self.answer
         return self.answer
 
 
 def _put(transport: _Transport) -> ByteResponse:
-    return RelayByteHttp(transport, connection_id="con_youtube0001", seal="s").put(  # type: ignore[arg-type]
+    return RelayByteHttp(
+        transport, connection_id="con_youtube0001", seal="s", mime_type="video/mp4"
+    ).put(
         LINK,
         headers={"Content-Range": "bytes 0-3/10", "Content-Type": "video/mp4"},
         content=b"abcd",
@@ -79,7 +99,9 @@ def test_relay_refusal_is_terminal_and_outage_is_transient() -> None:
     with pytest.raises(httpx.TransportError):
         _put(_Transport({"range": None}))
     with pytest.raises(ValueError, match="4 MiB"):
-        RelayByteHttp(_Transport({}), connection_id="c", seal="s").put(  # type: ignore[arg-type]
+        RelayByteHttp(
+            _Transport({}), connection_id="c", seal="s", mime_type="video/mp4"
+        ).put(
             LINK,
             headers={"Content-Range": "x"},
             content=b"\0" * (RELAY_CHUNK_BYTES + 1),
@@ -213,3 +235,13 @@ def test_transport_refusals_and_limits() -> None:
             content_type="video/mp4",
             body=b"",
         )
+
+
+def test_probes_carry_the_media_type() -> None:
+    transport = _Transport(
+        {"status": 308, "range": None, "resource": None, "reason": ""}
+    )
+    RelayByteHttp(transport, connection_id="c", seal="s", mime_type="image/png").put(
+        LINK, headers={"Content-Range": "bytes */10"}, content=b"", timeout=1
+    )
+    assert transport.calls[0]["content_type"] == "image/png"
