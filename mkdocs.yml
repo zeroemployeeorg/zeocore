@@ -102,6 +102,7 @@ nav:
       - HubSpot: integrations/hubspot.md
       - Kit: integrations/kit.md
       - Google Workspace: integrations/google.md
+      - YouTube: integrations/youtube.md
       - GitHub: integrations/github.md
       - Notion: integrations/notion.md
       - Supabase: integrations/supabase.md

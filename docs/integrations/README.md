@@ -18,6 +18,7 @@ ZeoCore 0.11.0 or newer. Earlier wheels do not include this complete surface.
 | `google.docs` | [Docs](google.md#docs) | Dedicated user and disposable document |
 | `google.sheets` | [Sheets](google.md#sheets) | Dedicated user and disposable spreadsheet |
 | `google.slides` | [Slides](google.md#slides) | Dedicated user and disposable presentation |
+| `google.youtube` | [YouTube](youtube.md) | Dedicated test channel; uploads stay private until checked |
 | `notion` | [Notion](notion.md) | Test workspace or separately shared test parent |
 | `supabase` | [Supabase](supabase.md) | Local stack or separate hosted project |
 | `social.bluesky` | [Bluesky](bluesky.md) | Dedicated account; posts remain public |
