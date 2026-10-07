@@ -1325,6 +1325,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#youtube-data-is-kept-for-at-most-30-days" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        YouTube data is kept for at most 30 days
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#command-line" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2302,6 +2313,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#youtube-data-is-kept-for-at-most-30-days" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        YouTube data is kept for at most 30 days
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#command-line" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2432,18 +2454,38 @@ public at that time. A large upload therefore has hours or days to recover from 
 <h2 id="the-job-directory">The job directory<a class="headerlink" href="#the-job-directory" title="Permanent link">&para;</a></h2>
 <p><code>job.json</code> and <code>authorization.json</code> are written once, by the studio. After that the
 directory only grows: events are appended to <code>events/%010d.json</code>, and the executor writes
-<code>receipt.json</code> once, at the end. State is the fold of the events.</p>
+<code>receipt.json</code> once, at the end. State is the fold of the events. The one exception is
+<code>youtube.json</code>, which holds YouTube's data and is replaced or deleted (see the 30-day rule
+below).</p>
 <p>The identifiers use ZEO Runtime's occurrence derivation, so Runtime can adopt the same
 files (<code>job.runtime_identity</code>; the tests carry vectors computed by Go). The executor
 refuses a job whose <code>authorization.json</code> doesn't bind the exact bytes of <code>job.json</code>.</p>
 <p>Upload links are kept in the macOS Keychain (<code>--link-store keychain</code>, the default),
 written through stdin. An owner-only file (<code>--link-store file</code>) is used only when you
 choose it explicitly.</p>
+<h2 id="youtube-data-is-kept-for-at-most-30-days">YouTube data is kept for at most 30 days<a class="headerlink" href="#youtube-data-is-kept-for-at-most-30-days" title="Permanent link">&para;</a></h2>
+<p>The YouTube API Services Developer Policies (§III.E.4) limit stored authorized data to
+30 calendar days, unless it is refreshed. The adviser's note r14 settled the rule:</p>
+<ul>
+<li><strong>Only <code>youtube.json</code> holds YouTube data:</strong> the video's id, privacy, schedule and
+  link, plus when they were fetched. The write-once files (<code>job.json</code>, the events,
+  <code>receipt.json</code>) never contain anything YouTube returned.</li>
+<li><strong><code>retain</code> refreshes, or deletes.</strong> Once a record is 20 days old, <code>retain</code> refreshes
+  it with one <code>youtube.video.get</code> read (1 quota unit).</li>
+<li><strong>The video is gone, or access has lapsed:</strong> the record is deleted, and a
+    <code>provider_data_dropped</code> event says when and why.</li>
+<li><strong>ZEOconnect is unreachable:</strong> the refresh waits. But a record that reaches 29 days
+    is deleted anyway.</li>
+<li><strong>What stays:</strong> the job's own record, meaning what was sent, the operator's
+  authorization, and that a publish happened.</li>
+</ul>
+<p>Run <code>retain</code> once a day; the studio's runner does.</p>
 <h2 id="command-line">Command line<a class="headerlink" href="#command-line" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>python<span class="w"> </span>-m<span class="w"> </span>zeo_core.integrations.google.youtube.publish<span class="w"> </span>pair<span class="w">          </span><span class="c1"># once: pair this device with ZEOconnect</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>python<span class="w"> </span>-m<span class="w"> </span>zeo_core.integrations.google.youtube.publish<span class="w"> </span>connections<span class="w">   </span><span class="c1"># the YouTube connection IDs</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>python<span class="w"> </span>-m<span class="w"> </span>zeo_core.integrations.google.youtube.publish<span class="w"> </span>run<span class="w"> </span>JOB_DIR<span class="w">   </span><span class="c1"># advance a job; safe to repeat</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>python<span class="w"> </span>-m<span class="w"> </span>zeo_core.integrations.google.youtube.publish<span class="w"> </span>status<span class="w"> </span>JOB_DIR
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>python<span class="w"> </span>-m<span class="w"> </span>zeo_core.integrations.google.youtube.publish<span class="w"> </span>retain<span class="w"> </span>PUBLISH_ROOT<span class="w">  </span><span class="c1"># daily: the 30-day rule</span>
 </code></pre></div>
 <p><code>run</code> prints one JSON status line. Its exit code says what to do next:</p>
 <table>

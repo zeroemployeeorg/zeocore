@@ -3500,6 +3500,14 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <h2 id="unreleased"><a href="https://github.com/profrodai/zeocore/compare/v0.11.0...HEAD">Unreleased</a><a class="headerlink" href="#unreleased" title="Permanent link">&para;</a></h2>
 <h3 id="added">Added<a class="headerlink" href="#added" title="Permanent link">&para;</a></h3>
 <ul>
+<li><strong>YouTube data retention</strong> (<code>youtube.retention</code>, <code>publish retain</code>): YouTube's fields
+  (the video id, privacy, schedule and link) live only in a replaceable <code>youtube.json</code>,
+  never in the write-once job files. <code>retain</code> refreshes each record once it is 20 days
+  old (one <code>videos.get</code>, 1 unit). It deletes the record when the video is gone or
+  access has lapsed, or when no refresh succeeded by day 29, and logs when and why.
+  This follows the Developer Policies' 30-day limit (§III.E.4). <code>Receipt</code> no longer
+  carries <code>provider_object_id</code>, <code>video_url</code> or <code>response_sha256</code>; it points to
+  <code>provider_record</code>.</li>
 <li><strong>YouTube publishing for multi-GB files</strong> (<code>zeo_core.integrations.google.youtube</code>):
   the provider client opens resumable sessions inside the custody boundary and
   never sends bytes; <code>transfer</code> sends a file to a session link with no
