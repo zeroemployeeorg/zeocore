@@ -1055,6 +1055,8 @@
       
         
       
+        
+      
     
     
     
@@ -1208,6 +1210,34 @@
     
   
     Google Workspace
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../integrations/youtube/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    YouTube
   
 
     
@@ -3470,6 +3500,14 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <h2 id="unreleased"><a href="https://github.com/profrodai/zeocore/compare/v0.11.0...HEAD">Unreleased</a><a class="headerlink" href="#unreleased" title="Permanent link">&para;</a></h2>
 <h3 id="added">Added<a class="headerlink" href="#added" title="Permanent link">&para;</a></h3>
 <ul>
+<li><strong>YouTube publishing</strong> (<code>zeo_core.integrations.google.youtube</code>, extra <code>youtube</code>):
+  resumable chunked upload with progress, schedule (<code>publish_at</code>), metadata,
+  thumbnail, caption track, playlist item, channel identity and video state.
+  Injected credentials only (<code>GoogleCredentialSource</code>); it reads no credential
+  file. Models refuse what YouTube would reject before any call. When YouTube
+  keeps an upload private (an unverified API project), the result says so; a
+  failed upload is never retried. Not in the setup catalogue. Offline contract
+  only; no live request has been made.</li>
 <li><strong>Local Revolut Business enrollment</strong> (<code>zeo_core.integrations.revolut.local</code>,
   extra <code>revolut</code>): use your own account on your own machine, with no hosted
   service or database. Three explicit steps (<code>setup</code>, <code>authorize</code>, <code>complete</code>)
