@@ -1,33 +1,34 @@
-"""YouTube Data API v3: publish a finished video and everything that goes with it.
+"""YouTube Data API v3: the provider side of publishing a finished video.
 
-``GoogleYouTubeService`` uploads a video (resumable, in chunks), sets its schedule and
-metadata, sets its thumbnail, adds a caption track, adds it to a playlist, and reads the
-authorised channel and a video's state. It is the provider client that a hosted
-connection (ZEOconnect) wraps with custody, approval and idempotency; it does none of
-that itself.
+``GoogleYouTubeService`` runs inside a custody boundary (ZEOconnect) that holds the
+channel's OAuth token. It never sends a video's bytes. For each upload it opens a
+resumable session and returns the session link; the device that has the file sends the
+bytes to that link (``transfer.py``). A multi-GB 4K upload therefore never passes
+through the custody service, and the token never reaches the device.
 
-CREDENTIALS: injected only. The service is built from a ``GoogleCredentialSource`` and a
-``GoogleApiClientFactory`` (``google/ports.py``), as ``GoogleDocsService``'s injected
-path is; it reads no credential or config file, so a channel's tokens can live only
-inside the custody boundary that injects them. Without a credential source,
-``initialize()`` fails and every operation reports it.
+It also reads a channel and its videos, finds an upload after a lost answer
+(``find_upload``), lists caption tracks, checks a playlist, and changes a video's
+privacy or schedule.
 
-HONEST OUTCOMES: YouTube keeps uploads from an unverified API project private and still
-answers success. When the requested privacy differs from the privacy YouTube reports
-back, the result says so (``privacy_requested`` against ``privacy``) instead of
-reporting the request as done.
+CREDENTIALS: injected only (``GoogleCredentialSource``). The service reads no
+credential or config file. Without a credential source every operation reports an
+error.
 
-ERROR SHAPE: as the other Google services, each public method returns
-``IntegrationResult``; an SDK failure becomes ``error_result`` with the provider's
-message, and nothing is retried here (an upload whose outcome is unknown must be
-reconciled by the caller, not repeated blindly).
+FIXED ORIGIN: every request goes to ``https://www.googleapis.com`` with redirects off,
+and a session link is returned only when it is on YouTube's upload path there.
+
+ERROR SHAPE: each public method returns ``IntegrationResult``. A provider failure
+becomes ``error_result`` and nothing is retried here; retry and reconciliation belong
+to the caller's orchestrator.
 """
 
 from __future__ import annotations
 
+import json
 import logging
-from collections.abc import Callable
-from typing import TYPE_CHECKING, Any, cast
+from collections.abc import Callable, Mapping
+from datetime import UTC, datetime
+from typing import Any, Protocol, cast, runtime_checkable
 
 from zeo_core.integrations.core.base import BaseIntegrationService
 from zeo_core.integrations.core.results import IntegrationResult
@@ -37,28 +38,71 @@ from zeo_core.integrations.google.ports import (
     GoogleCredentialSource,
 )
 from zeo_core.integrations.google.youtube.models import (
-    CaptionUpload,
-    VideoMetadata,
+    CaptionSessionRequest,
+    ThumbnailSessionRequest,
+    VideoSessionRequest,
     VideoStatus,
-    VideoUpload,
 )
-
-if TYPE_CHECKING:
-    from googleapiclient.http import MediaFileUpload
 
 NoneType = type(None)
 
-#: Upload chunk size: a multiple of 256 KiB, as resumable uploads require.
-CHUNK_BYTES = 8 * 1024 * 1024
+ORIGIN = "https://www.googleapis.com"
+#: Where YouTube's resumable session links live; anything else is refused.
+UPLOAD_PREFIX = ORIGIN + "/upload/youtube/v3/"
+SESSION_TIMEOUT_SECONDS = 30.0
+#: How many of the channel's newest uploads ``find_upload`` inspects.
+FIND_WINDOW = 50
 
-ProgressCallback = Callable[[float], None]
+
+@runtime_checkable
+class HttpResponse(Protocol):
+    @property
+    def status_code(self) -> int: ...
+
+    @property
+    def headers(self) -> Mapping[str, str]: ...
+
+    @property
+    def text(self) -> str: ...
+
+
+@runtime_checkable
+class AuthorizedHttp(Protocol):
+    """An HTTP session that adds the channel's bearer token to each request."""
+
+    def request(
+        self,
+        method: str,
+        url: str,
+        *,
+        headers: Mapping[str, str],
+        data: bytes,
+        timeout: float,
+        allow_redirects: bool,
+    ) -> HttpResponse: ...
+
+
+@runtime_checkable
+class AuthorizedHttpFactory(Protocol):
+    def session(self, credentials: object) -> AuthorizedHttp: ...
+
+
+class GoogleAuthorizedHttpFactory:
+    """Default: ``google.auth`` ``AuthorizedSession``, ambient proxies disabled."""
+
+    def session(self, credentials: object) -> AuthorizedHttp:
+        from google.auth.transport.requests import AuthorizedSession
+
+        session = AuthorizedSession(credentials)
+        session.trust_env = False
+        return cast(AuthorizedHttp, session)
 
 
 class GoogleYouTubeService(BaseIntegrationService):
     """Integration service for publishing on YouTube (Data API v3)."""
 
-    #: upload (videos.insert); youtube (videos.update, thumbnails.set,
-    #: playlistItems.insert, channels.list); force-ssl (captions.insert).
+    #: upload (sessions for videos.insert); youtube (videos.update,
+    #: thumbnails.set, playlistItems, channels.list); force-ssl (captions).
     #: Nothing broader.
     SCOPES: list[str] = [
         "https://www.googleapis.com/auth/youtube.upload",
@@ -71,6 +115,7 @@ class GoogleYouTubeService(BaseIntegrationService):
         *,
         credential_source: GoogleCredentialSource | None = None,
         client_factory: GoogleApiClientFactory | None = None,
+        http_factory: AuthorizedHttpFactory | None = None,
         log_level: int = logging.INFO,
     ) -> None:
         super().__init__(
@@ -82,6 +127,8 @@ class GoogleYouTubeService(BaseIntegrationService):
         )
         self._credential_source = credential_source
         self._client_factory = client_factory or DiscoveryGoogleApiClientFactory()
+        self._http_factory = http_factory or GoogleAuthorizedHttpFactory()
+        self._credentials: object | None = None
         self.youtube: Any = None
 
     @property
@@ -90,7 +137,7 @@ class GoogleYouTubeService(BaseIntegrationService):
 
     @property
     def version(self) -> str:
-        return "1.0.0"
+        return "2.0.0"
 
     def initialize(self) -> IntegrationResult[NoneType]:
         """Build the YouTube client from the injected credential source."""
@@ -104,9 +151,9 @@ class GoogleYouTubeService(BaseIntegrationService):
                 " (a credential source from a custody boundary)"
             )
         try:
-            credentials = self._credential_source.get_credentials()
+            self._credentials = self._credential_source.get_credentials()
             self.youtube = self._client_factory.build(
-                "youtube", "v3", credentials=credentials
+                "youtube", "v3", credentials=self._credentials
             )
         except Exception:
             self._initialized = False
@@ -141,24 +188,63 @@ class GoogleYouTubeService(BaseIntegrationService):
         try:
             response = run()
         except Exception as api_error:
-            self.logger.error(f"YouTube {what} failed: {api_error}")
+            self.logger.error(f"YouTube {what} failed: {type(api_error).__name__}")
             return IntegrationResult.error_result(f"YouTube {what} failed: {api_error}")
         return IntegrationResult.success_result(
             content=cast(dict[str, Any], response or {}), message=f"YouTube {what}"
         )
 
-    @staticmethod
-    def _media(
-        path: str, mimetype: str, *, resumable: bool, chunksize: int = -1
-    ) -> MediaFileUpload:
-        from googleapiclient.http import MediaFileUpload
-
-        return MediaFileUpload(
-            path, mimetype=mimetype, resumable=resumable, chunksize=chunksize
+    def _open_session(
+        self,
+        what: str,
+        path_and_query: str,
+        *,
+        size_bytes: int,
+        mime_type: str,
+        body: dict[str, object] | None,
+    ) -> IntegrationResult[dict[str, Any]]:
+        """POST a resumable-session request and return the session link only."""
+        if not_ready := self._ready():
+            return not_ready
+        headers = {
+            "X-Upload-Content-Length": str(size_bytes),
+            "X-Upload-Content-Type": mime_type,
+        }
+        data = b""
+        if body is not None:
+            headers["Content-Type"] = "application/json; charset=UTF-8"
+            data = json.dumps(body, separators=(",", ":")).encode("utf-8")
+        try:
+            http = self._http_factory.session(self._credentials)
+            response = http.request(
+                "POST",
+                ORIGIN + path_and_query,
+                headers=headers,
+                data=data,
+                timeout=SESSION_TIMEOUT_SECONDS,
+                allow_redirects=False,
+            )
+        except Exception as error:
+            self.logger.error(f"YouTube {what} failed: {type(error).__name__}")
+            return IntegrationResult.error_result(
+                f"YouTube {what} failed: {type(error).__name__}"
+            )
+        if response.status_code != 200:
+            return IntegrationResult.error_result(
+                f"YouTube {what} refused: HTTP {response.status_code}"
+                f" {_reason(response.text)}".rstrip()
+            )
+        location = _header(response.headers, "Location")
+        if location is None or not location.startswith(UPLOAD_PREFIX):
+            return IntegrationResult.error_result(
+                f"YouTube {what} returned no upload link on {UPLOAD_PREFIX}"
+            )
+        return IntegrationResult.success_result(
+            content={"upload_url": location}, message=f"YouTube {what}"
         )
 
     # ------------------------------------------------------------------
-    # channels.list (mine)
+    # channel
     # ------------------------------------------------------------------
 
     def get_my_channel(self) -> IntegrationResult[dict[str, Any]]:
@@ -185,7 +271,7 @@ class GoogleYouTubeService(BaseIntegrationService):
         snippet = item.get("snippet", {})
         return IntegrationResult.success_result(
             content={
-                "id": item.get("id"),
+                "channel_id": item.get("id"),
                 "title": snippet.get("title"),
                 "handle": snippet.get("customUrl"),
             },
@@ -193,186 +279,68 @@ class GoogleYouTubeService(BaseIntegrationService):
         )
 
     # ------------------------------------------------------------------
-    # videos.insert (resumable)
+    # upload sessions (the device sends the bytes)
     # ------------------------------------------------------------------
 
-    def upload_video(
-        self,
-        upload: VideoUpload,
-        *,
-        chunk_bytes: int = CHUNK_BYTES,
-        on_progress: ProgressCallback | None = None,
+    def create_video_upload_session(
+        self, request: VideoSessionRequest
     ) -> IntegrationResult[dict[str, Any]]:
-        """Upload a video in resumable chunks with its snippet and status.
+        """Open a resumable videos.insert session with the snippet and status.
 
-        Returns the video id, the privacy YouTube reports, and the privacy requested.
-        When they differ (an unverified API project keeps uploads private),
-        ``privacy_overridden`` is true and the message says so.
+        The video exists only once the last byte reaches the returned link; an
+        unfinished session creates nothing on the channel.
         """
-        if chunk_bytes % (256 * 1024):
-            return IntegrationResult.error_result(
-                "chunk_bytes must be a multiple of 256 KiB"
-            )
-        if not_ready := self._ready():
-            return not_ready
-        body = {"snippet": upload.metadata.snippet(), "status": upload.status.status()}
-        try:
-            media = self._media(
-                str(upload.file), "video/*", resumable=True, chunksize=chunk_bytes
-            )
-            request = self.youtube.videos().insert(
-                part="snippet,status",
-                body=body,
-                media_body=media,
-                notifySubscribers=upload.notify_subscribers,
-            )
-            response: dict[str, Any] | None = None
-            while response is None:
-                progress, response = request.next_chunk()
-                if progress is not None and on_progress is not None:
-                    on_progress(float(progress.progress()))
-        except Exception as api_error:
-            # Unknown outcome: the video may exist. The caller reconciles against
-            # the channel's uploads before trying again.
-            self.logger.error(f"YouTube videos.insert failed: {api_error}")
-            return IntegrationResult.error_result(
-                f"YouTube videos.insert failed (the video may exist): {api_error}"
-            )
-        if on_progress is not None:
-            on_progress(1.0)
-        requested = upload.status.privacy
-        privacy = (response.get("status") or {}).get("privacyStatus")
-        overridden = privacy is not None and privacy != requested
-        return IntegrationResult.success_result(
-            content={
-                "id": response.get("id"),
-                "privacy": privacy,
-                "privacy_requested": requested,
-                "privacy_overridden": overridden,
-                "publish_at": (response.get("status") or {}).get("publishAt"),
+        notify = "true" if request.notify_subscribers else "false"
+        return self._open_session(
+            "videos.insert session",
+            "/upload/youtube/v3/videos?uploadType=resumable&part=snippet,status"
+            f"&notifySubscribers={notify}",
+            size_bytes=request.size_bytes,
+            mime_type=request.mime_type,
+            body={
+                "snippet": request.metadata.snippet(),
+                "status": request.status.status(),
             },
-            message=(
-                f"Uploaded, but YouTube kept it {privacy} (asked {requested}):"
-                " the API project may be unverified"
-                if overridden
-                else f"Uploaded as {privacy}"
-            ),
+        )
+
+    def create_thumbnail_upload_session(
+        self, request: ThumbnailSessionRequest
+    ) -> IntegrationResult[dict[str, Any]]:
+        """Open a resumable thumbnails.set session for an existing video."""
+        return self._open_session(
+            "thumbnails.set session",
+            "/upload/youtube/v3/thumbnails/set?uploadType=resumable"
+            f"&videoId={request.video_id}",
+            size_bytes=request.size_bytes,
+            mime_type=request.mime_type,
+            body=None,
+        )
+
+    def create_caption_upload_session(
+        self, request: CaptionSessionRequest
+    ) -> IntegrationResult[dict[str, Any]]:
+        """Open a resumable captions.insert session (a published track, not a draft)."""
+        return self._open_session(
+            "captions.insert session",
+            "/upload/youtube/v3/captions?uploadType=resumable&part=snippet",
+            size_bytes=request.size_bytes,
+            mime_type=request.mime_type,
+            body={
+                "snippet": {
+                    "videoId": request.video_id,
+                    "language": request.language,
+                    "name": request.name,
+                    "isDraft": False,
+                }
+            },
         )
 
     # ------------------------------------------------------------------
-    # videos.update
-    # ------------------------------------------------------------------
-
-    def set_status(
-        self, video_id: str, status: VideoStatus
-    ) -> IntegrationResult[dict[str, Any]]:
-        """Change a video's privacy or schedule (``publish_at`` keeps it private)."""
-        return self._call(
-            "videos.update(status)",
-            lambda: (
-                self.youtube.videos()
-                .update(part="status", body={"id": video_id, "status": status.status()})
-                .execute()
-            ),
-        )
-
-    def set_metadata(
-        self, video_id: str, metadata: VideoMetadata
-    ) -> IntegrationResult[dict[str, Any]]:
-        """Replace a video's title, description, tags, category and language."""
-        snippet = metadata.snippet()
-        if "categoryId" not in snippet:
-            return IntegrationResult.error_result(
-                "set_metadata needs category_id (YouTube requires it on update)"
-            )
-        return self._call(
-            "videos.update(snippet)",
-            lambda: (
-                self.youtube.videos()
-                .update(part="snippet", body={"id": video_id, "snippet": snippet})
-                .execute()
-            ),
-        )
-
-    # ------------------------------------------------------------------
-    # thumbnails.set, captions.insert, playlistItems.insert
-    # ------------------------------------------------------------------
-
-    def set_thumbnail(
-        self, video_id: str, image_path: str
-    ) -> IntegrationResult[dict[str, Any]]:
-        """Set a custom thumbnail: JPEG or PNG, at most 2 MB.
-
-        The channel must be allowed custom thumbnails (a verified channel).
-        """
-        mimetype = "image/png" if image_path.lower().endswith(".png") else "image/jpeg"
-        return self._call(
-            "thumbnails.set",
-            lambda: (
-                self.youtube.thumbnails()
-                .set(
-                    videoId=video_id,
-                    media_body=self._media(image_path, mimetype, resumable=False),
-                )
-                .execute()
-            ),
-        )
-
-    def add_caption(
-        self, video_id: str, caption: CaptionUpload
-    ) -> IntegrationResult[dict[str, Any]]:
-        """Add a caption track (as a published track, not a draft)."""
-        mimetype = (
-            "text/vtt"
-            if caption.file.suffix.lower() == ".vtt"
-            else "application/x-subrip"
-        )
-        body = {
-            "snippet": {
-                "videoId": video_id,
-                "language": caption.language,
-                "name": caption.name,
-                "isDraft": False,
-            }
-        }
-        return self._call(
-            "captions.insert",
-            lambda: (
-                self.youtube.captions()
-                .insert(
-                    part="snippet",
-                    body=body,
-                    media_body=self._media(
-                        str(caption.file), mimetype, resumable=False
-                    ),
-                )
-                .execute()
-            ),
-        )
-
-    def add_to_playlist(
-        self, playlist_id: str, video_id: str
-    ) -> IntegrationResult[dict[str, Any]]:
-        """Append a video to a playlist the channel owns."""
-        body = {
-            "snippet": {
-                "playlistId": playlist_id,
-                "resourceId": {"kind": "youtube#video", "videoId": video_id},
-            }
-        }
-        return self._call(
-            "playlistItems.insert",
-            lambda: (
-                self.youtube.playlistItems().insert(part="snippet", body=body).execute()
-            ),
-        )
-
-    # ------------------------------------------------------------------
-    # videos.list
+    # reads
     # ------------------------------------------------------------------
 
     def get_video(self, video_id: str) -> IntegrationResult[dict[str, Any]]:
-        """A video's status and processing state (has YouTube finished processing?)."""
+        """A video's privacy, schedule, upload and processing state."""
         result = self._call(
             "videos.list",
             lambda: (
@@ -389,8 +357,235 @@ class GoogleYouTubeService(BaseIntegrationService):
                 f"No video {video_id} on this channel"
             )
         return IntegrationResult.success_result(
-            content=cast(dict[str, Any], items[0]), message=f"Read video {video_id}"
+            content=_video_state(items[0]), message=f"Read video {video_id}"
+        )
+
+    def find_upload(
+        self, *, title: str, size_bytes: int, uploaded_after: datetime
+    ) -> IntegrationResult[dict[str, Any]]:
+        """Find an upload whose answer was lost: same title, same file size.
+
+        Inspects the channel's newest uploads. ``fileDetails`` is visible only to the
+        channel owner, so the size match is private to these credentials.
+        """
+        channel = self._call(
+            "channels.list(uploads)",
+            lambda: (
+                self.youtube.channels()
+                .list(part="contentDetails", mine=True, maxResults=1)
+                .execute()
+            ),
+        )
+        if not channel.success or channel.content is None:
+            return channel
+        items = channel.content.get("items") or []
+        uploads = (
+            items[0]
+            .get("contentDetails", {})
+            .get("relatedPlaylists", {})
+            .get("uploads")
+            if items
+            else None
+        )
+        if not uploads:
+            return IntegrationResult.error_result("The channel has no uploads list")
+        listed = self._call(
+            "playlistItems.list(uploads)",
+            lambda: (
+                self.youtube.playlistItems()
+                .list(part="contentDetails", playlistId=uploads, maxResults=FIND_WINDOW)
+                .execute()
+            ),
+        )
+        if not listed.success or listed.content is None:
+            return listed
+        ids = [
+            item.get("contentDetails", {}).get("videoId")
+            for item in listed.content.get("items") or []
+        ]
+        ids = [video_id for video_id in ids if video_id]
+        if not ids:
+            return IntegrationResult.success_result(
+                content={"matches": []}, message="No uploads"
+            )
+        videos = self._call(
+            "videos.list(fileDetails)",
+            lambda: (
+                self.youtube.videos()
+                .list(part="snippet,status,fileDetails", id=",".join(ids))
+                .execute()
+            ),
+        )
+        if not videos.success or videos.content is None:
+            return videos
+        matches = []
+        for item in videos.content.get("items") or []:
+            snippet = item.get("snippet", {})
+            size = item.get("fileDetails", {}).get("fileSize")
+            published = _parse_time(snippet.get("publishedAt"))
+            if (
+                snippet.get("title") == title
+                and size is not None
+                and int(size) == size_bytes
+                and (published is None or published >= uploaded_after)
+            ):
+                matches.append(
+                    {
+                        "video_id": item.get("id"),
+                        "privacy": item.get("status", {}).get("privacyStatus"),
+                        "upload_status": item.get("status", {}).get("uploadStatus"),
+                        "published_at": snippet.get("publishedAt"),
+                    }
+                )
+        return IntegrationResult.success_result(
+            content={"matches": matches}, message=f"{len(matches)} matching upload(s)"
+        )
+
+    def list_captions(self, video_id: str) -> IntegrationResult[dict[str, Any]]:
+        """The caption tracks a video already has."""
+        result = self._call(
+            "captions.list",
+            lambda: (
+                self.youtube.captions().list(part="snippet", videoId=video_id).execute()
+            ),
+        )
+        if not result.success or result.content is None:
+            return result
+        tracks = [
+            {
+                "caption_id": item.get("id"),
+                "language": item.get("snippet", {}).get("language"),
+                "name": item.get("snippet", {}).get("name"),
+            }
+            for item in result.content.get("items") or []
+        ]
+        return IntegrationResult.success_result(
+            content={"tracks": tracks}, message=f"{len(tracks)} caption track(s)"
+        )
+
+    def playlist_contains(
+        self, playlist_id: str, video_id: str
+    ) -> IntegrationResult[dict[str, Any]]:
+        """Whether a playlist already holds a video (checked before adding it)."""
+        result = self._call(
+            "playlistItems.list",
+            lambda: (
+                self.youtube.playlistItems()
+                .list(part="id", playlistId=playlist_id, videoId=video_id, maxResults=1)
+                .execute()
+            ),
+        )
+        if not result.success or result.content is None:
+            return result
+        items = result.content.get("items") or []
+        return IntegrationResult.success_result(
+            content={
+                "present": bool(items),
+                "playlist_item_id": items[0].get("id") if items else None,
+            },
+            message="Checked the playlist",
+        )
+
+    # ------------------------------------------------------------------
+    # effects
+    # ------------------------------------------------------------------
+
+    def set_status(
+        self, video_id: str, status: VideoStatus
+    ) -> IntegrationResult[dict[str, Any]]:
+        """Change a video's privacy or schedule (``publish_at`` keeps it private)."""
+        result = self._call(
+            "videos.update(status)",
+            lambda: (
+                self.youtube.videos()
+                .update(part="status", body={"id": video_id, "status": status.status()})
+                .execute()
+            ),
+        )
+        if not result.success or result.content is None:
+            return result
+        state = result.content.get("status", {})
+        return IntegrationResult.success_result(
+            content={
+                "video_id": video_id,
+                "privacy": state.get("privacyStatus"),
+                "publish_at": state.get("publishAt"),
+            },
+            message="Updated the video's status",
+        )
+
+    def add_to_playlist(
+        self, playlist_id: str, video_id: str
+    ) -> IntegrationResult[dict[str, Any]]:
+        """Append a video to a playlist the channel owns."""
+        body = {
+            "snippet": {
+                "playlistId": playlist_id,
+                "resourceId": {"kind": "youtube#video", "videoId": video_id},
+            }
+        }
+        result = self._call(
+            "playlistItems.insert",
+            lambda: (
+                self.youtube.playlistItems().insert(part="snippet", body=body).execute()
+            ),
+        )
+        if not result.success or result.content is None:
+            return result
+        return IntegrationResult.success_result(
+            content={"playlist_item_id": result.content.get("id")},
+            message="Added to the playlist",
         )
 
 
-__all__ = ["CHUNK_BYTES", "GoogleYouTubeService", "ProgressCallback"]
+def _video_state(item: Mapping[str, Any]) -> dict[str, Any]:
+    status = item.get("status", {})
+    return {
+        "video_id": item.get("id"),
+        "title": item.get("snippet", {}).get("title"),
+        "privacy": status.get("privacyStatus"),
+        "publish_at": status.get("publishAt"),
+        "upload_status": status.get("uploadStatus"),
+        "processing_status": item.get("processingDetails", {}).get("processingStatus"),
+        "failure_reason": status.get("failureReason"),
+        "rejection_reason": status.get("rejectionReason"),
+    }
+
+
+def _header(headers: Mapping[str, str], name: str) -> str | None:
+    for key, value in headers.items():
+        if key.lower() == name.lower():
+            return value
+    return None
+
+
+def _reason(text: str) -> str:
+    """YouTube's error reason, never the whole provider body."""
+    try:
+        errors = json.loads(text).get("error", {}).get("errors") or []
+        reason = errors[0].get("reason") if errors else None
+    except ValueError, AttributeError, TypeError:
+        reason = None
+    return str(reason) if reason else ""
+
+
+def _parse_time(value: object) -> datetime | None:
+    if not isinstance(value, str):
+        return None
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return parsed if parsed.tzinfo else parsed.replace(tzinfo=UTC)
+
+
+__all__ = [
+    "FIND_WINDOW",
+    "ORIGIN",
+    "UPLOAD_PREFIX",
+    "AuthorizedHttp",
+    "AuthorizedHttpFactory",
+    "GoogleAuthorizedHttpFactory",
+    "GoogleYouTubeService",
+    "HttpResponse",
+]

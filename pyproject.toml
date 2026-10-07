@@ -157,6 +157,8 @@ youtube = [
     "google-auth-httplib2>=0.1.0",
     "google-auth-oauthlib>=0.4.0",
     "platformdirs>=4.0.0",
+    # google.auth.transport.requests.AuthorizedSession opens upload sessions.
+    "requests",
 ]
 pandoc = ["pypandoc", "beautifulsoup4"]
 llms = ["tiktoken", "openai", "anthropic"]

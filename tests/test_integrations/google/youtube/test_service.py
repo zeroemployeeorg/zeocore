@@ -1,208 +1,280 @@
-"""GoogleYouTubeService against a mocked Data API v3 client (the SDK boundary, never the
-service's own methods).
+"""GoogleYouTubeService against a mocked Data API client and a fake authorized HTTP.
 
-No network and no token: the credential source and the client factory are injected, as a
-custody boundary injects them in production.
+No network and no token: the credential source, client factory and authorized HTTP are
+injected, as a custody boundary injects them in production.
 """
 
+from __future__ import annotations
+
+import json
+from collections.abc import Mapping
+from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
-from pathlib import Path
+from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
 
 from zeo_core.integrations.google.youtube import (
-    CaptionUpload,
+    CaptionSessionRequest,
     GoogleYouTubeService,
+    ThumbnailSessionRequest,
     VideoMetadata,
+    VideoSessionRequest,
     VideoStatus,
-    VideoUpload,
 )
+
+UPLOAD = "https://www.googleapis.com/upload/youtube/v3/videos?uploadType=resumable&upload_id=X"
 
 
 class _Source:
     def get_credentials(self) -> object:
-        return object()
+        return "credentials"
 
 
 class _Factory:
     def __init__(self, client: MagicMock) -> None:
         self.client = client
-        self.calls: list[tuple[str, str]] = []
 
     def build(self, service: str, version: str, *, credentials: object) -> object:
-        self.calls.append((service, version))
+        assert (service, version, credentials) == ("youtube", "v3", "credentials")
         return self.client
 
 
-@pytest.fixture
-def api() -> MagicMock:
-    return MagicMock()
+@dataclass
+class _Response:
+    status_code: int
+    headers: Mapping[str, str] = field(default_factory=dict)
+    text: str = ""
 
 
-@pytest.fixture
-def svc(api: MagicMock, monkeypatch: pytest.MonkeyPatch) -> GoogleYouTubeService:
-    monkeypatch.setattr(
-        GoogleYouTubeService,
-        "_media",
-        staticmethod(lambda path, mimetype, **kw: ("media", path, mimetype, kw)),
-    )
+class _Http:
+    def __init__(self, response: _Response | Exception) -> None:
+        self.response = response
+        self.requests: list[dict[str, Any]] = []
+
+    def session(self, credentials: object) -> _Http:
+        assert credentials == "credentials"
+        return self
+
+    def request(self, method: str, url: str, **kw: object) -> _Response:
+        self.requests.append({"method": method, "url": url, **kw})
+        if isinstance(self.response, Exception):
+            raise self.response
+        return self.response
+
+
+def _svc(api: MagicMock, http: _Http | None = None) -> GoogleYouTubeService:
     return GoogleYouTubeService(
-        credential_source=_Source(), client_factory=_Factory(api)
+        credential_source=_Source(),
+        client_factory=_Factory(api),
+        http_factory=http or _Http(_Response(200, {"Location": UPLOAD})),
     )
 
 
-def _upload(tmp_path: Path, privacy: str = "public") -> VideoUpload:
-    f = tmp_path / "take.mp4"
-    f.write_bytes(b"\0" * 10)
-    return VideoUpload(
-        file=f,
-        metadata=VideoMetadata(title="Agent skills", tags=("rasa",)),
-        status=VideoStatus(privacy=privacy),
+def _video_request(**status: object) -> VideoSessionRequest:
+    return VideoSessionRequest(
+        size_bytes=4_210_000_000,
+        mime_type="video/mp4",
+        metadata=VideoMetadata(title="Agent skills", tags=("rasa",), category_id="27"),
+        status=VideoStatus(**({"privacy": "private"} | status)),
+        notify_subscribers=False,
     )
 
 
 def test_needs_injected_credentials() -> None:
     result = GoogleYouTubeService().get_my_channel()
-    assert result.success is False
-    assert "injected credentials" in (result.error or "")
+    assert result.success is False and "injected credentials" in (result.error or "")
 
 
-def test_builds_youtube_v3_from_the_injected_source(
-    svc: GoogleYouTubeService, api: MagicMock
-) -> None:
+def test_channel_identity() -> None:
+    api = MagicMock()
     api.channels().list().execute.return_value = {
         "items": [{"id": "UC1", "snippet": {"title": "Rasa", "customUrl": "@rasahq"}}]
     }
-    result = svc.get_my_channel()
-    assert result.success and result.content == {
-        "id": "UC1",
+    assert _svc(api).get_my_channel().content == {
+        "channel_id": "UC1",
         "title": "Rasa",
         "handle": "@rasahq",
     }
-    assert svc._client_factory.calls == [("youtube", "v3")]  # type: ignore[attr-defined]
-
-
-def test_no_channel_is_an_error(svc: GoogleYouTubeService, api: MagicMock) -> None:
     api.channels().list().execute.return_value = {"items": []}
-    assert svc.get_my_channel().success is False
+    assert _svc(api).get_my_channel().success is False
 
 
-def test_upload_resumes_in_chunks_and_reports_progress(
-    svc: GoogleYouTubeService, api: MagicMock, tmp_path: Path
-) -> None:
-    progress = MagicMock()
-    progress.progress.return_value = 0.5
-    request = MagicMock()
-    request.next_chunk.side_effect = [
-        (progress, None),
-        (None, {"id": "vid1", "status": {"privacyStatus": "public"}}),
-    ]
-    api.videos().insert.return_value = request
-    seen: list[float] = []
-    result = svc.upload_video(_upload(tmp_path), on_progress=seen.append)
-    assert result.success and result.content is not None
+def test_video_session_sends_metadata_and_returns_only_the_link() -> None:
+    http = _Http(_Response(200, {"location": UPLOAD}))
+    later = datetime.now(UTC) + timedelta(days=1)
+    result = _svc(MagicMock(), http).create_video_upload_session(
+        _video_request(publish_at=later)
+    )
+    assert result.success and result.content == {"upload_url": UPLOAD}
+    sent = http.requests[0]
+    assert sent["method"] == "POST" and sent["allow_redirects"] is False
+    assert sent["url"].startswith(
+        "https://www.googleapis.com/upload/youtube/v3/videos?uploadType=resumable"
+    )
+    assert "notifySubscribers=false" in sent["url"]
+    assert sent["headers"]["X-Upload-Content-Length"] == "4210000000"
+    assert sent["headers"]["X-Upload-Content-Type"] == "video/mp4"
+    body = json.loads(sent["data"])
     assert (
-        result.content["id"] == "vid1" and result.content["privacy_overridden"] is False
+        body["snippet"]["title"] == "Agent skills"
+        and body["snippet"]["categoryId"] == "27"
     )
-    assert seen == [0.5, 1.0]
-    kwargs = api.videos().insert.call_args.kwargs
-    assert kwargs["part"] == "snippet,status"
-    assert kwargs["body"]["status"] == {
-        "privacyStatus": "public",
-        "selfDeclaredMadeForKids": False,
-    }
-    assert kwargs["media_body"][3] == {"resumable": True, "chunksize": 8 * 1024 * 1024}
+    assert body["status"]["privacyStatus"] == "private" and body["status"][
+        "publishAt"
+    ].endswith(".000Z")
 
 
-def test_upload_says_when_youtube_kept_it_private(
-    svc: GoogleYouTubeService, api: MagicMock, tmp_path: Path
+@pytest.mark.parametrize(
+    ("response", "message"),
+    [
+        (
+            _Response(
+                403,
+                text=json.dumps({"error": {"errors": [{"reason": "quotaExceeded"}]}}),
+            ),
+            "HTTP 403 quotaExceeded",
+        ),
+        (_Response(200, {"Location": "https://evil.example/upload"}), "no upload link"),
+        (_Response(200), "no upload link"),
+        (ConnectionError("down"), "ConnectionError"),
+    ],
+)
+def test_session_failures_are_error_results(
+    response: _Response | Exception, message: str
 ) -> None:
-    request = MagicMock()
-    request.next_chunk.return_value = (
-        None,
-        {"id": "vid2", "status": {"privacyStatus": "private"}},
+    result = _svc(MagicMock(), _Http(response)).create_video_upload_session(
+        _video_request()
     )
-    api.videos().insert.return_value = request
-    result = svc.upload_video(_upload(tmp_path, "public"))
-    assert result.success and result.content is not None
-    assert result.content["privacy_overridden"] is True
-    assert "kept it private" in (result.message or "")
+    assert result.success is False and message in (result.error or "")
 
 
-def test_upload_failure_is_reported_never_retried(
-    svc: GoogleYouTubeService, api: MagicMock, tmp_path: Path
-) -> None:
-    request = MagicMock()
-    request.next_chunk.side_effect = RuntimeError("connection reset")
-    api.videos().insert.return_value = request
-    result = svc.upload_video(_upload(tmp_path))
-    assert result.success is False and "may exist" in (result.error or "")
-    assert request.next_chunk.call_count == 1
-
-
-def test_chunk_size_must_be_a_256k_multiple(
-    svc: GoogleYouTubeService, tmp_path: Path
-) -> None:
-    assert svc.upload_video(_upload(tmp_path), chunk_bytes=1000).success is False
-
-
-def test_schedule_metadata_thumbnail_caption_playlist(
-    svc: GoogleYouTubeService, api: MagicMock, tmp_path: Path
-) -> None:
-    when = datetime.now(UTC) + timedelta(days=2)
-    assert svc.set_status(
-        "vid", VideoStatus(privacy="private", publish_at=when)
+def test_thumbnail_and_caption_sessions() -> None:
+    http = _Http(_Response(200, {"Location": UPLOAD}))
+    svc = _svc(MagicMock(), http)
+    assert svc.create_thumbnail_upload_session(
+        ThumbnailSessionRequest(
+            video_id="vid_1-x", size_bytes=5000, mime_type="image/png"
+        )
     ).success
-    body = api.videos().update.call_args.kwargs["body"]
-    assert (
-        body["id"] == "vid"
-        and body["status"]["privacyStatus"] == "private"
-        and "publishAt" in body["status"]
+    assert http.requests[0]["url"].endswith(
+        "/thumbnails/set?uploadType=resumable&videoId=vid_1-x"
     )
-
-    assert svc.set_metadata("vid", VideoMetadata(title="x")).success is False, (
-        "YouTube requires categoryId on update"
-    )
-    assert svc.set_metadata("vid", VideoMetadata(title="x", category_id="27")).success
-
-    assert svc.set_thumbnail("vid", "thumb.png").success
-    assert api.thumbnails().set.call_args.kwargs["media_body"][2] == "image/png"
-
-    srt = tmp_path / "en.srt"
-    srt.write_text("1\n00:00:00,000 --> 00:00:01,000\nhi\n")
-    assert svc.add_caption(
-        "vid", CaptionUpload(file=srt, language="en", name="English")
+    assert http.requests[0]["data"] == b""
+    assert svc.create_caption_upload_session(
+        CaptionSessionRequest(
+            video_id="vid1",
+            language="en",
+            name="English",
+            size_bytes=40,
+            mime_type="application/x-subrip",
+        )
     ).success
-    cap = api.captions().insert.call_args.kwargs
-    assert cap["body"]["snippet"] == {
-        "videoId": "vid",
+    assert json.loads(http.requests[1]["data"])["snippet"] == {
+        "videoId": "vid1",
         "language": "en",
         "name": "English",
         "isDraft": False,
     }
 
-    assert svc.add_to_playlist("PL1", "vid").success
-    assert api.playlistItems().insert.call_args.kwargs["body"]["snippet"][
-        "resourceId"
-    ] == {"kind": "youtube#video", "videoId": "vid"}
 
-
-def test_provider_errors_become_error_results(
-    svc: GoogleYouTubeService, api: MagicMock
-) -> None:
-    api.playlistItems().insert().execute.side_effect = RuntimeError("quotaExceeded")
-    result = svc.add_to_playlist("PL1", "vid")
-    assert result.success is False and "quotaExceeded" in (result.error or "")
-
-
-def test_get_video(svc: GoogleYouTubeService, api: MagicMock) -> None:
+def test_get_video_normalizes_state() -> None:
+    api = MagicMock()
     api.videos().list().execute.return_value = {
-        "items": [{"id": "vid", "status": {"uploadStatus": "processed"}}]
+        "items": [
+            {
+                "id": "vid1",
+                "snippet": {"title": "t"},
+                "status": {
+                    "privacyStatus": "private",
+                    "publishAt": "2026-10-09T15:00:00Z",
+                    "uploadStatus": "processed",
+                },
+                "processingDetails": {"processingStatus": "succeeded"},
+            }
+        ]
     }
-    assert svc.get_video("vid").content == {
-        "id": "vid",
-        "status": {"uploadStatus": "processed"},
+    assert _svc(api).get_video("vid1").content == {
+        "video_id": "vid1",
+        "title": "t",
+        "privacy": "private",
+        "publish_at": "2026-10-09T15:00:00Z",
+        "upload_status": "processed",
+        "processing_status": "succeeded",
+        "failure_reason": None,
+        "rejection_reason": None,
     }
     api.videos().list().execute.return_value = {"items": []}
-    assert svc.get_video("nope").success is False
+    assert _svc(api).get_video("nope").success is False
+
+
+def test_find_upload_matches_title_size_and_time() -> None:
+    api = MagicMock()
+    api.channels().list().execute.return_value = {
+        "items": [{"contentDetails": {"relatedPlaylists": {"uploads": "UU1"}}}]
+    }
+    api.playlistItems().list().execute.return_value = {
+        "items": [{"contentDetails": {"videoId": v}} for v in ("a", "b", "c", "d")]
+    }
+    api.videos().list().execute.return_value = {
+        "items": [
+            {
+                "id": "a",
+                "snippet": {"title": "T", "publishedAt": "2026-10-07T10:00:00Z"},
+                "fileDetails": {"fileSize": "100"},
+                "status": {"privacyStatus": "private", "uploadStatus": "processed"},
+            },
+            {
+                "id": "b",
+                "snippet": {"title": "T", "publishedAt": "2026-10-07T10:00:00Z"},
+                "fileDetails": {"fileSize": "101"},
+            },
+            {
+                "id": "c",
+                "snippet": {"title": "Other", "publishedAt": "2026-10-07T10:00:00Z"},
+                "fileDetails": {"fileSize": "100"},
+            },
+            {
+                "id": "d",
+                "snippet": {"title": "T", "publishedAt": "2026-10-01T10:00:00Z"},
+                "fileDetails": {"fileSize": "100"},
+            },
+        ]
+    }
+    result = _svc(api).find_upload(
+        title="T", size_bytes=100, uploaded_after=datetime(2026, 10, 7, tzinfo=UTC)
+    )
+    assert [m["video_id"] for m in result.content["matches"]] == ["a"]  # type: ignore[index]
+    api.channels().list().execute.return_value = {"items": []}
+    assert (
+        _svc(api)
+        .find_upload(title="T", size_bytes=1, uploaded_after=datetime.now(UTC))
+        .success
+        is False
+    )
+
+
+def test_captions_playlist_status() -> None:
+    api = MagicMock()
+    api.captions().list().execute.return_value = {
+        "items": [{"id": "c1", "snippet": {"language": "en", "name": "English"}}]
+    }
+    assert _svc(api).list_captions("v").content == {
+        "tracks": [{"caption_id": "c1", "language": "en", "name": "English"}]
+    }
+    api.playlistItems().list().execute.return_value = {"items": []}
+    assert _svc(api).playlist_contains("PL", "v").content == {
+        "present": False,
+        "playlist_item_id": None,
+    }
+    api.playlistItems().insert().execute.return_value = {"id": "pli"}
+    assert _svc(api).add_to_playlist("PL", "v").content == {"playlist_item_id": "pli"}
+    api.videos().update().execute.return_value = {"status": {"privacyStatus": "public"}}
+    assert _svc(api).set_status("v", VideoStatus(privacy="public")).content == {
+        "video_id": "v",
+        "privacy": "public",
+        "publish_at": None,
+    }
+    api.captions().list().execute.side_effect = RuntimeError("quotaExceeded")
+    assert "quotaExceeded" in (_svc(api).list_captions("v").error or "")

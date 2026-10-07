@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **YouTube publishing for multi-GB files** (`zeo_core.integrations.google.youtube`):
+  the provider client opens resumable sessions inside the custody boundary and
+  never sends bytes; `transfer` sends a file to a session link with no
+  credential, probing first so a drop, kill or reboot resumes at the exact byte;
+  `job` and `publish` are a write-once job directory (ZEO Runtime's occurrence
+  identity, Go-computed test vectors) and an executor CLI (`pair`, `connections`,
+  `run`, `status`) whose lost-final-answer path adopts one matching upload,
+  holds on several, and never uploads twice. Replaces 0.11's `upload_video`.
+  Offline contract only; no live request has been made.
 - **YouTube publishing** (`zeo_core.integrations.google.youtube`, extra `youtube`):
   resumable chunked upload with progress, schedule (`publish_at`), metadata,
   thumbnail, caption track, playlist item, channel identity and video state.
