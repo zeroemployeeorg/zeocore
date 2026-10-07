@@ -22,6 +22,7 @@ from zeo_core.integrations.google.youtube.publish import (
     RunResult,
     main,
 )
+from zeo_core.integrations.google.youtube.relay import RelayByteHttp
 from zeo_core.integrations.google.youtube.transfer import CHUNK_UNIT
 from zeo_core.integrations.hosted.client import (
     HostedClientError,
@@ -40,7 +41,7 @@ from zeo_core.integrations.hosted.profile import (
     OpaqueConnectionHandle,
 )
 
-from .fakes import FakeBroker, FakeYouTube
+from .fakes import FakeBroker, FakeRelayTransport, FakeYouTube
 from .helpers import make_job
 
 
@@ -229,6 +230,44 @@ def test_link_refused_without_a_token_holds_for_the_relay(
     )
 
 
+def test_a_refused_link_switches_to_the_custody_relay(
+    tmp_path: Path, world: tuple
+) -> None:
+    yt, broker, links = world
+    yt.require_token = True
+    relay = FakeRelayTransport(yt)
+    directory = make_job(tmp_path, size=6 * CHUNK_UNIT + 9, thumbnail=True)
+    stops = {"n": 0}
+
+    def stop() -> bool:
+        stops["n"] += 1
+        return stops["n"] > 4
+
+    def with_relay(**kw: object) -> PublishExecutor:
+        return _executor(
+            directory,
+            yt,
+            broker,
+            links,
+            relay=lambda seal: RelayByteHttp(
+                relay, connection_id="con_youtube0001", seal=seal
+            ),
+            **kw,
+        )
+
+    paused = with_relay(should_stop=stop).run()
+    assert paused.exit_code == EXIT_WAIT and relay.chunks, "the same session continued"
+    direct = len(yt.puts) - len(relay.chunks)
+    assert with_relay().run().exit_code == EXIT_DONE
+    assert len(yt.puts) - len(relay.chunks) == direct, (
+        "after the switch, later runs and steps go straight to the relay"
+    )
+    assert len(yt.sessions) == 2 and len(yt.videos) == 1  # video + thumbnail
+    events = JobDirectory(directory).events()
+    assert [e.type for e in events].count("relay_engaged") == 1
+    assert JobDirectory(directory).state().relay is True
+
+
 def test_a_replayed_session_has_no_link_and_asks_again(
     tmp_path: Path, world: tuple
 ) -> None:
@@ -334,7 +373,7 @@ def test_cancelled_jobs_close_refused(tmp_path: Path, world: tuple) -> None:
     directory = make_job(tmp_path)
     JobDirectory(directory).append(actor="studio", type="cancelled")
     result = _executor(directory, yt, broker, links).run()
-    assert result.exit_code == EXIT_HELD and result.status["state"] == "refused"
+    assert result.exit_code == EXIT_DONE and result.status["state"] == "cancelled"
     assert not yt.sessions
 
 

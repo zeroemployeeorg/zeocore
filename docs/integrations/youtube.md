@@ -84,13 +84,24 @@ python -m zeo_core.integrations.google.youtube.publish status JOB_DIR
 A run holds a lock on the job directory, so two runners never work on the same job. It
 stops cleanly at the next chunk boundary on SIGTERM.
 
-## Open question
+## When YouTube wants a token on every chunk
 
-Google's guide shows the token on every upload request. This design depends on the
-session link being enough on its own, which is widely relied on, but not yet verified for
-YouTube. If YouTube answers 401/403, the job is held as `session_link_refused`. The
-fallback, a ZEOconnect relay of chunks of at most 4 MB that keeps the token in custody, is
-designed but not built. The first trial on a test channel decides.
+Google's guide shows the token on every upload request. The design first sends chunks
+straight to the session link. If YouTube refuses the link alone (401/403), the executor
+switches that job to the **custody relay** (`relay.RelayByteHttp`), records
+`relay_engaged`, and continues the same session from the byte YouTube holds:
+
+- Each chunk, at most 4 MiB (the hosting platform's request limit), goes to ZEOconnect's
+  `POST /v1/youtube/uploads:relay` with the link and the `relay_seal` that ZEOconnect
+  issued with the session.
+- ZEOconnect checks the seal, adds the channel's token inside custody, forwards the
+  chunk, and answers with only YouTube's status, `Range`, and on completion the video's
+  id and privacy.
+- The device still never holds the token, and ZEOconnect still stores no link.
+
+Later steps and runs of that job go straight to the relay. If the relay is unavailable
+too, the job is held as `session_link_refused`. The first trial on a test channel shows
+which path YouTube accepts.
 
 ## Test track
 

@@ -192,3 +192,16 @@ def test_probe_reports_stored_bytes(video: Path) -> None:
     assert transfer.probe() == 0
     yt.sessions[url].data.extend(b"\0" * 10)
     assert transfer.probe() == 10
+
+
+def test_a_long_outage_ends_the_run_without_losing_bytes(video: Path) -> None:
+    yt = FakeYouTube()
+    url = yt.open(
+        "videos", SIZE, {"metadata": {"title": "t"}, "status": {"privacy": "private"}}
+    )
+    yt.fail_statuses = [503] * 25
+    out = _transfer(yt, url, video, max_failures=20).run()
+    assert out.state is TransferState.PAUSED and out.detail.startswith("unreachable")
+    yt.fail_statuses = []
+    assert _transfer(yt, url, video).run().state is TransferState.COMPLETED
+    assert len(yt.videos) == 1

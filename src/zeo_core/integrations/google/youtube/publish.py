@@ -63,6 +63,7 @@ from zeo_core.integrations.google.youtube.links import (
     KeychainUploadLinkStore,
     UploadLinkStore,
 )
+from zeo_core.integrations.google.youtube.relay import RELAY_CHUNK_BYTES, RelayByteHttp
 from zeo_core.integrations.google.youtube.service import UPLOAD_PREFIX
 from zeo_core.integrations.google.youtube.transfer import (
     DEFAULT_CHUNK_BYTES,
@@ -185,8 +186,10 @@ class PublishExecutor:
         approval_wait: float = 270.0,
         approval_poll: float = 3.0,
         verify_hash: bool = True,
+        relay: Callable[[str], ByteHttp] | None = None,
     ) -> None:
         self.dir = JobDirectory(job_dir)
+        self._relay = relay
         self._broker = broker
         self._links = links
         self._http = http
@@ -287,6 +290,8 @@ class PublishExecutor:
         )
 
     def _finished(self, receipt: Receipt) -> RunResult:
+        if receipt.outcome == "REFUSED" and receipt.reason == "cancelled":
+            return self._result(EXIT_DONE, "cancelled", reason="cancelled")
         code = EXIT_DONE if receipt.outcome == "SUCCEEDED" else EXIT_HELD
         state = "done" if receipt.outcome == "SUCCEEDED" else receipt.outcome.lower()
         return self._result(code, state, reason=receipt.reason)
@@ -425,20 +430,36 @@ class PublishExecutor:
     # upload steps
     # ------------------------------------------------------------------
 
-    def _session(self, step: str, operation: str, arguments: dict[str, Any]) -> str:
-        """The step's upload link: from the store, or a new approved session."""
-        stored = self._links.get(self.job.job_id, step)
+    def _stored(self, step: str) -> tuple[str, str | None] | None:
+        """The step's stored upload link and relay seal, if a session is open."""
+        raw = self._links.get(self.job.job_id, step)
+        if raw is None:
+            return None
+        if raw.startswith("{"):
+            value = json.loads(raw)
+            return str(value["url"]), value.get("seal")
+        return raw, None
+
+    def _session(
+        self, step: str, operation: str, arguments: dict[str, Any]
+    ) -> tuple[str, str | None]:
+        """The step's upload link and seal: stored, or a new approved session."""
+        stored = self._stored(step)
         if stored is not None:
             return stored
         for _ in range(2):
             result = self._effect(step, operation, arguments)
             url = result.get("upload_url")
+            seal = result.get("relay_seal")
             if isinstance(url, str) and url:
                 if not url.startswith(UPLOAD_PREFIX):
                     raise self._hold("foreign_upload_link", step)
-                self._links.put(self.job.job_id, step, url)
+                seal = seal if isinstance(seal, str) and seal else None
+                self._links.put(
+                    self.job.job_id, step, json.dumps({"url": url, "seal": seal})
+                )
                 self.dir.append(actor="executor", type="session_ready", step=step)
-                return url
+                return url, seal
             # A replay: the broker never stores links, so ask under a new key.
             self._new_attempt(step, self._state().step(step).attempt)
         raise self._hold("no_upload_link", step)
@@ -455,7 +476,11 @@ class PublishExecutor:
             self._hashed = True
 
     def _transfer(
-        self, step: str, url: str, media: MediaFile, mtime_ms: int | None
+        self,
+        step: str,
+        link: tuple[str, str | None],
+        media: MediaFile,
+        mtime_ms: int | None,
     ) -> dict[str, Any] | None:
         """Send the file; the completed resource, or None when the session expired."""
         if mtime_ms is None:
@@ -475,18 +500,42 @@ class PublishExecutor:
                     size=size,
                 )
 
-        transfer = ResumableTransfer(
-            url=url,
-            file=FileIdentity(media.path, media.size_bytes, mtime_ms),
-            mime_type=media.mime_type,
-            http=self._http,
-            chunk_bytes=self._chunk,
-            on_progress=progress,
-            before_final_chunk=lambda: self._mark_final(step),
-            should_stop=self._should_stop,
-            sleep=self._sleep,
-        )
-        return self._settle(step, transfer.run(), media)
+        url, seal = link
+        identity = FileIdentity(media.path, media.size_bytes, mtime_ms)
+
+        def attempt(http: ByteHttp | None, chunk: int) -> TransferOutcome:
+            return ResumableTransfer(
+                url=url,
+                file=identity,
+                mime_type=media.mime_type,
+                http=http,
+                chunk_bytes=chunk,
+                on_progress=progress,
+                before_final_chunk=lambda: self._mark_final(step),
+                should_stop=self._should_stop,
+                sleep=self._sleep,
+            ).run()
+
+        relay = self._relay_for(seal)
+        if self._state().relay and relay is not None:
+            outcome = attempt(relay, min(self._chunk, RELAY_CHUNK_BYTES))
+        else:
+            outcome = attempt(self._http, self._chunk)
+            if outcome.state is TransferState.REFUSED and relay is not None:
+                # YouTube wants a token on each chunk: same session, through custody.
+                self.dir.append(
+                    actor="executor",
+                    type="relay_engaged",
+                    step=step,
+                    status_code=outcome.status_code,
+                )
+                outcome = attempt(relay, min(self._chunk, RELAY_CHUNK_BYTES))
+        return self._settle(step, outcome, media)
+
+    def _relay_for(self, seal: str | None) -> ByteHttp | None:
+        if seal is None or self._relay is None:
+            return None
+        return self._relay(seal)
 
     def _mark_final(self, step: str) -> None:
         self.dir.append(actor="executor", type="final_chunk_sent", step=step)
@@ -510,7 +559,8 @@ class PublishExecutor:
                 self._result(
                     EXIT_WAIT,
                     "waiting",
-                    reason="paused",
+                    reason="unreachable" if outcome.detail else "paused",
+                    detail=outcome.detail or None,
                     step=step,
                     received=outcome.received,
                     size=media.size_bytes,
@@ -520,7 +570,7 @@ class PublishExecutor:
             TransferState.REFUSED: (
                 "session_link_refused",
                 f"{step}: YouTube answered HTTP {outcome.status_code} to the upload"
-                " link without a token; the relay fallback is needed",
+                " link and the custody relay could not take over",
             ),
             TransferState.REJECTED: (
                 "upload_rejected",
@@ -554,7 +604,7 @@ class PublishExecutor:
                         "publish_time_passed",
                         f"publish_at {rfc3339_nano(publish_at)} is too close or past",
                     )
-            url = self._session(
+            link = self._session(
                 "video",
                 "youtube.video.upload_session.create",
                 {
@@ -566,7 +616,7 @@ class PublishExecutor:
                     "notify_subscribers": job.notify_subscribers,
                 },
             )
-            resource = self._transfer("video", url, job.video, job.video.mtime_ms)
+            resource = self._transfer("video", link, job.video, job.video.mtime_ms)
             if resource is None:
                 continue
             video_id = resource.get("id")
@@ -674,8 +724,8 @@ class PublishExecutor:
                     detail={"existing": True},
                 )
                 return
-            url = self._session(step, operation, arguments)
-            resource = self._transfer(step, url, media, None)
+            link = self._session(step, operation, arguments)
+            resource = self._transfer(step, link, media, None)
             if resource is None:
                 continue
             self.dir.append(
@@ -827,6 +877,9 @@ def _run(args: argparse.Namespace) -> int:
         ),
         links=_link_store(args.link_store, job_dir),
         http=_byte_http(),
+        relay=lambda seal: RelayByteHttp(
+            transport, connection_id=job.destination.connection_id, seal=seal
+        ),
         should_stop=lambda: stopping["now"],
         chunk_bytes=args.chunk_mib * 1024 * 1024,
     )

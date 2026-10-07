@@ -23,7 +23,14 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    JsonValue,
+    field_validator,
+    model_validator,
+)
 
 from zeo_core.integrations.google.youtube.models import (
     CAPTION_MIME_TYPES,
@@ -165,7 +172,8 @@ class Job(BaseModel):
     thumbnail: ThumbnailFile | None = None
     captions: tuple[CaptionFile, ...] = ()
     playlist_id: str | None = Field(default=None, pattern=r"^[A-Za-z0-9_-]{2,64}$")
-    source: dict[str, str] = Field(default_factory=dict)
+    #: Provenance for people (episode, take, what the operator typed); not interpreted.
+    source: dict[str, JsonValue] = Field(default_factory=dict)
     created_at: datetime
 
     @model_validator(mode="after")
@@ -203,6 +211,7 @@ EventType = Literal[
     "approval_required",
     "session_ready",
     "session_lost",
+    "relay_engaged",
     "transfer_progress",
     "final_chunk_sent",
     "uploaded",
@@ -263,6 +272,8 @@ class JobState:
     held_detail: str = ""
     cancelled: bool = False
     done: bool = False
+    #: YouTube refused a link without a token: chunks go through custody.
+    relay: bool = False
     last_seq: int = 0
 
     def step(self, name: str) -> StepState:
@@ -311,6 +322,8 @@ def _job_event(state: JobState, event: Event, extra: dict[str, Any]) -> None:
                 state.step("video").final_chunk_sent = False
             state.held = None
             state.held_detail = ""
+        case "relay_engaged":
+            state.relay = True
         case "cancelled":
             state.cancelled = True
         case "done":

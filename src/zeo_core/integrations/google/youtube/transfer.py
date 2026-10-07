@@ -41,6 +41,9 @@ CHUNK_UNIT = 256 * 1024
 #: Default chunk: 16 MiB keeps a 4K upload to a few hundred requests.
 DEFAULT_CHUNK_BYTES = 64 * CHUNK_UNIT
 MAX_BACKOFF_SECONDS = 60.0
+#: Consecutive failures without progress before a run gives up (about 10 minutes);
+#: the next run probes again and resumes, so nothing is lost.
+MAX_FAILURES = 20
 
 
 class TransferError(RuntimeError):
@@ -159,6 +162,7 @@ class ResumableTransfer:
         sleep: Callable[[float], None] = time.sleep,
         jitter: Callable[[], float] = random.random,
         request_timeout: float = 300.0,
+        max_failures: int = MAX_FAILURES,
     ) -> None:
         if not url.startswith(UPLOAD_PREFIX):
             raise TransferError(f"refusing an upload link outside {UPLOAD_PREFIX}")
@@ -175,6 +179,7 @@ class ResumableTransfer:
         self._sleep = sleep
         self._jitter = jitter
         self._timeout = request_timeout
+        self._max_failures = max_failures
         self._failures = 0
         self._received = 0
 
@@ -185,8 +190,14 @@ class ResumableTransfer:
         while True:
             try:
                 return self._attempt()
-            except _TransientError:
+            except _TransientError as error:
                 self._failures += 1
+                if self._failures >= self._max_failures:
+                    return TransferOutcome(
+                        TransferState.PAUSED,
+                        self._received,
+                        detail=f"unreachable: {error}",
+                    )
                 delay = min(MAX_BACKOFF_SECONDS, 2.0 ** min(self._failures - 1, 6))
                 self._sleep(delay * (0.5 + self._jitter() / 2))
 
@@ -329,6 +340,7 @@ __all__ = [
     "CHUNK_UNIT",
     "DEFAULT_CHUNK_BYTES",
     "MAX_BACKOFF_SECONDS",
+    "MAX_FAILURES",
     "ByteHttp",
     "ByteResponse",
     "FileIdentity",

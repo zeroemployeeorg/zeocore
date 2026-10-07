@@ -204,7 +204,7 @@ class FakeBroker:
         if idempotency_key in self.executed:
             replay = dict(self.executed[idempotency_key])
             if "upload_url" in replay:
-                replay = {"upload_url": None, "replayed": True}
+                replay = {"upload_url": None, "relay_seal": None, "replayed": True}
             return _confirmed(replay)
         if self.auto_approve:
             self.approved.add(idempotency_key)
@@ -220,12 +220,14 @@ class FakeBroker:
 
     def _effect(self, operation: str, args: dict[str, Any]) -> dict[str, Any]:
         yt = self.youtube
-        if operation == "youtube.video.upload_session.create":
-            return {"upload_url": yt.open("videos", args["size_bytes"], args)}
-        if operation == "youtube.thumbnail.upload_session.create":
-            return {"upload_url": yt.open("thumbnails/set", args["size_bytes"], args)}
-        if operation == "youtube.caption.upload_session.create":
-            return {"upload_url": yt.open("captions", args["size_bytes"], args)}
+        kinds = {
+            "youtube.video.upload_session.create": "videos",
+            "youtube.thumbnail.upload_session.create": "thumbnails/set",
+            "youtube.caption.upload_session.create": "captions",
+        }
+        if operation in kinds:
+            url = yt.open(kinds[operation], args["size_bytes"], args)
+            return {"upload_url": url, "relay_seal": seal_for(url)}
         if operation == "youtube.playlist.item.add":
             items = yt.playlists.setdefault(args["playlist_id"], [])
             present = args["video_id"] in items
@@ -275,6 +277,51 @@ class FakeBroker:
         if operation == "youtube.channel.get":
             return {"channel_id": "UC1", "title": "Rasa", "handle": "@rasahq"}
         raise AssertionError(f"unexpected read {operation}")
+
+
+def seal_for(url: str) -> str:
+    return hashlib.sha256(b"fake-relay|" + url.encode()).hexdigest()
+
+
+class FakeRelayTransport:
+    """ZEOconnect's relay endpoint: checks the seal, adds the token, forwards."""
+
+    def __init__(self, youtube: FakeYouTube) -> None:
+        self.youtube = youtube
+        self.chunks: list[int] = []
+
+    def relay_youtube_chunk(
+        self,
+        *,
+        connection_id: str,
+        link: str,
+        seal: str,
+        content_range: str,
+        content_type: str,
+        body: bytes,
+    ) -> dict[str, Any]:
+        if seal != seal_for(link) or not connection_id.startswith("con_"):
+            from zeo_core.integrations.hosted.client import HostedClientError
+
+            raise HostedClientError("hosted request was refused")
+        self.chunks.append(len(body))
+        answer = self.youtube.put(
+            link,
+            headers={
+                "Authorization": "Bearer custody-token",
+                "Content-Range": content_range,
+                "Content-Type": content_type,
+            },
+            content=body,
+            timeout=280,
+        )
+        resource = json.loads(answer.text) if answer.status_code in (200, 201) else None
+        return {
+            "status": answer.status_code,
+            "range": dict(answer.headers).get("Range"),
+            "resource": resource,
+            "reason": "",
+        }
 
 
 def _confirmed(result: dict[str, Any]) -> HostedOperationResponse:

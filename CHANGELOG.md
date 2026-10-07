@@ -17,6 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   identity, Go-computed test vectors) and an executor CLI (`pair`, `connections`,
   `run`, `status`) whose lost-final-answer path adopts one matching upload,
   holds on several, and never uploads twice. Replaces 0.11's `upload_video`.
+  If YouTube refuses a link without a token, the job switches to a custody
+  relay (`relay.RelayByteHttp`, `ZEOconnectHTTPTransport.relay_youtube_chunk`):
+  sealed 4 MiB chunks through ZEOconnect, same session, same resume.
   Offline contract only; no live request has been made.
 - **YouTube publishing** (`zeo_core.integrations.google.youtube`, extra `youtube`):
   resumable chunked upload with progress, schedule (`publish_at`), metadata,
