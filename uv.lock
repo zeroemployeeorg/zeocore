@@ -3185,6 +3185,7 @@ youtube = [
     { name = "google-auth-httplib2" },
     { name = "google-auth-oauthlib" },
     { name = "platformdirs" },
+    { name = "requests" },
 ]
 
 [package.dev-dependencies]
@@ -3287,6 +3288,7 @@ requires-dist = [
     { name = "requests", marker = "extra == 'all'" },
     { name = "requests", marker = "extra == 'bluesky'" },
     { name = "requests", marker = "extra == 'github'" },
+    { name = "requests", marker = "extra == 'youtube'" },
     { name = "rfc8785", marker = "extra == 'runtime-host'", specifier = "==0.1.4" },
     { name = "rich", specifier = ">=13.6.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.2.0" },

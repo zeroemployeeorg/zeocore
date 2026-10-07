@@ -11,7 +11,6 @@ channel state, an unverified API project); the service reports that, it never gu
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from pathlib import Path
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -119,50 +118,85 @@ class VideoStatus(BaseModel):
         return out
 
 
-class VideoUpload(BaseModel):
-    """One video to upload: the file, its snippet, its status."""
+#: Media types YouTube accepts for each upload kind (the device sends the bytes).
+VIDEO_MIME_TYPES = frozenset({"video/mp4", "video/quicktime", "video/webm", "video/*"})
+THUMBNAIL_MIME_TYPES = frozenset({"image/jpeg", "image/png"})
+CAPTION_MIME_TYPES = frozenset({"application/x-subrip", "text/vtt"})
+THUMBNAIL_MAX_BYTES = 2 * 1024 * 1024
+#: YouTube's maximum upload: 256 GB.
+VIDEO_MAX_BYTES = 256 * 1000**3
+
+LanguageCode = Field(pattern=r"^[a-z]{2,3}(-[A-Za-z0-9]+)*$")
+
+
+class VideoSessionRequest(BaseModel):
+    """Open a resumable session for one video; the bytes are sent elsewhere."""
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
-    file: Path
+    size_bytes: int = Field(gt=0, le=VIDEO_MAX_BYTES)
+    mime_type: str
     metadata: VideoMetadata
     status: VideoStatus
     notify_subscribers: bool = True
 
-    @field_validator("file")
+    @field_validator("mime_type")
     @classmethod
-    def _file(cls, value: Path) -> Path:
-        if not value.is_file():
-            raise ValueError(f"video file not found: {value}")
+    def _mime(cls, value: str) -> str:
+        if value not in VIDEO_MIME_TYPES:
+            raise ValueError(f"unsupported video media type: {value}")
         return value
 
 
-class CaptionUpload(BaseModel):
-    """A caption track (SRT or WebVTT) for a video."""
+class ThumbnailSessionRequest(BaseModel):
+    """Open a resumable session for a custom thumbnail (JPEG or PNG, at most 2 MB)."""
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
-    file: Path
-    language: str = Field(pattern=r"^[a-z]{2,3}(-[A-Za-z0-9]+)*$")
-    name: str = Field(default="", max_length=150)
+    video_id: str = Field(pattern=r"^[A-Za-z0-9_-]{1,64}$")
+    size_bytes: int = Field(gt=0, le=THUMBNAIL_MAX_BYTES)
+    mime_type: str
 
-    @field_validator("file")
+    @field_validator("mime_type")
     @classmethod
-    def _file(cls, value: Path) -> Path:
-        if not value.is_file():
-            raise ValueError(f"caption file not found: {value}")
-        if value.suffix.lower() not in {".srt", ".vtt"}:
-            raise ValueError("captions must be .srt or .vtt")
+    def _mime(cls, value: str) -> str:
+        if value not in THUMBNAIL_MIME_TYPES:
+            raise ValueError("thumbnails must be image/jpeg or image/png")
+        return value
+
+
+class CaptionSessionRequest(BaseModel):
+    """Open a resumable session for a published (not draft) caption track."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    video_id: str = Field(pattern=r"^[A-Za-z0-9_-]{1,64}$")
+    language: str = LanguageCode
+    name: str = Field(default="", max_length=150)
+    size_bytes: int = Field(gt=0, le=100 * 1024 * 1024)
+    mime_type: str
+
+    @field_validator("mime_type")
+    @classmethod
+    def _mime(cls, value: str) -> str:
+        if value not in CAPTION_MIME_TYPES:
+            raise ValueError("captions must be application/x-subrip or text/vtt")
         return value
 
 
 __all__ = [
+    "CAPTION_MIME_TYPES",
     "DESCRIPTION_MAX_BYTES",
     "TAGS_TOTAL_MAX",
+    "THUMBNAIL_MAX_BYTES",
+    "THUMBNAIL_MIME_TYPES",
     "TITLE_MAX",
-    "CaptionUpload",
+    "VIDEO_MAX_BYTES",
+    "VIDEO_MIME_TYPES",
+    "CaptionSessionRequest",
     "Privacy",
+    "ThumbnailSessionRequest",
     "VideoMetadata",
+    "VideoSessionRequest",
     "VideoStatus",
-    "VideoUpload",
 ]

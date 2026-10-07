@@ -1,78 +1,111 @@
 # YouTube publishing
 
-<!-- Offline contract only; verified against the YouTube Data API v3 reference 2026-10-07. -->
+<!-- Offline contract only; verified against the YouTube Data API v3 resumable-upload guide 2026-10-07. -->
 
-`GoogleYouTubeService` publishes a finished video to one YouTube channel:
+Publishing a finished video involves three pieces. The channel's token never reaches the
+machine that has the file, and multi-GB files never pass through the hosted service.
 
-- uploads the file in resumable chunks with its title, description, tags and privacy;
-- schedules it (`publish_at`);
-- sets its thumbnail;
-- adds a caption track;
-- adds it to a playlist;
-- reads the authorised channel and the video's processing state.
+| Piece | Module | Runs where | Holds |
+|---|---|---|---|
+| Provider client | `zeo_core.integrations.google.youtube.service` | inside ZEOconnect (custody) | the channel's OAuth token, injected |
+| Byte transfer | `zeo_core.integrations.google.youtube.transfer` | the device with the file | one upload session link |
+| Publish executor | `zeo_core.integrations.google.youtube.publish` | the device | a job directory |
 
-Install the Google dependencies with `uv pip install -e ".[youtube]"`.
+Install with `uv pip install -e ".[youtube]"`.
 
-## Credentials are injected, never read from files
+## How one upload works
 
-Unlike the Workspace services, this service has no local OAuth flow and reads no
-credential or configuration file. You construct it with a `GoogleCredentialSource` and,
-optionally, a `GoogleApiClientFactory` (both in `zeo_core.integrations.google.ports`).
-A channel's refresh token can therefore live only inside the custody boundary that
-injects it, such as a hosted connection. Without a credential source, every operation
-returns an error result.
+1. The device asks ZEOconnect for `youtube.video.upload_session.create`, sending the
+   size, the sha256, the title, the privacy and any `publish_at`.
+2. ZEOconnect shows you the exact request and asks for approval in the browser.
+3. Once you approve, ZEOconnect opens a resumable session with the token and returns only
+   the session link.
+4. The device sends the bytes to that link in 16 MiB chunks (`ResumableTransfer`).
+   - **Every attempt starts by asking YouTube how many bytes it has**
+     (`Content-Range: bytes */SIZE`). A dropped connection, a killed process or a reboot
+     therefore continues at the exact byte.
+   - Connection errors, timeouts, 429 and 5xx answers back off (up to 60 s) and try again
+     for as long as the session lives.
+   - The video exists only once the last byte lands, so no resend can create a second one.
+5. The thumbnail, captions and playlist follow. Each is its own approval. Captions and
+   playlists are checked first, so nothing is added twice.
+6. The executor waits for YouTube's processing, then checks that the privacy and schedule
+   are the ones you asked for. When they aren't, the job is held instead of being reported
+   done: an unverified Google Cloud project keeps uploads private.
 
-```python
-from zeo_core.integrations.google.youtube import (
-    GoogleYouTubeService,
-    VideoMetadata,
-    VideoStatus,
-    VideoUpload,
-)
+With `publish_at`, the video is uploaded early as private and YouTube itself makes it
+public at that time. A large upload therefore has hours or days to recover from problems.
 
-service = GoogleYouTubeService(credential_source=my_custody_source)
-channel = service.get_my_channel()  # check the identity before any upload
-upload = VideoUpload(
-    file="episode.mp4",
-    metadata=VideoMetadata(title="Agent skills", category_id="27"),
-    status=VideoStatus(privacy="private"),
-)
-result = service.upload_video(upload, on_progress=print)
+## A lost answer never becomes a duplicate
+
+- The job records `final_chunk_sent` before sending the request that carries the last
+  byte.
+- If that answer is lost and the session has expired, the executor looks for the upload
+  by title and file size. File size is visible only to the channel owner.
+  - **One match** is adopted as the upload.
+  - **Several matches** hold the job as `ambiguous_upload` until you release it.
+  - **No match** means a new session (and a new approval).
+- Without `final_chunk_sent`, a lost session is always safe to replace: an unfinished
+  session creates nothing.
+
+## The job directory
+
+`job.json` and `authorization.json` are written once, by the studio. After that the
+directory only grows: events are appended to `events/%010d.json`, and the executor writes
+`receipt.json` once, at the end. State is the fold of the events.
+
+The identifiers use ZEO Runtime's occurrence derivation, so Runtime can adopt the same
+files (`job.runtime_identity`; the tests carry vectors computed by Go). The executor
+refuses a job whose `authorization.json` doesn't bind the exact bytes of `job.json`.
+
+Upload links are kept in the macOS Keychain (`--link-store keychain`, the default),
+written through stdin. An owner-only file (`--link-store file`) is used only when you
+choose it explicitly.
+
+## Command line
+
+```bash
+python -m zeo_core.integrations.google.youtube.publish pair          # once: pair this device with ZEOconnect
+python -m zeo_core.integrations.google.youtube.publish connections   # the YouTube connection IDs
+python -m zeo_core.integrations.google.youtube.publish run JOB_DIR   # advance a job; safe to repeat
+python -m zeo_core.integrations.google.youtube.publish status JOB_DIR
 ```
 
-The OAuth scopes are `youtube.upload`, `youtube` and `youtube.force-ssl` (captions),
-and nothing broader. They are listed on `GoogleYouTubeService.SCOPES`.
+`run` prints one JSON status line. Its exit code says what to do next:
 
-## What the models refuse before any call
+| Exit | Meaning | What to do |
+|---|---|---|
+| `0` | done or cancelled | nothing |
+| `10` | waiting for your approval (`approval_url`) | approve in ZEOconnect, then run again |
+| `11` | waiting: not due yet, YouTube processing, paused, or busy | run again later |
+| `20` | held (`reason`) | resolve the reason; append a `released` event |
+| `2` | invalid or unauthorized job | fix the job |
 
-| Field | Rule |
-|---|---|
-| `title` | 1–100 characters, no `<` or `>` |
-| `description` | at most 5,000 bytes, no `<` or `>` |
-| `tags` | at most 500 characters in total; a tag with a space counts two extra (quotes); tags are separated by commas |
-| `category_id` | numeric; required by `set_metadata`, since YouTube requires it on update |
-| `publish_at` | only with privacy `private`, time-zone aware, in the future |
-| captions | `.srt` or `.vtt` |
-| files | must exist |
+A run holds a lock on the job directory, so two runners never work on the same job. It
+stops cleanly at the next chunk boundary on SIGTERM.
 
-A request that validates can still be refused by YouTube (quota, channel state). The
-result carries the provider's message.
+## When YouTube wants a token on every chunk
 
-## Outcomes the service reports, not hides
+Google's guide shows the token on every upload request. The design first sends chunks
+straight to the session link. If YouTube refuses the link alone (401/403), the executor
+switches that job to the **custody relay** (`relay.RelayByteHttp`), records
+`relay_engaged`, and continues the same session from the byte YouTube holds:
 
-- **An unverified API project.** YouTube keeps every upload from an unverified API
-  project private and still answers success. When the privacy YouTube reports differs
-  from the privacy requested, the result sets `privacy_overridden` and says so. To
-  publish publicly or on a schedule, the Google Cloud project must pass YouTube's API
-  audit.
-- **An upload that fails partway.** The video may or may not exist. The service never
-  retries; the caller reconciles against the channel's uploads before trying again.
-- **Quota.** An upload costs far more quota than a read. A quota refusal is an error
-  result like any other.
-- **Custom thumbnails** need a channel allowed to use them (a verified channel).
+- Each chunk, at most 4 MiB (the hosting platform's request limit), goes to ZEOconnect's
+  `POST /v1/youtube/uploads:relay` with the link and the `relay_seal` that ZEOconnect
+  issued with the session.
+- ZEOconnect checks the seal, adds the channel's token inside custody, forwards the
+  chunk, and answers with only YouTube's status, `Range`, and on completion the video's
+  id and privacy.
+- The device still never holds the token, and ZEOconnect still stores no link.
+
+Later steps and runs of that job go straight to the relay. If the relay is unavailable
+too, the job is held as `session_link_refused`. The first trial on a test channel shows
+which path YouTube accepts.
 
 ## Test track
 
-Use a dedicated test channel, and upload as `private` until the whole flow has been
-checked. The tests in `tests/test_integrations/google/youtube/` mock the Data API client
-at the SDK boundary; no live request has been made by this package.
+Use a dedicated test channel and upload as `private`. The tests in
+`tests/test_integrations/google/youtube/` run against a fake upload server that keeps real
+byte offsets: dropped connections, lost answers, expired sessions and refused links. No
+live request has been made by this package.

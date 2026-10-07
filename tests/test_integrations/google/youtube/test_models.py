@@ -1,16 +1,16 @@
 """YouTube request models: what YouTube would reject is rejected before any call."""
 
 from datetime import UTC, datetime, timedelta
-from pathlib import Path
 
 import pytest
 from pydantic import ValidationError
 
 from zeo_core.integrations.google.youtube.models import (
-    CaptionUpload,
+    CaptionSessionRequest,
+    ThumbnailSessionRequest,
     VideoMetadata,
+    VideoSessionRequest,
     VideoStatus,
-    VideoUpload,
 )
 
 
@@ -77,24 +77,26 @@ def test_status_and_schedule() -> None:
         )
 
 
-def test_files_must_exist_and_captions_be_srt_or_vtt(tmp_path: Path) -> None:
-    video = tmp_path / "take.mp4"
-    video.write_bytes(b"\0")
-    VideoUpload(
-        file=video,
-        metadata=VideoMetadata(title="x"),
-        status=VideoStatus(privacy="private"),
+def test_session_requests_refuse_what_youtube_refuses() -> None:
+    meta, status = VideoMetadata(title="x"), VideoStatus(privacy="private")
+    VideoSessionRequest(
+        size_bytes=1, mime_type="video/mp4", metadata=meta, status=status
     )
-    with pytest.raises(ValidationError, match="not found"):
-        VideoUpload(
-            file=tmp_path / "missing.mp4",
-            metadata=VideoMetadata(title="x"),
-            status=VideoStatus(privacy="private"),
+    with pytest.raises(ValidationError):
+        VideoSessionRequest(
+            size_bytes=1, mime_type="text/plain", metadata=meta, status=status
         )
-    srt = tmp_path / "en.srt"
-    srt.write_text("1\n00:00:00,000 --> 00:00:01,000\nhi\n")
-    CaptionUpload(file=srt, language="en")
-    txt = tmp_path / "en.txt"
-    txt.write_text("hi")
-    with pytest.raises(ValidationError, match=r"\.srt or \.vtt"):
-        CaptionUpload(file=txt, language="en")
+    with pytest.raises(ValidationError):
+        VideoSessionRequest(
+            size_bytes=0, mime_type="video/mp4", metadata=meta, status=status
+        )
+    with pytest.raises(ValidationError):
+        ThumbnailSessionRequest(
+            video_id="v", size_bytes=3 * 1024 * 1024, mime_type="image/png"
+        )
+    with pytest.raises(ValidationError):
+        ThumbnailSessionRequest(video_id="a&b", size_bytes=10, mime_type="image/png")
+    with pytest.raises(ValidationError):
+        CaptionSessionRequest(
+            video_id="v", language="en", size_bytes=10, mime_type="text/plain"
+        )

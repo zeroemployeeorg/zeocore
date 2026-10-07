@@ -36,6 +36,8 @@ _MAX_JSON_BYTES = 1024 * 1024
 _MAX_REQUEST_BYTES = 64 * 1024
 _MAX_ARTIFACT_BYTES = 10 * 1024 * 1024
 _SAFE_RETRY_OPERATIONS = frozenset({"google.drive.file.download"})
+#: Relay chunks stay under the hosting platform's 4.5 MB request limit.
+YOUTUBE_RELAY_MAX_CHUNK_BYTES = 4 * 1024 * 1024
 
 
 class _PairingWire(BaseModel):
@@ -244,6 +246,59 @@ class ZEOconnectHTTPTransport:
         except Exception:
             raise HostedClientError("hosted transport is unavailable") from None
 
+    def relay_youtube_chunk(
+        self,
+        *,
+        connection_id: str,
+        link: str,
+        seal: str,
+        content_range: str,
+        content_type: str,
+        body: bytes,
+    ) -> dict[str, JsonValue]:
+        """Send one upload chunk through ZEOconnect, which adds the channel token.
+
+        The fallback when YouTube refuses an upload link without a token. ZEOconnect
+        checks the seal it issued with the session, so only links it opened can be
+        relayed; the token never leaves custody.
+        """
+        if len(body) > YOUTUBE_RELAY_MAX_CHUNK_BYTES:
+            raise HostedClientError("relay chunk exceeds the client limit")
+        if is_managed_execution():
+            raise HostedClientError("managed execution forbids member API fallback")
+        headers = {
+            **self._headers(self._active_session()),
+            "Content-Type": "application/octet-stream",
+            "X-Zeo-Connection": connection_id,
+            "X-Zeo-Upload-Link": link,
+            "X-Zeo-Relay-Seal": seal,
+            "X-Zeo-Content-Range": content_range,
+            "X-Zeo-Content-Type": content_type,
+        }
+        try:
+            response = self._client.post(
+                "/v1/youtube/uploads:relay",
+                content=body,
+                headers=headers,
+                timeout=httpx.Timeout(300.0, connect=15.0),
+            )
+        except httpx.TransportError:
+            raise HostedClientError("hosted transport is unavailable") from None
+        if response.status_code in {502, 503, 504}:
+            # ZEOconnect could not reach YouTube (or Google's token endpoint):
+            # transient, so the transfer probes again and resumes.
+            raise HostedClientError("hosted transport is unavailable")
+        self._validate_response(response)
+        if len(response.content) > _MAX_JSON_BYTES:
+            raise HostedClientError("hosted response exceeds the client limit")
+        try:
+            payload = response.json()
+        except Exception:
+            raise HostedClientError("hosted response shape is invalid") from None
+        if not isinstance(payload, dict) or not isinstance(payload.get("status"), int):
+            raise HostedClientError("hosted response shape is invalid")
+        return cast(dict[str, JsonValue], payload)
+
     def revoke_device(self, session: DeviceSession) -> None:
         self._request_json(
             "POST",
@@ -371,6 +426,7 @@ def _validated_origin(value: str, *, allow_development: bool) -> str:
 
 
 __all__ = [
+    "YOUTUBE_RELAY_MAX_CHUNK_BYTES",
     "ZEOCONNECT_PRODUCTION_ORIGIN",
     "ZEOCONNECT_PROTOCOL_HEADER",
     "ZEOCONNECT_PROTOCOL_VERSION",
