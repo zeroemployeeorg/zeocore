@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **YouTube data retention** (`youtube.retention`, `publish retain`): YouTube's fields
+  (the video id, privacy, schedule and link) live only in a replaceable `youtube.json`,
+  never in the write-once job files. `retain` refreshes each record once it is 20 days
+  old (one `videos.get`, 1 unit). It deletes the record when the video is gone or
+  access has lapsed, or when no refresh succeeded by day 29, and logs when and why.
+  This follows the Developer Policies' 30-day limit (§III.E.4). `Receipt` no longer
+  carries `provider_object_id`, `video_url` or `response_sha256`; it points to
+  `provider_record`.
 - **YouTube publishing for multi-GB files** (`zeo_core.integrations.google.youtube`):
   the provider client opens resumable sessions inside the custody boundary and
   never sends bytes; `transfer` sends a file to a session link with no
