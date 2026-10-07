@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **YouTube publishing** (`zeo_core.integrations.google.youtube`, extra `youtube`):
+  resumable chunked upload with progress, schedule (`publish_at`), metadata,
+  thumbnail, caption track, playlist item, channel identity and video state.
+  Injected credentials only (`GoogleCredentialSource`); it reads no credential
+  file. Models refuse what YouTube would reject before any call. When YouTube
+  keeps an upload private (an unverified API project), the result says so; a
+  failed upload is never retried. Not in the setup catalogue. Offline contract
+  only; no live request has been made.
 - **Local Revolut Business enrollment** (`zeo_core.integrations.revolut.local`,
   extra `revolut`): use your own account on your own machine, with no hosted
   service or database. Three explicit steps (`setup`, `authorize`, `complete`)

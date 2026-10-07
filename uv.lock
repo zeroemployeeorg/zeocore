@@ -3043,6 +3043,7 @@ dependencies = [
 all = [
     { name = "anthropic" },
     { name = "beautifulsoup4" },
+    { name = "cryptography" },
     { name = "ffmpeg-zeo" },
     { name = "google-api-python-client" },
     { name = "google-auth-httplib2" },
@@ -3156,6 +3157,10 @@ pandoc = [
     { name = "beautifulsoup4" },
     { name = "pypandoc" },
 ]
+revolut = [
+    { name = "cryptography" },
+    { name = "platformdirs" },
+]
 runtime-host = [
     { name = "jsonschema" },
     { name = "rfc8785" },
@@ -3175,6 +3180,12 @@ slides = [
 supabase = [
     { name = "supabase" },
 ]
+youtube = [
+    { name = "google-api-python-client" },
+    { name = "google-auth-httplib2" },
+    { name = "google-auth-oauthlib" },
+    { name = "platformdirs" },
+]
 
 [package.dev-dependencies]
 documentation = [
@@ -3192,6 +3203,8 @@ requires-dist = [
     { name = "black", marker = "extra == 'dev'", specifier = ">=23.0.0" },
     { name = "build", marker = "extra == 'dev'", specifier = ">=1.0.0" },
     { name = "coverage", marker = "extra == 'dev'", specifier = ">=7.10" },
+    { name = "cryptography", marker = "extra == 'all'", specifier = ">=45" },
+    { name = "cryptography", marker = "extra == 'revolut'", specifier = ">=45" },
     { name = "fastapi", marker = "extra == 'http'", specifier = ">=0.112" },
     { name = "fastapi", marker = "extra == 'http-dev'", specifier = ">=0.112" },
     { name = "ffmpeg-zeo", marker = "extra == 'all'", specifier = ">=0.1.0" },
@@ -3204,6 +3217,7 @@ requires-dist = [
     { name = "google-api-python-client", marker = "extra == 'google'", specifier = ">=2.0.0" },
     { name = "google-api-python-client", marker = "extra == 'sheets'", specifier = ">=2.0.0" },
     { name = "google-api-python-client", marker = "extra == 'slides'", specifier = ">=2.0.0" },
+    { name = "google-api-python-client", marker = "extra == 'youtube'", specifier = ">=2.0.0" },
     { name = "google-auth-httplib2", marker = "extra == 'all'", specifier = ">=0.1.0" },
     { name = "google-auth-httplib2", marker = "extra == 'calendar'", specifier = ">=0.1.0" },
     { name = "google-auth-httplib2", marker = "extra == 'docs'", specifier = ">=0.1.0" },
@@ -3212,6 +3226,7 @@ requires-dist = [
     { name = "google-auth-httplib2", marker = "extra == 'google'", specifier = ">=0.1.0" },
     { name = "google-auth-httplib2", marker = "extra == 'sheets'", specifier = ">=0.1.0" },
     { name = "google-auth-httplib2", marker = "extra == 'slides'", specifier = ">=0.1.0" },
+    { name = "google-auth-httplib2", marker = "extra == 'youtube'", specifier = ">=0.1.0" },
     { name = "google-auth-oauthlib", marker = "extra == 'all'", specifier = ">=0.4.0" },
     { name = "google-auth-oauthlib", marker = "extra == 'calendar'", specifier = ">=0.4.0" },
     { name = "google-auth-oauthlib", marker = "extra == 'docs'", specifier = ">=0.4.0" },
@@ -3220,6 +3235,7 @@ requires-dist = [
     { name = "google-auth-oauthlib", marker = "extra == 'google'", specifier = ">=0.4.0" },
     { name = "google-auth-oauthlib", marker = "extra == 'sheets'", specifier = ">=0.4.0" },
     { name = "google-auth-oauthlib", marker = "extra == 'slides'", specifier = ">=0.4.0" },
+    { name = "google-auth-oauthlib", marker = "extra == 'youtube'", specifier = ">=0.4.0" },
     { name = "hatchling", marker = "extra == 'dev'" },
     { name = "httpx", specifier = ">=0.27" },
     { name = "hypothesis", marker = "extra == 'dev'" },
@@ -3249,8 +3265,10 @@ requires-dist = [
     { name = "platformdirs", marker = "extra == 'drive'", specifier = ">=4.0.0" },
     { name = "platformdirs", marker = "extra == 'gmail'", specifier = ">=4.0.0" },
     { name = "platformdirs", marker = "extra == 'google'", specifier = ">=4.0.0" },
+    { name = "platformdirs", marker = "extra == 'revolut'", specifier = ">=4.0.0" },
     { name = "platformdirs", marker = "extra == 'sheets'", specifier = ">=4.0.0" },
     { name = "platformdirs", marker = "extra == 'slides'", specifier = ">=4.0.0" },
+    { name = "platformdirs", marker = "extra == 'youtube'", specifier = ">=4.0.0" },
     { name = "psutil", marker = "extra == 'all'", specifier = ">=7.2,<8" },
     { name = "psutil", marker = "extra == 'notebook'", specifier = ">=7.2,<8" },
     { name = "pydantic", specifier = ">=2.6.0" },
@@ -3281,7 +3299,7 @@ requires-dist = [
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'http'", specifier = ">=0.30" },
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'http-dev'", specifier = ">=0.30" },
 ]
-provides-extras = ["http", "http-dev", "mcp", "mcp-dev", "dev", "lint", "gmail", "notion", "supabase", "google", "docs", "sheets", "slides", "drive", "calendar", "pandoc", "llms", "github", "bluesky", "ffmpeg", "jupytext", "notebook", "all", "runtime-host"]
+provides-extras = ["http", "http-dev", "mcp", "mcp-dev", "dev", "lint", "gmail", "notion", "supabase", "google", "docs", "sheets", "slides", "drive", "calendar", "youtube", "pandoc", "llms", "github", "bluesky", "ffmpeg", "revolut", "jupytext", "notebook", "all", "runtime-host"]
 
 [package.metadata.requires-dev]
 documentation = [

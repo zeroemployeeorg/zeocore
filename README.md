@@ -266,6 +266,7 @@ accounts and authorization. Install additional dependencies only as needed:
 | `zeocore[drive]` | Google Drive |
 | `zeocore[gmail]` | Gmail |
 | `zeocore[calendar]` | Google Calendar (read + write) |
+| `zeocore[youtube]` | YouTube publishing: resumable upload, schedule, thumbnail, captions, playlists (injected credentials only) |
 | `zeocore[google]` | Drive + Gmail + **Docs** auth plumbing together |
 | `zeocore[bluesky]` | Bluesky posting via an app password — no OAuth, no developer app |
 | `zeocore[notion]` | Notion (read + write) |
