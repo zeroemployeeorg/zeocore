@@ -10,7 +10,7 @@ import pytest
 from pydantic import SecretStr
 
 from zeo_core.integrations.google.youtube import publish
-from zeo_core.integrations.google.youtube.job import JobDirectory
+from zeo_core.integrations.google.youtube.job import JobDirectory, ProviderRecord
 from zeo_core.integrations.google.youtube.links import InMemoryUploadLinkStore
 from zeo_core.integrations.google.youtube.publish import (
     EXIT_APPROVAL,
@@ -95,7 +95,14 @@ def test_happy_path_uploads_once_and_attaches_everything(
     assert yt.playlists["PL123"] == [video.video_id]
     receipt = JobDirectory(directory).receipt()
     assert receipt is not None and receipt.outcome == "SUCCEEDED"
-    assert receipt.video_url == f"https://youtu.be/{video.video_id}"
+    assert receipt.provider_record == "youtube.json" and receipt.video_url is None
+    record = JobDirectory(directory).provider_record()
+    assert record is not None and record.video_id == video.video_id
+    assert record.video_url == f"https://youtu.be/{video.video_id}"
+    write_once = (directory / "receipt.json").read_text() + "".join(
+        p.read_text() for p in (directory / "events").iterdir()
+    )
+    assert video.video_id not in write_once, "YouTube's id lives only in youtube.json"
     assert not links.links, "upload links are deleted when their step completes"
     assert _executor(directory, yt, broker, links).run().exit_code == EXIT_DONE
     assert len(yt.videos) == 1, "running a finished job again changes nothing"
@@ -194,7 +201,11 @@ def test_lost_final_answer_and_expired_session_adopts_the_upload(
     assert result.exit_code == EXIT_DONE, result.status
     assert len(yt.videos) == 1 and len(yt.sessions) == 1
     uploaded = [e for e in JobDirectory(directory).events() if e.type == "uploaded"]
-    assert uploaded[0].model_extra == {"video_id": "vid00000001", "reconciled": True}
+    assert uploaded[0].model_extra == {
+        "provider_record": "youtube.json",
+        "reconciled": True,
+    }
+    assert JobDirectory(directory).state().video_id == "vid00000001"
 
 
 def test_two_matching_uploads_hold_the_job(tmp_path: Path, world: tuple) -> None:
@@ -388,7 +399,16 @@ def test_status_cli_prints_the_fold(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     directory = make_job(tmp_path)
-    JobDirectory(directory).append(actor="executor", type="uploaded", video_id="vidX")
+    JobDirectory(directory).write_provider_record(
+        ProviderRecord(
+            video_id="vidX",
+            video_url="https://youtu.be/vidX",
+            fetched_at=datetime.now(UTC),
+        )
+    )
+    JobDirectory(directory).append(
+        actor="executor", type="uploaded", provider_record="youtube.json"
+    )
     assert main(["status", str(directory)]) == 0
     printed = json.loads(capsys.readouterr().out)
     assert printed["video_id"] == "vidX" and printed["done"] is False

@@ -11,6 +11,14 @@ nanoseconds; ``occurrence_id = "occ_" + hex(sha256(key)[:12])``; ``idempotency_k
 hex(sha256(key))``), so Runtime can adopt these files without a migration.
 
 No secret is ever written here. Session links live in an ``UploadLinkStore``.
+
+YOUTUBE DATA IS KEPT APART (YouTube API Services Developer Policies §III.E.4; the
+adviser's note r14, org-zeroemployeeorg#735 6045087532): authorized data may be stored
+for at most 30 days unless refreshed. So nothing YouTube returned goes into the
+write-once files. The video's id, privacy, schedule and link live only in
+``youtube.json``, which is replaced on refresh and deleted when a refresh fails
+(``publish retain``). The job's own record (what was sent, when, the operator's
+authorization, that a publish happened) stays indefinitely.
 """
 
 from __future__ import annotations
@@ -43,6 +51,8 @@ from zeo_core.integrations.google.youtube.models import (
 
 SCHEMA_VERSION = 1
 _SHA256 = r"^[0-9a-f]{64}$"
+#: The only file that holds YouTube data; replaced on refresh, deleted on failure.
+PROVIDER_RECORD = "youtube.json"
 
 
 class JobError(RuntimeError):
@@ -212,6 +222,7 @@ EventType = Literal[
     "session_ready",
     "session_lost",
     "relay_engaged",
+    "provider_data_dropped",
     "transfer_progress",
     "final_chunk_sent",
     "uploaded",
@@ -233,18 +244,37 @@ class Event(BaseModel):
 
 
 class Receipt(BaseModel):
-    """``receipt.json``: the job's single outcome."""
+    """``receipt.json``: the job's single outcome. It holds no YouTube data.
+
+    The video's id and link are in ``youtube.json`` (``provider_record``), which
+    retention refreshes or deletes. ``provider_object_id`` and ``video_url`` stay in
+    the schema for ZEO Runtime's receipt shape and are always ``None`` here.
+    """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     schema_version: Literal[1]
     job_id: str
     outcome: Literal["SUCCEEDED", "REFUSED", "AMBIGUOUS"]
-    provider_object_id: str | None
-    response_sha256: str | None = Field(default=None, pattern=_SHA256)
-    video_url: str | None
+    provider_object_id: None = None
+    response_sha256: None = None
+    video_url: None = None
+    provider_record: str | None = None
     observed_at: datetime
     reason: str | None = None
+
+
+class ProviderRecord(BaseModel):
+    """``youtube.json``: what YouTube said about the video, and when we last asked."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    schema_version: Literal[1] = 1
+    video_id: str = Field(pattern=r"^[A-Za-z0-9_-]{1,64}$")
+    privacy: str | None = None
+    publish_at: str | None = None
+    video_url: str
+    fetched_at: datetime
 
 
 @dataclass
@@ -267,7 +297,11 @@ class JobState:
     """The fold of a job's events."""
 
     steps: dict[str, StepState] = field(default_factory=dict)
+    #: From ``youtube.json`` (JobDirectory.state); None once retention dropped it.
     video_id: str | None = None
+    uploaded: bool = False
+    #: Why the YouTube fields were deleted, if they were.
+    provider_dropped: str | None = None
     held: str | None = None
     held_detail: str = ""
     cancelled: bool = False
@@ -311,8 +345,10 @@ def _job_event(state: JobState, event: Event, extra: dict[str, Any]) -> None:
     """Apply an event that concerns the whole job."""
     match event.type:
         case "uploaded":
-            state.video_id = str(extra["video_id"])
+            state.uploaded = True
             state.step("video").done = True
+        case "provider_data_dropped":
+            state.provider_dropped = str(extra.get("reason", "dropped"))
         case "held":
             state.held = str(extra.get("reason", "held"))
             state.held_detail = str(extra.get("detail", ""))
@@ -417,7 +453,37 @@ class JobDirectory:
         return out
 
     def state(self) -> JobState:
-        return fold(self.events())
+        state = fold(self.events())
+        record = self.provider_record()
+        state.video_id = record.video_id if record is not None else None
+        return state
+
+    def provider_record(self) -> ProviderRecord | None:
+        path = self.path / PROVIDER_RECORD
+        try:
+            raw = path.read_bytes()
+        except FileNotFoundError:
+            return None
+        return ProviderRecord.model_validate_json(raw)
+
+    def write_provider_record(self, record: ProviderRecord) -> None:
+        """Write or replace ``youtube.json`` atomically (the one replaceable file)."""
+        temporary = self.path / f".{PROVIDER_RECORD}.tmp"
+        descriptor = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o644)
+        try:
+            os.write(descriptor, _canonical(record.model_dump(mode="json")))
+            os.fsync(descriptor)
+        finally:
+            os.close(descriptor)
+        os.replace(temporary, self.path / PROVIDER_RECORD)
+
+    def drop_provider_record(self, reason: str) -> None:
+        """Delete the YouTube fields and record when and why (the job record stays)."""
+        try:
+            (self.path / PROVIDER_RECORD).unlink()
+        except FileNotFoundError:
+            return
+        self.append(actor="executor", type="provider_data_dropped", reason=reason)
 
     def append(
         self,
@@ -468,6 +534,7 @@ class JobDirectory:
 
 
 __all__ = [
+    "PROVIDER_RECORD",
     "SCHEMA_VERSION",
     "Authorization",
     "CaptionFile",
@@ -478,6 +545,7 @@ __all__ = [
     "JobError",
     "JobState",
     "JobStatus",
+    "ProviderRecord",
     "Receipt",
     "StepState",
     "ThumbnailFile",

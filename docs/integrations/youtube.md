@@ -52,7 +52,9 @@ public at that time. A large upload therefore has hours or days to recover from 
 
 `job.json` and `authorization.json` are written once, by the studio. After that the
 directory only grows: events are appended to `events/%010d.json`, and the executor writes
-`receipt.json` once, at the end. State is the fold of the events.
+`receipt.json` once, at the end. State is the fold of the events. The one exception is
+`youtube.json`, which holds YouTube's data and is replaced or deleted (see the 30-day rule
+below).
 
 The identifiers use ZEO Runtime's occurrence derivation, so Runtime can adopt the same
 files (`job.runtime_identity`; the tests carry vectors computed by Go). The executor
@@ -62,6 +64,25 @@ Upload links are kept in the macOS Keychain (`--link-store keychain`, the defaul
 written through stdin. An owner-only file (`--link-store file`) is used only when you
 choose it explicitly.
 
+## YouTube data is kept for at most 30 days
+
+The YouTube API Services Developer Policies (§III.E.4) limit stored authorized data to
+30 calendar days, unless it is refreshed. The adviser's note r14 settled the rule:
+
+- **Only `youtube.json` holds YouTube data:** the video's id, privacy, schedule and
+  link, plus when they were fetched. The write-once files (`job.json`, the events,
+  `receipt.json`) never contain anything YouTube returned.
+- **`retain` refreshes, or deletes.** Once a record is 20 days old, `retain` refreshes
+  it with one `youtube.video.get` read (1 quota unit).
+  - **The video is gone, or access has lapsed:** the record is deleted, and a
+    `provider_data_dropped` event says when and why.
+  - **ZEOconnect is unreachable:** the refresh waits. But a record that reaches 29 days
+    is deleted anyway.
+- **What stays:** the job's own record, meaning what was sent, the operator's
+  authorization, and that a publish happened.
+
+Run `retain` once a day; the studio's runner does.
+
 ## Command line
 
 ```bash
@@ -69,6 +90,7 @@ python -m zeo_core.integrations.google.youtube.publish pair          # once: pai
 python -m zeo_core.integrations.google.youtube.publish connections   # the YouTube connection IDs
 python -m zeo_core.integrations.google.youtube.publish run JOB_DIR   # advance a job; safe to repeat
 python -m zeo_core.integrations.google.youtube.publish status JOB_DIR
+python -m zeo_core.integrations.google.youtube.publish retain PUBLISH_ROOT  # daily: the 30-day rule
 ```
 
 `run` prints one JSON status line. Its exit code says what to do next:

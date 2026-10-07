@@ -49,12 +49,14 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 from zeo_core.integrations.google.youtube.job import (
+    PROVIDER_RECORD,
     CaptionFile,
     Job,
     JobDirectory,
     JobError,
     JobState,
     MediaFile,
+    ProviderRecord,
     Receipt,
     rfc3339_nano,
 )
@@ -297,20 +299,14 @@ class PublishExecutor:
         return self._result(code, state, reason=receipt.reason)
 
     def _close(self, outcome: str, *, reason: str | None = None) -> RunResult:
-        state = self._state()
-        response = (
-            hashlib.sha256(state.video_id.encode()).hexdigest()
-            if state.video_id
-            else None
-        )
         receipt = Receipt.model_validate(
             {
                 "schema_version": 1,
                 "job_id": self.job.job_id,
                 "outcome": outcome,
-                "provider_object_id": state.video_id,
-                "response_sha256": response,
-                "video_url": video_url(state.video_id) if state.video_id else None,
+                "provider_record": (
+                    PROVIDER_RECORD if self.dir.provider_record() is not None else None
+                ),
                 "observed_at": self._clock(),
                 "reason": reason,
             }
@@ -588,7 +584,7 @@ class PublishExecutor:
         job = self.job
         for _ in range(4):
             state = self._state()
-            if state.video_id is not None:
+            if state.uploaded:
                 return
             step = state.step("video")
             if self._links.get(job.job_id, "video") is None and step.final_chunk_sent:
@@ -624,9 +620,28 @@ class PublishExecutor:
                 raise self._hold(
                     "no_video_id", "YouTube completed the upload without an id"
                 )
-            self.dir.append(actor="executor", type="uploaded", video_id=video_id)
+            status = resource.get("status")
+            privacy = status.get("privacyStatus") if isinstance(status, dict) else None
+            self._record_upload(video_id, privacy=privacy)
             return
         raise self._hold("session_churn", "four upload sessions in one run")
+
+    def _record_upload(
+        self, video_id: str, *, privacy: object = None, reconciled: bool = False
+    ) -> None:
+        """YouTube's id goes only into youtube.json; the event says that it happened."""
+        self.dir.write_provider_record(
+            ProviderRecord(
+                video_id=video_id,
+                privacy=privacy if isinstance(privacy, str) else None,
+                video_url=video_url(video_id),
+                fetched_at=self._clock(),
+            )
+        )
+        extra = {"reconciled": True} if reconciled else {}
+        self.dir.append(
+            actor="executor", type="uploaded", provider_record=PROVIDER_RECORD, **extra
+        )
 
     def _adopt_lost_upload(self, since: datetime) -> bool:
         found = self._read(
@@ -644,10 +659,9 @@ class PublishExecutor:
             and isinstance(matches[0], dict)
             and matches[0].get("video_id")
         ):
-            self.dir.append(
-                actor="executor",
-                type="uploaded",
-                video_id=str(matches[0]["video_id"]),
+            self._record_upload(
+                str(matches[0]["video_id"]),
+                privacy=matches[0].get("privacy"),
                 reconciled=True,
             )
             return True
@@ -732,7 +746,8 @@ class PublishExecutor:
                 actor="executor",
                 type="step_done",
                 step=step,
-                detail={"id": resource.get("id")} if resource.get("id") else {},
+                # no YouTube ids in the write-once events (retention, r14 §1)
+                detail={},
             )
             return
         raise self._hold("session_churn", f"{step}: four sessions in one run")
@@ -746,14 +761,23 @@ class PublishExecutor:
             {"playlist_id": playlist_id, "video_id": self._video_id()},
         )
         self.dir.append(
-            actor="executor", type="step_done", step="playlist", detail=result
+            actor="executor",
+            type="step_done",
+            step="playlist",
+            detail={"already_present": bool(result.get("already_present"))},
         )
 
     def _video_id(self) -> str:
-        video_id = self._state().video_id
-        if video_id is None:  # the video step runs first
-            raise JobError("no video id yet")
-        return video_id
+        state = self._state()
+        if state.video_id is None:
+            if state.uploaded:
+                # Retention deleted the YouTube fields (no refresh within 30 days).
+                raise self._hold(
+                    "provider_data_dropped",
+                    state.provider_dropped or "the video's YouTube record is gone",
+                )
+            raise JobError("no video id yet")  # the video step runs first
+        return state.video_id
 
     # ------------------------------------------------------------------
     # verify
@@ -771,6 +795,7 @@ class PublishExecutor:
                 video.get("rejection_reason") or video.get("failure_reason") or upload
             )
             raise self._hold("youtube_rejected", str(reason))
+        self._refresh_record(video)
         if processing not in {"succeeded", None} or upload == "uploaded":
             return self._result(EXIT_WAIT, "waiting", reason="youtube_processing")
         expected, scheduled = self._expected_privacy()
@@ -790,6 +815,19 @@ class PublishExecutor:
                     f" the job asked {rfc3339_nano(scheduled)}",
                 )
         return self._close("SUCCEEDED")
+
+    def _refresh_record(self, video: dict[str, Any]) -> None:
+        video_id = video.get("video_id")
+        if isinstance(video_id, str) and video_id:
+            self.dir.write_provider_record(
+                ProviderRecord(
+                    video_id=video_id,
+                    privacy=video.get("privacy"),
+                    publish_at=video.get("publish_at"),
+                    video_url=video_url(video_id),
+                    fetched_at=self._clock(),
+                )
+            )
 
     def _expected_privacy(self) -> tuple[str, datetime | None]:
         publish_at = self.job.status.publish_at
@@ -922,6 +960,21 @@ def _status(args: argparse.Namespace) -> int:
     return _print(RunResult(EXIT_DONE, status))
 
 
+def _retain(args: argparse.Namespace) -> int:
+    from zeo_core.integrations.google.youtube.retention import RetentionSweep
+
+    transport, _ = _transport()
+    client = HostedConnectionClient(transport=transport)
+    try:
+        report = RetentionSweep(
+            Path(args.publish_root).resolve(),
+            broker_for=lambda connection_id: HostedYouTubeBroker(client, connection_id),
+        ).run()
+        return _print(RunResult(EXIT_DONE, report.as_dict()))
+    finally:
+        transport.close()
+
+
 def _pair(args: argparse.Namespace) -> int:
     from zeo_core.integrations.hosted.pairing import (
         HostedConnectionManager,
@@ -1010,6 +1063,11 @@ def main(argv: list[str] | None = None) -> int:
     status = commands.add_parser("status", help="print a job's folded state")
     status.add_argument("job_dir")
     status.set_defaults(handler=_status)
+    retain = commands.add_parser(
+        "retain", help="refresh or delete YouTube data older than 20/29 days (daily)"
+    )
+    retain.add_argument("publish_root")
+    retain.set_defaults(handler=_retain)
     pair = commands.add_parser("pair", help="pair this device with ZEOconnect")
     pair.add_argument("--device-name", default="ZEO Broadcasting Studio")
     pair.set_defaults(handler=_pair)

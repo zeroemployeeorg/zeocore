@@ -11,6 +11,7 @@ import pytest
 from zeo_core.integrations.google.youtube.job import (
     JobDirectory,
     JobError,
+    ProviderRecord,
     Receipt,
     rfc3339_nano,
     runtime_identity,
@@ -106,8 +107,17 @@ def test_events_append_once_and_fold(tmp_path: Path) -> None:
     jd.append(actor="studio", type="released")
     released = jd.state()
     assert released.held is None and released.steps["video"].final_chunk_sent is False
-    jd.append(actor="executor", type="uploaded", video_id="vid1")
-    assert jd.state().video_id == "vid1"
+    jd.write_provider_record(
+        ProviderRecord(
+            video_id="vid1",
+            video_url="https://youtu.be/vid1",
+            fetched_at=datetime.now(UTC),
+        )
+    )
+    jd.append(actor="executor", type="uploaded", provider_record="youtube.json")
+    assert jd.state().video_id == "vid1" and jd.state().uploaded
+    events_text = "".join(p.read_text() for p in jd.events_dir.iterdir())
+    assert "vid1" not in events_text, "no YouTube data in the write-once events"
     assert sorted(p.name for p in jd.events_dir.iterdir())[0] == "0000000001.json"
 
 
@@ -117,8 +127,7 @@ def test_receipt_is_written_once(tmp_path: Path) -> None:
         schema_version=1,
         job_id="ytj_x",
         outcome="SUCCEEDED",
-        provider_object_id="v",
-        video_url="https://youtu.be/v",
+        provider_record="youtube.json",
         observed_at=datetime.now(UTC),
     )
     jd.write_receipt(receipt)
