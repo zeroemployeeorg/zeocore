@@ -183,7 +183,24 @@ release-check: ## Pre-tag gate: version + floor agreement, CHANGELOG entry, inde
 #                so it cannot pass on stale bytecode or a broken package layout.
 
 .PHONY: verify
-verify: ## The doctrine gate: format-check + ruff + mypy + hygiene + tests
+# verify-env: provision the environment ONLY when it is absent.
+#
+# The canon zeo.yml v2.3 (byte-identical adoption mandatory, org issue #276)
+# runs `make verify` in its post-merge zeo-certify job on a clean runner, with
+# no setup step. Without .venv every stage failed on exit 127, on every main
+# merge since the canon was adopted (7124cae6). Rather than diverge from the
+# canon, the gate provisions itself on a clean checkout. Where .venv already
+# exists -- developer machines, ci.yml and publish.yml, which run `make setup`
+# first -- nothing changes: verify stays the fast gate and never reinstalls.
+# The matching canon correction is proposed upstream on org issue #276.
+.PHONY: verify-env
+verify-env:
+	@if [ ! -x "$(PYTHON)" ]; then \
+		echo "${YELLOW}No environment at $(VENV_NAME) -- provisioning it (make setup) before the gate.${RESET}"; \
+		$(MAKE) --no-print-directory setup; \
+	fi
+
+verify: verify-env ## The doctrine gate: format-check + ruff + mypy + hygiene + tests
 	@echo "${BLUE}Running doctrine gate...${RESET}"
 	@echo ""
 	@echo "${BLUE}[1/8] format-check${RESET}"
