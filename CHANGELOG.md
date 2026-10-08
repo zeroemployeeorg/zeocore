@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Revolut Business reads for expenses, receipts and labels**
+  (`zeo_core.integrations.revolut`), approved by the zeocore elders as an
+  independent 0.13.0 expansion (org issue #787, Q2):
+  - `list_expenses` (one bounded page, with `next_to` and stall detection);
+  - `get_expense`;
+  - `download_receipt`, bounded to 10 MiB while it is read, never parsed or
+    logged, and returned with its sha256;
+  - `list_label_groups` and `list_labels`, which page by an opaque token.
+
+  Amounts stay exact `Decimal`s, and an expense's `payer` name is dropped.
+  Redirects are never followed. A provider identifier must be one safe path
+  segment, or nothing is sent. The 0.12 read operations and their error codes
+  are unchanged.
+
+  **Offline contract only; no request has been made to Revolut.** Which date
+  Revolut's expense window filters on is not stated in its published
+  contract. The cursor assumes `expense_date`, and that is unverified until a
+  live sandbox run.
+
 ## [0.12.0] - 2026-10-08
 
 ### Added

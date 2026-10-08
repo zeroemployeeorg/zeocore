@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from contextvars import ContextVar
 from decimal import Decimal
 from typing import Any
@@ -18,7 +19,22 @@ _ORIGINS = {
     RevolutEnvironment.SANDBOX: "https://sandbox-b2b.revolut.com",
 }
 _API = "/api/1.0"
-_ROUTES = frozenset({"/accounts", "/transactions"})
+_ID = r"[A-Za-z0-9_-]{1,100}"
+# Every path this integration may request. A path parameter admits no "/",
+# "?", "#", "%" or "." characters, so no caller value can add a segment, a
+# query or a traversal. Reads only: there is no method other than GET here.
+_ROUTES = tuple(
+    re.compile(pattern)
+    for pattern in (
+        r"/accounts",
+        r"/transactions",
+        r"/expenses",
+        rf"/expenses/{_ID}",
+        rf"/expenses/{_ID}/receipts/{_ID}/content",
+        r"/label-groups",
+        rf"/label-groups/{_ID}/labels",
+    )
+)
 MAX_UPSTREAM_BYTES = 8 * 1024 * 1024
 
 _private_request: ContextVar[bool] = ContextVar(
@@ -101,9 +117,48 @@ class RevolutTransport:
     def get(
         self, path: str, *, params: dict[str, str | int] | None = None
     ) -> list[dict[str, Any]]:
-        if path not in _ROUTES:
-            raise ValueError("Revolut route is outside the read integration")
-        status, retry, content = self._fetch(path, params)
+        data = self._json(path, params)
+        if not isinstance(data, list) or not all(isinstance(i, dict) for i in data):
+            raise RevolutAPIError(
+                "RESPONSE", "Revolut returned an unexpected response shape"
+            )
+        return data
+
+    def get_object(
+        self, path: str, *, params: dict[str, str | int] | None = None
+    ) -> dict[str, Any]:
+        data = self._json(path, params)
+        if not isinstance(data, dict):
+            raise RevolutAPIError(
+                "RESPONSE", "Revolut returned an unexpected response shape"
+            )
+        return data
+
+    def get_bytes(self, path: str, *, max_bytes: int) -> tuple[bytes, str]:
+        """A file body, bounded while it is read; never parsed, never logged."""
+
+        _require_route(path)
+        status, retry, content, media_type = self._fetch(
+            path, None, accept="*/*", limit=max_bytes
+        )
+        if status != 200:
+            raise _refusal(status, retry)
+        if len(content) > max_bytes:
+            raise RevolutAPIError(
+                "RESPONSE_TOO_LARGE",
+                "Revolut file exceeded the size limit; nothing was kept",
+            )
+        if self._token.get_secret_value().encode() in content:
+            raise RevolutAPIError(
+                "RESPONSE", "Revolut response repeated the request credential"
+            )
+        return content, media_type
+
+    def _json(self, path: str, params: dict[str, str | int] | None) -> object:
+        _require_route(path)
+        status, retry, content, _ = self._fetch(
+            path, params, accept="application/json", limit=MAX_UPSTREAM_BYTES
+        )
         if status != 200:
             raise _refusal(status, retry)
         if len(content) > MAX_UPSTREAM_BYTES:
@@ -118,20 +173,20 @@ class RevolutTransport:
             )
         try:
             # Amounts arrive as JSON numbers; binary floats would corrupt money.
-            data = json.loads(content, parse_float=Decimal)
+            return json.loads(content, parse_float=Decimal)
         except ValueError:
             raise RevolutAPIError(
                 "RESPONSE", "Revolut returned an invalid JSON response"
             ) from None
-        if not isinstance(data, list) or not all(isinstance(i, dict) for i in data):
-            raise RevolutAPIError(
-                "RESPONSE", "Revolut returned an unexpected response shape"
-            )
-        return data
 
     def _fetch(
-        self, path: str, params: dict[str, str | int] | None
-    ) -> tuple[int, str, bytes]:
+        self,
+        path: str,
+        params: dict[str, str | int] | None,
+        *,
+        accept: str,
+        limit: int,
+    ) -> tuple[int, str, bytes, str]:
         content = bytearray()
         private_token = _private_request.set(True)
         try:
@@ -140,24 +195,30 @@ class RevolutTransport:
                 self._origin + _API + path,
                 headers={
                     "Authorization": "Bearer " + self._token.get_secret_value(),
-                    "Accept": "application/json",
+                    "Accept": accept,
                 },
                 params=params,
             ) as response:
                 status = response.status_code
                 retry = response.headers.get("Retry-After", "")
+                media_type = response.headers.get("Content-Type", "")
                 # Bound the body before it is buffered or parsed; an error
                 # body is never read at all.
                 if status == 200:
                     for chunk in response.iter_bytes():
                         content += chunk
-                        if len(content) > MAX_UPSTREAM_BYTES:
+                        if len(content) > limit:
                             break
         except httpx.HTTPError:
             raise RevolutAPIError("TRANSPORT", "Revolut request failed") from None
         finally:
             _private_request.reset(private_token)
-        return status, retry, bytes(content)
+        return status, retry, bytes(content), media_type
+
+
+def _require_route(path: str) -> None:
+    if not any(route.fullmatch(path) for route in _ROUTES):
+        raise ValueError("Revolut route is outside the read integration")
 
 
 def _refusal(status: int, retry: str) -> RevolutAPIError:

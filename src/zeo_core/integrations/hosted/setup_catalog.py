@@ -214,10 +214,14 @@ SETUP_CATALOGUE: tuple[SetupManifest, ...] = (
     _manifest(
         "revolut.business",
         "Revolut Business",
-        purpose="Import business bank transactions as expense evidence.",
+        purpose=(
+            "Import business bank transactions, expenses and their receipts "
+            "as expense evidence."
+        ),
         access=(
-            "Reviewed read operations for accounts and bounded transaction "
-            "pages only; no payment, transfer or settings change."
+            "Reviewed read operations only: accounts, bounded transaction and "
+            "expense pages, single expenses, bounded receipt downloads and "
+            "labels; no payment, transfer or settings change."
         ),
         account="Revolut Business account",
         selection="Choose the exact accounts whose transactions may be read.",
