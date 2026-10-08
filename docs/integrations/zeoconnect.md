@@ -23,9 +23,10 @@ Live operation also requires a compatible deployed ZEOconnect Member API.
 ## Protocol failures and stops
 
 Every Broker response carries exactly one `ZEOconnect-Protocol-Version: 1`
-header. A response without it, with another value, or with the header twice is
-a **protocol failure**, whatever its HTTP status. That covers an error page
-from a proxy in front of the Broker. A protocol failure ends that operation:
+header (Broker contract `1.0.0` §3). A response without it did not come from
+the Broker; it came from a proxy, the edge or the network. One with another
+value, or with the header twice, is a version mismatch. Either is a **protocol
+failure**, whatever its HTTP status. A protocol failure ends that operation:
 zeocore does not retry it, refresh the session, poll pairing again or resume an
 upload around it. It is never reported as a stop. A stop, a refusal or an
 outage is recognized only on a response that carries the header. A relay 503

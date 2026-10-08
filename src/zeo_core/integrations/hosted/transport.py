@@ -43,12 +43,16 @@ YOUTUBE_RELAY_MAX_CHUNK_BYTES = 4 * 1024 * 1024
 def _require_protocol(response: httpx.Response) -> None:
     """A Broker response carries exactly one, matching protocol header.
 
-    A missing or different header, on any status including errors, is a
-    terminal protocol failure: never a stop, never an outage, never retried.
+    Broker contract 1.0.0 §3: a response without the header was not produced
+    by the Broker (an edge, proxy or network failure), and one with another
+    value is a mismatch. Either way, on any status including errors, it ends
+    the operation (council ruling E5): never a stop, never an outage, never
+    retried.
     """
-    if response.headers.get_list(ZEOCONNECT_PROTOCOL_HEADER) != [
-        ZEOCONNECT_PROTOCOL_VERSION
-    ]:
+    values = response.headers.get_list(ZEOCONNECT_PROTOCOL_HEADER)
+    if not values:
+        raise HostedClientError("hosted response did not come from the Broker")
+    if values != [ZEOCONNECT_PROTOCOL_VERSION]:
         raise HostedClientError("hosted protocol version is incompatible")
 
 

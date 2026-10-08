@@ -38,6 +38,8 @@ from zeo_core.integrations.hosted import (
 )
 
 Answer = Callable[[int, object, httpx.Request], httpx.Response]
+# A missing header: not from the Broker. Another value, or two: a mismatch.
+PROTOCOL_FAILURE = "did not come from the Broker|protocol version is incompatible"
 STOP = {"code": "stopped", "control": "dispatch", "scope": "global"}
 LINK = "https://www.googleapis.com/upload/youtube/v3/videos?upload_id=u1"
 
@@ -91,7 +93,7 @@ def test_the_one_retried_operation_is_not_retried_on_a_protocol_failure(
     hosted, store = transport(httpx.MockTransport(handler))
     store.save(session(NOW))
 
-    with pytest.raises(HostedClientError, match="protocol version is incompatible"):
+    with pytest.raises(HostedClientError, match=PROTOCOL_FAILURE):
         hosted.invoke(request("google.drive.file.download"))
     assert len(sent) == 1
 
@@ -139,7 +141,7 @@ def test_a_protocol_failure_on_refresh_is_not_retried_and_keeps_the_session(
     store.save(stale)
     hosted, _ = transport(httpx.MockTransport(handler), store)
 
-    with pytest.raises(HostedClientError, match="protocol version is incompatible"):
+    with pytest.raises(HostedClientError, match=PROTOCOL_FAILURE):
         hosted.invoke(request())
     assert sent == ["/v1/device/token/refresh"]
     assert store.load() == stale
@@ -166,7 +168,7 @@ def test_a_headerless_pending_answer_ends_pairing(answer: Answer) -> None:
     hosted, _ = transport(httpx.MockTransport(handler))
     challenge = hosted.begin_pairing(device_name="studio")
 
-    with pytest.raises(HostedClientError, match="incompatible") as caught:
+    with pytest.raises(HostedClientError, match=PROTOCOL_FAILURE) as caught:
         hosted.poll_pairing(challenge)
     assert not isinstance(caught.value, PairingPendingError)
 

@@ -120,6 +120,7 @@ def test_relay_refusal_is_terminal_and_outage_is_transient() -> None:
     "message",
     [
         "hosted protocol version is incompatible",
+        "hosted response did not come from the Broker",
         "hosted response shape is invalid",
         "hosted response exceeds the client limit",
         "hosted redirect is forbidden",
