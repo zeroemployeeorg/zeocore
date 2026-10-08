@@ -34,6 +34,10 @@ VENV_NAME := .venv
 PROJECT_NAME := zeocore
 REPO_ROOT := $(shell pwd)
 PYTHON := $(REPO_ROOT)/$(VENV_NAME)/bin/python
+# The optional integrations a full development environment carries. One list,
+# used by install-all and by verify-env, so the two can never drift apart.
+SETUP_EXTRAS := gmail,notion,supabase,google,drive,calendar,pandoc,llms,github,bluesky,http,ffmpeg,jupytext,notebook,mcp,mcp-dev,runtime-host,revolut
+comma := ,
 SRC := src
 PKG_SRC := src/zeo_core
 TESTS := tests
@@ -108,7 +112,7 @@ install: ## Install zeocore (editable)
 .PHONY: install-all
 install-all: install ## Install zeocore with all optional integrations
 	@echo "${BLUE}Installing optional integration dependencies...${RESET}"
-	uv pip install -e ".[gmail,notion,supabase,google,drive,calendar,pandoc,llms,github,bluesky,http,ffmpeg,jupytext,notebook,mcp,mcp-dev,runtime-host,revolut]" --python $(PYTHON)
+	uv pip install -e ".[$(SETUP_EXTRAS)]" --python $(PYTHON)
 	@echo "${GREEN}All integration dependencies installed${RESET}"
 
 .PHONY: install-dev
@@ -183,21 +187,33 @@ release-check: ## Pre-tag gate: version + floor agreement, CHANGELOG entry, inde
 #                so it cannot pass on stale bytecode or a broken package layout.
 
 .PHONY: verify
-# verify-env: provision the environment ONLY when it is absent.
+# verify-env: provision the environment ONLY when it is absent, and only
+# from the committed lock.
 #
 # The canon zeo.yml v2.3 (byte-identical adoption mandatory, org issue #276)
 # runs `make verify` in its post-merge zeo-certify job on a clean runner, with
 # no setup step. Without .venv every stage failed on exit 127, on every main
 # merge since the canon was adopted (7124cae6). Rather than diverge from the
-# canon, the gate provisions itself on a clean checkout. Where .venv already
-# exists -- developer machines, ci.yml and publish.yml, which run `make setup`
-# first -- nothing changes: verify stays the fast gate and never reinstalls.
-# The matching canon correction is proposed upstream on org issue #276.
+# canon, the gate provisions itself on a clean checkout.
+#
+# The zeocore elders ruled (org issue #787, Q4) that this provisioning must
+# use the COMMITTED lock and must not continue after a failed setup. So it is
+# `uv sync --locked`, not `make setup`: `make setup` uses `uv pip install`,
+# which re-resolves from pyproject.toml and ignores uv.lock. `--locked`
+# refuses outright if uv.lock disagrees with pyproject.toml, so a stale lock
+# fails the gate instead of being re-resolved quietly. The extras and the
+# documentation group are exactly those `make setup` installs.
+#
+# Where .venv already exists (developer machines, and ci.yml and publish.yml,
+# which run `make setup` first), nothing changes and verify never reinstalls.
 .PHONY: verify-env
 verify-env:
 	@if [ ! -x "$(PYTHON)" ]; then \
-		echo "${YELLOW}No environment at $(VENV_NAME) -- provisioning it (make setup) before the gate.${RESET}"; \
-		$(MAKE) --no-print-directory setup; \
+		echo "${YELLOW}No environment at $(VENV_NAME) -- provisioning it from the committed uv.lock before the gate.${RESET}"; \
+		uv sync --locked --python $(PYTHON_VERSION) \
+			$(foreach extra,$(subst $(comma), ,$(SETUP_EXTRAS)) dev lint,--extra $(extra)) \
+			--group documentation \
+		|| { echo "${RED}Provisioning from uv.lock failed; the gate will not run.${RESET}"; exit 1; }; \
 	fi
 
 verify: verify-env ## The doctrine gate: format-check + ruff + mypy + hygiene + tests
