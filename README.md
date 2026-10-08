@@ -225,6 +225,21 @@ and [the authoring reference](docs/integrations/authoring-reference.md) provide
 fresh-kernel execution and independently checked staging receipts.
 See [release notes](RELEASE_NOTES.md) for migration and remaining qualification limits.
 
+## New in 0.12.0: YouTube publishing and local Revolut Business
+
+```bash
+uv pip install "zeocore[youtube]==0.12.0"   # resumable multi-GB publishing
+uv pip install "zeocore[revolut]==0.12.0"   # local enrollment of your own account
+```
+
+[YouTube publishing](docs/integrations/youtube.md) uploads resumably from a
+write-once job directory, resumes at the exact byte after a drop, and never
+uploads twice. The [Revolut Business](docs/integrations/revolut-business.md)
+read client ships in the base package; the `revolut` extra adds local
+enrollment of your own account, with credentials in private per-user files.
+Both are **offline contracts: no live request has been made to either provider.**
+See the [release notes](RELEASE_NOTES.md).
+
 ## New in 0.11.0: Runtime host and meeting operations
 
 The Runtime host and meeting adapters are available in **0.11.0**. Install the
@@ -322,7 +337,7 @@ module by module.
 
 ## Project status
 
-ZeoCore **0.11.0** is a beta library: the API is typed and tested, and this
+ZeoCore **0.12.0** is a beta library: the API is typed and tested, and this
 release is the canonical capability-authoring surface for the Zero Employee
 ecosystem. The surface may still shift before 1.0. Issues, questions, and API
 feedback are welcome.

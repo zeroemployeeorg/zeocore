@@ -12,7 +12,7 @@ so scripts, services, Zeocreator and Sovereign Agent can call the same capabilit
 [Register a provider](how-to/provider-registration.md){ .md-button }
 
 ```bash
-uv pip install "zeocore==0.11.0"
+uv pip install "zeocore==0.12.0"
 ```
 
 Python **3.14+** · Package `zeocore` · Import `zeo_core`
@@ -59,6 +59,18 @@ flowchart LR
 Capabilities describe and perform bounded work. Your host supplies authorization,
 credentials, scheduling and delivery policy. Marketing examples start offline;
 real sending requires explicit setup and host authorization.
+
+## New in 0.12.0
+
+[YouTube publishing](integrations/youtube.md) for multi-gigabyte files and a
+local [Revolut Business](integrations/revolut-business.md) profile for your own
+account. Both are offline contracts; no live request has been made to either
+provider.
+
+```bash
+uv pip install "zeocore[youtube]==0.12.0"
+uv pip install "zeocore[revolut]==0.12.0"
+```
 
 ## New in 0.11.0
 
