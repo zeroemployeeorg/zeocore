@@ -25,6 +25,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   retried, refreshed around or read as a stop. A Broker 503 *with* the header is
   still an outage and is retried (org #787, council ruling E5).
 
+### Changed
+
+- **One hosted error message is new.** A Broker response with no
+  `ZEOconnect-Protocol-Version` header now raises `HostedClientError("hosted
+  response did not come from the Broker")`. Before, it raised "hosted protocol
+  version is incompatible", which now means only a different or doubled header.
+  No other `HostedClientError` message changes, and neither do the session
+  store API or the `ZEOconnectHTTPTransport` constructor. Callers that match
+  on the old message for a headerless response must match on the new one.
+
 ### Known issues
 
 - **Hosted access stays unavailable in this release,** as in every release since
