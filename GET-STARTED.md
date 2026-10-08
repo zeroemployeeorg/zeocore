@@ -23,6 +23,13 @@ managed environments, native profiles, Gemini images, notebook execution and
 conversion/staging receipts. [Release notes](RELEASE_NOTES.md) list installation
 extras and the boundaries that still require host authorization or live validation.
 
+## Added in 0.12.0
+
+[YouTube publishing](docs/integrations/youtube.md) (`zeocore[youtube]`) and
+local [Revolut Business](docs/integrations/revolut-business.md) enrollment
+(`zeocore[revolut]`); the Revolut read client needs no extra. Both are offline
+contracts: no live request has been made to either provider.
+
 ## Added in 0.11.0
 
 The [provider registration guide](docs/how-to/provider-registration.md),

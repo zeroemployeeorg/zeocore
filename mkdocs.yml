@@ -1,8 +1,8 @@
 site_name: ZeoCore
 site_description: Typed capabilities for scripts, services and sovereign agents.
-site_url: https://profrodai.github.io/zeocore/
-repo_url: https://github.com/profrodai/zeocore
-repo_name: profrodai/zeocore
+site_url: https://zeroemployeeorg.github.io/zeocore/
+repo_url: https://github.com/zeroemployeeorg/zeocore
+repo_name: zeroemployeeorg/zeocore
 edit_uri: edit/main/docs/
 strict: true
 theme:

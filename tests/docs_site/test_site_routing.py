@@ -37,7 +37,7 @@ class LinkRoutingTests(unittest.TestCase):
         )
         self.assertEqual(
             actual,
-            "https://github.com/profrodai/zeocore/blob/main/examples/kit_usage.py",
+            "https://github.com/zeroemployeeorg/zeocore/blob/main/examples/kit_usage.py",
         )
 
     def test_missing_link_is_a_build_error(self) -> None:

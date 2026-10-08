@@ -9,7 +9,7 @@ This repo uses [`uv`](https://github.com/astral-sh/uv) for environment and
 dependency management, wired up through `make`:
 
 ```bash
-git clone https://github.com/profrodai/zeocore.git
+git clone https://github.com/zeroemployeeorg/zeocore.git
 cd zeocore
 make setup
 ```

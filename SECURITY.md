@@ -13,7 +13,7 @@ ZeoCore is beta. Security fixes land on the current minor line.
 
 Do **not** open a public GitHub issue for security problems.
 
-1. Use [GitHub Security Advisories](https://github.com/profrodai/zeocore/security/advisories/new)
+1. Use [GitHub Security Advisories](https://github.com/zeroemployeeorg/zeocore/security/advisories/new)
    on this repository, or
 2. Email the maintainer listed in `pyproject.toml` (`rod@aiproduct.engineer`)
    with a description, impact, and steps to reproduce.

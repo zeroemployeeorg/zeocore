@@ -2,12 +2,12 @@
 
 <!-- Teaches CLAUDE.md Rev 17; reviewed 2026-09-10: Runtime host and meeting source APIs. -->
 
-[Documentation](https://profrodai.github.io/zeocore/) · [Release notes](RELEASE_NOTES.md)
+[Documentation](https://zeroemployeeorg.github.io/zeocore/) · [Release notes](RELEASE_NOTES.md)
 
-[![CI](https://github.com/profrodai/zeocore/workflows/CI/badge.svg)](https://github.com/profrodai/zeocore/actions/workflows/ci.yml)
+[![CI](https://github.com/zeroemployeeorg/zeocore/workflows/CI/badge.svg)](https://github.com/zeroemployeeorg/zeocore/actions/workflows/ci.yml)
 [![PyPI version](https://img.shields.io/pypi/v/zeocore.svg)](https://pypi.org/project/zeocore/)
 [![Python versions](https://img.shields.io/pypi/pyversions/zeocore.svg)](https://pypi.org/project/zeocore/)
-[![Coverage](https://img.shields.io/badge/coverage-90%25-brightgreen.svg)](https://github.com/profrodai/zeocore)
+[![Coverage](https://img.shields.io/badge/coverage-90%25-brightgreen.svg)](https://github.com/zeroemployeeorg/zeocore)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 **ZeoCore is a Python framework for writing capabilities: small, typed,
@@ -225,6 +225,21 @@ and [the authoring reference](docs/integrations/authoring-reference.md) provide
 fresh-kernel execution and independently checked staging receipts.
 See [release notes](RELEASE_NOTES.md) for migration and remaining qualification limits.
 
+## New in 0.12.0: YouTube publishing and local Revolut Business
+
+```bash
+uv pip install "zeocore[youtube]==0.12.0"   # resumable multi-GB publishing
+uv pip install "zeocore[revolut]==0.12.0"   # local enrollment of your own account
+```
+
+[YouTube publishing](docs/integrations/youtube.md) uploads resumably from a
+write-once job directory, resumes at the exact byte after a drop, and never
+uploads twice. The [Revolut Business](docs/integrations/revolut-business.md)
+read client ships in the base package; the `revolut` extra adds local
+enrollment of your own account, with credentials in private per-user files.
+Both are **offline contracts: no live request has been made to either provider.**
+See the [release notes](RELEASE_NOTES.md).
+
 ## New in 0.11.0: Runtime host and meeting operations
 
 The Runtime host and meeting adapters are available in **0.11.0**. Install the
@@ -322,7 +337,7 @@ module by module.
 
 ## Project status
 
-ZeoCore **0.11.0** is a beta library: the API is typed and tested, and this
+ZeoCore **0.12.0** is a beta library: the API is typed and tested, and this
 release is the canonical capability-authoring surface for the Zero Employee
 ecosystem. The surface may still shift before 1.0. Issues, questions, and API
 feedback are welcome.
@@ -338,8 +353,8 @@ and how to submit a change. This project follows the
 ## Project links
 
 [PyPI](https://pypi.org/project/zeocore/) ·
-[Source](https://github.com/profrodai/zeocore) ·
-[Issues](https://github.com/profrodai/zeocore/issues) ·
+[Source](https://github.com/zeroemployeeorg/zeocore) ·
+[Issues](https://github.com/zeroemployeeorg/zeocore/issues) ·
 [Quickstart](QUICKSTART.md) ·
 [Docs](docs/README.md) ·
 [Manual](GET-STARTED.md) ·

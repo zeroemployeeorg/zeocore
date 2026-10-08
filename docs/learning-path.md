@@ -169,7 +169,7 @@ gracefully when the credential isn't set, rather than crashing.
 - [CHANGELOG.md](../CHANGELOG.md) — what changed, and which things were
   deliberately not built.
 
-Browse the [documentation site](https://profrodai.github.io/zeocore/) for
+Browse the [documentation site](https://zeroemployeeorg.github.io/zeocore/) for
 searchable guides and [generated API signatures](reference/generated.md).
 The [public API map](reference/api.md) defines supported import paths.
 
