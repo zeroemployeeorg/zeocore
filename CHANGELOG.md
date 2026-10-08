@@ -17,6 +17,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   transient. Anything else holds the job as `upload_rejected` after one
   request. A refusal, a Broker stop included, still holds it as
   `session_link_refused`.
+- **A Broker response without its protocol header is terminal everywhere.**
+  On the relay, a 502/503/504 was read as an outage *before* the header was
+  checked. A proxy's headerless 503 was therefore retried as if the Broker had
+  sent it. Now the header is checked first on every Broker response, so a
+  missing, different or doubled header is a protocol failure. It is never
+  retried, refreshed around or read as a stop. A Broker 503 *with* the header is
+  still an outage and is retried (org #787, council ruling E5).
+
+### Known issues
+
+- **Hosted access stays unavailable in this release.** The hosted origin is
+  still pinned to `connect.zeroemployee.org`, which no longer names the
+  ZEOconnect deployment; local integrations are unaffected. This release
+  changes relay failure handling. It does not claim conformance to Broker
+  contract `1.0.0` and does not repair the hosted origin; both are for 0.14.0
+  (org #791).
 
 ## [0.12.0] - 2026-10-08
 

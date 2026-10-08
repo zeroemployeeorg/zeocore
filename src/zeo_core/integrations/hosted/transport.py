@@ -40,6 +40,18 @@ _SAFE_RETRY_OPERATIONS = frozenset({"google.drive.file.download"})
 YOUTUBE_RELAY_MAX_CHUNK_BYTES = 4 * 1024 * 1024
 
 
+def _require_protocol(response: httpx.Response) -> None:
+    """A Broker response carries exactly one, matching protocol header.
+
+    A missing or different header, on any status including errors, is a
+    terminal protocol failure: never a stop, never an outage, never retried.
+    """
+    if response.headers.get_list(ZEOCONNECT_PROTOCOL_HEADER) != [
+        ZEOCONNECT_PROTOCOL_VERSION
+    ]:
+        raise HostedClientError("hosted protocol version is incompatible")
+
+
 class _PairingWire(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
@@ -284,6 +296,9 @@ class ZEOconnectHTTPTransport:
             )
         except httpx.TransportError:
             raise HostedClientError("hosted transport is unavailable") from None
+        # Only a Broker-produced 5xx is an outage. A headerless one came from
+        # something in front of the Broker and is a terminal protocol failure.
+        _require_protocol(response)
         if response.status_code in {502, 503, 504}:
             # ZEOconnect could not reach YouTube (or Google's token endpoint):
             # transient, so the transfer probes again and resumes.
@@ -359,11 +374,7 @@ class ZEOconnectHTTPTransport:
     def _validate_response(self, response: httpx.Response) -> None:
         if response.is_redirect:
             raise HostedClientError("hosted redirect is forbidden")
-        if (
-            response.headers.get(ZEOCONNECT_PROTOCOL_HEADER)
-            != ZEOCONNECT_PROTOCOL_VERSION
-        ):
-            raise HostedClientError("hosted protocol version is incompatible")
+        _require_protocol(response)
         if response.status_code in {409, 425, 428}:
             try:
                 if response.json().get("code") == "authorization_pending":
