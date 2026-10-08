@@ -10,8 +10,9 @@ The current native slice supplies Drive, Docs and Bluesky bindings; it is not
 a claim that every local integration is available through the hosted service.
 Live operation also requires a compatible deployed ZEOconnect Member API.
 
-!!! warning "Hosted access is unavailable in zeocore 0.12.0 and 0.13.0"
-    These releases pin the hosted origin `https://connect.zeroemployee.org`.
+!!! warning "Hosted access is unavailable in zeocore 0.10.0 through 0.13.0"
+    Every release with the hosted HTTP transport, from 0.10.0 to 0.13.0, pins
+    the hosted origin `https://connect.zeroemployee.org`.
     The ZEOconnect deployment has been renamed, so the hosted profile cannot
     reach it, and pairing and hosted calls fail. **Local integrations are
     unaffected.** At the time of writing the old name has no DNS record. That

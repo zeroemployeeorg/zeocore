@@ -27,9 +27,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Known issues
 
-- **Hosted access stays unavailable in this release.** The hosted origin is
-  still pinned to `connect.zeroemployee.org`, which no longer names the
-  ZEOconnect deployment; local integrations are unaffected. This release
+- **Hosted access stays unavailable in this release,** as in every release since
+  0.10.0. The hosted origin is still pinned to `connect.zeroemployee.org`, which
+  no longer names the ZEOconnect deployment; local integrations are unaffected. This release
   changes relay failure handling. It does not claim conformance to Broker
   contract `1.0.0` and does not repair the hosted origin; both are for 0.14.0
   (org #791).
