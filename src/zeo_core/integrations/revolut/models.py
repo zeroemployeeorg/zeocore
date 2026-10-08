@@ -242,11 +242,18 @@ class ExpensePage(_Normalized):
     Revolut's published contract does not state which date ``from``/``to``
     filter on. ``expense_date`` is the assumption, and it is unverified until
     a live sandbox run.
+
+    If the assumption is wrong, the next page can start past expenses that
+    were never returned. Replacing by ``id`` removes duplicates; it cannot
+    recover what was skipped. So ``completeness`` is always ``"unverified"``,
+    and a run of pages that ends with ``next_to=None`` is not proof that the
+    window was read in full. Record such a sync as potentially incomplete.
     """
 
     expenses: tuple[Expense, ...]
     observed_at: AwareDatetime
     next_to: datetime | None = None
+    completeness: Literal["unverified"] = "unverified"
     normalization_version: Literal["revolut-business-read-1"] = NORMALIZATION_VERSION
 
 

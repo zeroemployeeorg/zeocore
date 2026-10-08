@@ -26,7 +26,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   **Offline contract only; no request has been made to Revolut.** Which date
   Revolut's expense window filters on is not stated in its published
   contract. The cursor assumes `expense_date`, and that is unverified until a
-  live sandbox run.
+  live sandbox run. **So every `ExpensePage` reports
+  `completeness="unverified"`**, and a run that reaches `next_to=None` is not
+  proof of a complete window (org #787, council ruling on E4).
 
 ## [0.12.0] - 2026-10-08
 

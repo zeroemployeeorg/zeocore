@@ -19,6 +19,7 @@ from pydantic import SecretStr, ValidationError
 
 from zeo_core.integrations.revolut import (
     MAX_RECEIPT_BYTES,
+    ExpensePage,
     ExpenseQuery,
     LabelQuery,
     RevolutAPIError,
@@ -107,6 +108,8 @@ def test_expenses_are_exact_drop_the_payer_and_send_only_declared_params() -> No
         "payer" not in expense.model_dump() and "A Person" not in page.model_dump_json()
     )
     assert page.next_to is None  # not a full page
+    # A short page ends the loop, but it is not proof the window was complete.
+    assert page.completeness == "unverified"
     (request,) = seen
     assert request.url.host == "sandbox-b2b.revolut.com"
     assert request.url.path == "/api/1.0/expenses"
@@ -124,6 +127,14 @@ def test_a_full_expense_page_yields_the_oldest_expense_date_as_its_cursor() -> N
     items = [_expense(i, START - timedelta(hours=i)) for i in range(3)]
     page = _client(_json(items)).list_expenses(ExpenseQuery(count=3))
     assert page.next_to == START - timedelta(hours=2)
+    assert page.completeness == "unverified"
+
+
+def test_an_expense_page_cannot_claim_a_complete_window() -> None:
+    page = _client(_json([])).list_expenses()
+    assert page.next_to is None and page.completeness == "unverified"
+    with pytest.raises(ValidationError):
+        ExpensePage.model_validate({**page.model_dump(), "completeness": "complete"})
 
 
 def test_an_expense_cursor_that_does_not_advance_is_refused() -> None:

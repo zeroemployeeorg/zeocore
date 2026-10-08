@@ -191,8 +191,14 @@ labels = client.list_labels(str(groups.label_groups[0].id))
   up to 500. Replace stored expenses by `id`.
 - **Which date the window filters on is not stated** in Revolut's published
   contract. `next_to` is derived from the oldest `expense_date`, and that
-  choice is **unverified until a live sandbox run**. Replacement by `id` keeps
-  the loop safe if the assumption is wrong.
+  choice is **unverified until a live sandbox run**. If it is wrong, a page can
+  start past expenses that were never returned. Replacing by `id` removes
+  duplicates, but it cannot recover a skipped expense.
+- **So an expense read is never reported complete.** Every `ExpensePage`
+  carries `completeness="unverified"`. Reaching `next_to=None` means Revolut
+  returned a short page, not that every expense in the window was read. Record
+  an expense sync as potentially incomplete, and do not use it to conclude that
+  an expense does not exist.
 - **Labels and label groups** page by an opaque `next_page_token`. Pass it back
   unchanged as `LabelQuery(page_token=...)`. `limit` goes up to 500, and a token
   that does not change raises `PAGINATION_STALLED`.

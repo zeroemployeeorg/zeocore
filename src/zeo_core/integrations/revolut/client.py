@@ -116,7 +116,10 @@ class RevolutBusinessClient:
         """Return one observed page of expenses and the cursor for the next older page.
 
         As with transactions, the caller owns the loop and replaces by ``id``.
-        Any error means the window was not fully read.
+        Any error means the window was not fully read. Reaching
+        ``next_to=None`` does not prove the opposite: the cursor rests on an
+        unverified date assumption, so every page reports
+        ``completeness="unverified"`` (see ``ExpensePage``).
         """
         query = query or ExpenseQuery()
         params: dict[str, str | int] = {"count": query.count}
