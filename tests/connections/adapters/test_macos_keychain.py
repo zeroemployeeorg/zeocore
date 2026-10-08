@@ -58,6 +58,7 @@ import subprocess
 import sys
 import threading
 import time
+from collections.abc import Callable
 from datetime import UTC, datetime
 
 import pytest
@@ -704,49 +705,133 @@ class TestStructuralConformance:
 
 _IS_MACOS = platform.system() == "Darwin"
 _SECURITY_AVAILABLE = shutil.which("security") is not None
-# Set on a host that is meant to provide the stdin-transport proof. There, an
-# unusable keychain is a failure, not a skip, so the proof cannot go unrun
-# quietly on every host.
+# Set on a host designated to PROVIDE the stdin-transport proof. There the
+# proof must run or fail: an unsupported platform, an unusable keychain, a
+# failed probe and a probe timeout are all failures, never skips.
 _REQUIRE_KEYCHAIN = os.environ.get("ZEOCORE_REQUIRE_KEYCHAIN_PROOF") == "1"
+_PROBE_TIMEOUT_SECONDS = 10
+
+# security(1) refusals that describe the SESSION, not the adapter, and so may
+# skip in ordinary mode. Matched on exit code AND message; nothing else is
+# assumed to be environmental. Exit 36 is errSecInteractionNotAllowed: the
+# keychain is locked and this session may not prompt to unlock it.
+_ENVIRONMENTAL_REFUSALS = {36: "User interaction is not allowed"}
 
 
-def _keychain_refusal() -> str | None:
-    """Why the real login keychain cannot be used here, or None if it can.
+def _probe_default_keychain() -> tuple[str, str | None]:
+    """Probe the keychain the proofs below write to. Returns (keychain, refusal).
 
-    A headless macOS session (SSH, tmux, a CI agent) has no unlocked login
-    keychain: `security` exits 36, "User interaction is not allowed", and the
-    proofs below fail for a reason that says nothing about the adapter. This
-    asks `security` itself, read-only, instead of guessing from the session.
+    Neither these proofs nor KeychainSecretStore pass `-k`, so every write goes
+    to security(1)'s DEFAULT keychain. The probe resolves that keychain once
+    and asks about exactly it, so probe and proofs name the same target.
+
+    What a successful probe means, and no more: `show-keychain-info` read that
+    keychain's settings without user interaction, i.e. it is unlocked in this
+    session. It does NOT prove that a write will succeed. Inside a proof, a
+    write that fails is still a failure.
+
+    Some sessions (commonly SSH, tmux or a CI agent) see the keychain locked
+    and non-interactive. Being headless does not by itself decide this, which
+    is why the probe asks security(1) rather than inspecting the session.
+
+    Raises on anything that is not a recognised environmental refusal: an
+    unexpected exit code, an unexpected message, or a timeout. Those are
+    errors to surface, not reasons to skip.
     """
 
-    if not (_IS_MACOS and _SECURITY_AVAILABLE):
-        return "requires a real macOS security(1) binary"
-    probe = subprocess.run(  # noqa: S603
-        ["/usr/bin/security", "show-keychain-info"],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+    def run(args: list[str]) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(  # noqa: S603
+            ["/usr/bin/security", *args],
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=_PROBE_TIMEOUT_SECONDS,
+        )
+
+    located = run(["default-keychain"])
+    keychain = located.stdout.strip().strip('"')
+    if located.returncode != 0 or not keychain:
+        raise RuntimeError(
+            "security(1) could not name the default keychain "
+            f"(exit {located.returncode}): {(located.stderr or '').strip()}"
+        )
+    probe = run(["show-keychain-info", keychain])
     if probe.returncode == 0:
-        return None
-    detail = (probe.stderr or probe.stdout).strip().splitlines()
-    return "requires an unlocked login keychain; security(1) reported: " + (
-        detail[-1] if detail else f"exit {probe.returncode}"
-    )
-
-
-_KEYCHAIN_REFUSAL = _keychain_refusal()
-# Only the proofs that WRITE to the real login keychain need it unlocked; the
-# others in this section run headless and must keep running there.
-_needs_usable_keychain = pytest.mark.skipif(
-    _KEYCHAIN_REFUSAL is not None,
-    reason=f"this proof writes to the login keychain, which {_KEYCHAIN_REFUSAL}",
-)
-if _KEYCHAIN_REFUSAL is not None and _REQUIRE_KEYCHAIN and _IS_MACOS:
+        return keychain, None
+    diagnostic = (probe.stderr or probe.stdout).strip()
+    expected = _ENVIRONMENTAL_REFUSALS.get(probe.returncode)
+    if expected is not None and expected in diagnostic:
+        return keychain, (
+            f"{keychain} is not usable in this session "
+            f"(security(1) exit {probe.returncode}: {diagnostic})"
+        )
     raise RuntimeError(
-        "ZEOCORE_REQUIRE_KEYCHAIN_PROOF=1 but the stdin-transport proof cannot "
-        f"run here: {_KEYCHAIN_REFUSAL}"
+        f"unexpected keychain probe failure for {keychain}: "
+        f"exit {probe.returncode}: {diagnostic}"
     )
+
+
+def _keychain_decision(
+    *,
+    platform_supported: bool,
+    required: bool,
+    probe: Callable[[], tuple[str, str | None]],
+) -> tuple[str, str]:
+    """Decide whether the proof runs: ("run", keychain), ("skip", why) or
+    ("fail", why).
+
+    Pure apart from calling `probe`, so every branch of the contract is
+    tested directly below, including platforms this host is not. Ordinary
+    mode may skip only on an unsupported platform or a recognised
+    environmental refusal. Required mode never skips. A probe error or
+    timeout fails in both modes.
+    """
+
+    if not platform_supported:
+        why = "requires a real macOS security(1) binary"
+        if required:
+            return (
+                "fail",
+                f"ZEOCORE_REQUIRE_KEYCHAIN_PROOF=1 on an unsupported host: {why}",
+            )
+        return "skip", f"stdin-transport proof NOT run: {why}"
+    try:
+        keychain, refusal = probe()
+    except (RuntimeError, subprocess.TimeoutExpired) as error:
+        return "fail", f"keychain probe error: {error}"
+    if refusal is not None:
+        if required:
+            return "fail", f"ZEOCORE_REQUIRE_KEYCHAIN_PROOF=1 but {refusal}"
+        return "skip", f"stdin-transport proof NOT run: {refusal}"
+    return "run", keychain
+
+
+@pytest.fixture(scope="module")
+def usable_keychain() -> str:
+    """The default keychain, once it is known to be usable; else skip or fail.
+
+    A skip here is the ordinary gate passing; it is not this proof passing. A
+    fixture rather than a module-level probe, so unrelated test collection
+    never touches the keychain.
+    """
+
+    outcome, detail = _keychain_decision(
+        platform_supported=_IS_MACOS and _SECURITY_AVAILABLE,
+        required=_REQUIRE_KEYCHAIN,
+        probe=_probe_default_keychain,
+    )
+    if outcome == "fail":
+        pytest.fail(detail)
+    if outcome == "skip":
+        pytest.skip(detail)
+    return detail
+
+
+# The proofs that do not write to the keychain still need the real binary.
+_needs_real_security = pytest.mark.skipif(
+    not (_IS_MACOS and _SECURITY_AVAILABLE),
+    reason="requires a real macOS security(1) binary",
+)
 
 
 def _raw_security(
@@ -761,10 +846,104 @@ def _raw_security(
     )
 
 
-@pytest.mark.skipif(
-    not (_IS_MACOS and _SECURITY_AVAILABLE),
-    reason="stdin-transport proofs require a real macOS security(1) binary",
-)
+class TestKeychainProofGateContract:
+    """The gate's contract, case by case, on any platform (org issue #787 Z1)."""
+
+    @staticmethod
+    def _probe_returning(
+        keychain: str, refusal: str | None
+    ) -> Callable[[], tuple[str, str | None]]:
+        return lambda: (keychain, refusal)
+
+    @staticmethod
+    def _probe_raising(error: Exception) -> Callable[[], tuple[str, str | None]]:
+        def probe() -> tuple[str, str | None]:
+            raise error
+
+        return probe
+
+    def test_required_mode_fails_on_an_unsupported_platform(self) -> None:
+        # The elders' counterexample: a Linux runner designated as the
+        # provider must not be allowed to skip.
+        outcome, detail = _keychain_decision(
+            platform_supported=False,
+            required=True,
+            probe=self._probe_raising(AssertionError("must not probe")),
+        )
+        assert outcome == "fail", detail
+        assert "unsupported host" in detail
+
+    def test_ordinary_mode_skips_an_unsupported_platform(self) -> None:
+        outcome, detail = _keychain_decision(
+            platform_supported=False,
+            required=False,
+            probe=self._probe_raising(AssertionError("must not probe")),
+        )
+        assert outcome == "skip" and "NOT run" in detail
+
+    def test_a_recognised_refusal_skips_ordinarily_and_fails_when_required(
+        self,
+    ) -> None:
+        refusal = (
+            "login.keychain-db is not usable "
+            "(security(1) exit 36: User interaction is not allowed.)"
+        )
+        probe = self._probe_returning("login.keychain-db", refusal)
+        assert _keychain_decision(
+            platform_supported=True, required=False, probe=probe
+        ) == (
+            "skip",
+            f"stdin-transport proof NOT run: {refusal}",
+        )
+        outcome, detail = _keychain_decision(
+            platform_supported=True, required=True, probe=probe
+        )
+        assert outcome == "fail" and "exit 36" in detail
+
+    @pytest.mark.parametrize("required", [False, True])
+    @pytest.mark.parametrize(
+        "error",
+        [
+            RuntimeError(
+                "unexpected keychain probe failure: exit 50: no such keychain"
+            ),
+            subprocess.TimeoutExpired(cmd="security", timeout=10),
+        ],
+        ids=["unexpected-exit", "timeout"],
+    )
+    def test_an_unexpected_probe_failure_is_never_a_skip(
+        self, error: Exception, required: bool
+    ) -> None:
+        outcome, detail = _keychain_decision(
+            platform_supported=True,
+            required=required,
+            probe=self._probe_raising(error),
+        )
+        assert outcome == "fail", detail
+        assert "probe error" in detail
+
+    def test_a_usable_keychain_runs_the_proof_against_that_keychain(self) -> None:
+        for required in (False, True):
+            assert _keychain_decision(
+                platform_supported=True,
+                required=required,
+                probe=self._probe_returning("/k/login.keychain-db", None),
+            ) == ("run", "/k/login.keychain-db")
+
+    @pytest.mark.skipif(
+        not (_IS_MACOS and _SECURITY_AVAILABLE),
+        reason="requires a real macOS security(1) binary",
+    )
+    def test_the_probe_classifies_this_hosts_real_answer(self) -> None:
+        """On this host, the real probe either succeeds or is a recognised
+        refusal; anything else raises and fails this test."""
+
+        keychain, refusal = _probe_default_keychain()
+        assert keychain
+        if refusal is not None:
+            assert "exit 36" in refusal and "User interaction is not allowed" in refusal
+
+
 class TestStdinTransportProvenOnRealExecutable:
     """
     Principal decision msg_e79f76af, carried into this revision by
@@ -778,7 +957,7 @@ class TestStdinTransportProvenOnRealExecutable:
     `finally`, matching the pattern Master's own probe used.
     """
 
-    @_needs_usable_keychain
+    @pytest.mark.usefixtures("usable_keychain")
     def test_single_stdin_value_is_the_control_case_and_fails_red(self) -> None:
         # RED-before-green, the control case: this is SOW-05's original
         # (falsified) claim, reproduced here as the FIRST thing this
@@ -815,7 +994,7 @@ class TestStdinTransportProvenOnRealExecutable:
         finally:
             _raw_security(["delete-generic-password", "-a", account, "-s", service])
 
-    @_needs_usable_keychain
+    @pytest.mark.usefixtures("usable_keychain")
     def test_twice_fed_stdin_value_is_the_corrected_shape_and_passes_green(
         self,
     ) -> None:
@@ -855,7 +1034,7 @@ class TestStdinTransportProvenOnRealExecutable:
         finally:
             _raw_security(["delete-generic-password", "-a", account, "-s", service])
 
-    @_needs_usable_keychain
+    @pytest.mark.usefixtures("usable_keychain")
     def test_keychain_secret_store_put_never_leaks_material_via_ps_positive_guarantee(
         self,
     ) -> None:
@@ -966,6 +1145,7 @@ class TestStdinTransportProvenOnRealExecutable:
                     ]
                 )
 
+    @_needs_real_security
     def test_stdin_transport_diagnostics_never_carry_material_on_the_real_binary(
         self,
     ) -> None:
@@ -988,6 +1168,7 @@ class TestStdinTransportProvenOnRealExecutable:
         finally:
             _raw_security(["delete-generic-password", "-a", account, "-s", service])
 
+    @_needs_real_security
     def test_dash_a_broad_access_is_never_passed_by_the_store(self) -> None:
         # Structural check: -A (broad, unprompted app access) must never
         # appear on any argv this store constructs. Checked against the
