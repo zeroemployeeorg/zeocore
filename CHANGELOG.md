@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **The YouTube custody relay no longer retries a failure no retry can cure.**
+  Until now only a refusal ended a relayed upload: every other client error
+  backed off and probed again, up to 20 times. That covered an incompatible
+  protocol, an invalid answer, an expired or missing device session, and the
+  managed-execution refusal. Now only "unavailable" and "pending" are
+  transient. Anything else holds the job as `upload_rejected` after one
+  request. A refusal, a Broker stop included, still holds it as
+  `session_link_refused`.
+
 ## [0.12.0] - 2026-10-08
 
 ### Added

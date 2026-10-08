@@ -26,6 +26,8 @@ from zeo_core.integrations.hosted.client import HostedClientError
 
 #: The relay's chunk ceiling (a multiple of 256 KiB).
 RELAY_CHUNK_BYTES = 4 * 1024 * 1024
+#: The only relay failures a later attempt can cure.
+_TRANSIENT = frozenset({"hosted transport is unavailable", "hosted request is pending"})
 
 
 @runtime_checkable
@@ -82,14 +84,20 @@ class RelayByteHttp:
                 body=content,
             )
         except HostedClientError as error:
-            if "refused" in str(error):
-                # ZEOconnect refused the relay itself (seal, link or connection).
+            message = str(error)
+            if message in _TRANSIENT:
+                # Unreachable or pending: transient, so the transfer backs off.
+                raise httpx.ConnectError(message) from None
+            if "refused" in message:
+                # ZEOconnect refused the relay itself (seal, link, connection or
+                # a stop control): terminal, never retried.
                 return _RelayResponse(403, text=_reason("relay_refused"))
-            # Unavailable or pending: transient, so the transfer backs off.
-            raise httpx.ConnectError(str(error)) from None
+            # An incompatible protocol, an invalid answer, an expired session:
+            # every later attempt would fail the same way, so none is made.
+            return _RelayResponse(400, text=_reason("relay_failed"))
         status = result.get("status")
         if not isinstance(status, int):
-            raise httpx.ConnectError("relay answer without a status")
+            return _RelayResponse(400, text=_reason("relay_failed"))
         response_headers: dict[str, str] = {}
         if isinstance(result.get("range"), str):
             response_headers["Range"] = str(result["range"])
