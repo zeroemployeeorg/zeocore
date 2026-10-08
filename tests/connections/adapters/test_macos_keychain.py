@@ -50,6 +50,7 @@ import copy
 import io
 import json
 import logging
+import os
 import pickle
 import platform
 import shutil
@@ -703,6 +704,49 @@ class TestStructuralConformance:
 
 _IS_MACOS = platform.system() == "Darwin"
 _SECURITY_AVAILABLE = shutil.which("security") is not None
+# Set on a host that is meant to provide the stdin-transport proof. There, an
+# unusable keychain is a failure, not a skip, so the proof cannot go unrun
+# quietly on every host.
+_REQUIRE_KEYCHAIN = os.environ.get("ZEOCORE_REQUIRE_KEYCHAIN_PROOF") == "1"
+
+
+def _keychain_refusal() -> str | None:
+    """Why the real login keychain cannot be used here, or None if it can.
+
+    A headless macOS session (SSH, tmux, a CI agent) has no unlocked login
+    keychain: `security` exits 36, "User interaction is not allowed", and the
+    proofs below fail for a reason that says nothing about the adapter. This
+    asks `security` itself, read-only, instead of guessing from the session.
+    """
+
+    if not (_IS_MACOS and _SECURITY_AVAILABLE):
+        return "requires a real macOS security(1) binary"
+    probe = subprocess.run(  # noqa: S603
+        ["/usr/bin/security", "show-keychain-info"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if probe.returncode == 0:
+        return None
+    detail = (probe.stderr or probe.stdout).strip().splitlines()
+    return "requires an unlocked login keychain; security(1) reported: " + (
+        detail[-1] if detail else f"exit {probe.returncode}"
+    )
+
+
+_KEYCHAIN_REFUSAL = _keychain_refusal()
+# Only the proofs that WRITE to the real login keychain need it unlocked; the
+# others in this section run headless and must keep running there.
+_needs_usable_keychain = pytest.mark.skipif(
+    _KEYCHAIN_REFUSAL is not None,
+    reason=f"this proof writes to the login keychain, which {_KEYCHAIN_REFUSAL}",
+)
+if _KEYCHAIN_REFUSAL is not None and _REQUIRE_KEYCHAIN and _IS_MACOS:
+    raise RuntimeError(
+        "ZEOCORE_REQUIRE_KEYCHAIN_PROOF=1 but the stdin-transport proof cannot "
+        f"run here: {_KEYCHAIN_REFUSAL}"
+    )
 
 
 def _raw_security(
@@ -734,6 +778,7 @@ class TestStdinTransportProvenOnRealExecutable:
     `finally`, matching the pattern Master's own probe used.
     """
 
+    @_needs_usable_keychain
     def test_single_stdin_value_is_the_control_case_and_fails_red(self) -> None:
         # RED-before-green, the control case: this is SOW-05's original
         # (falsified) claim, reproduced here as the FIRST thing this
@@ -770,6 +815,7 @@ class TestStdinTransportProvenOnRealExecutable:
         finally:
             _raw_security(["delete-generic-password", "-a", account, "-s", service])
 
+    @_needs_usable_keychain
     def test_twice_fed_stdin_value_is_the_corrected_shape_and_passes_green(
         self,
     ) -> None:
@@ -809,6 +855,7 @@ class TestStdinTransportProvenOnRealExecutable:
         finally:
             _raw_security(["delete-generic-password", "-a", account, "-s", service])
 
+    @_needs_usable_keychain
     def test_keychain_secret_store_put_never_leaks_material_via_ps_positive_guarantee(
         self,
     ) -> None:
