@@ -59,7 +59,7 @@ def rewrite_target(target: str, source: str, destination: str, mapping: dict[str
         relative = posixpath.relpath(mapping[path], posixpath.dirname(destination) or ".")
         return urlunsplit(("", "", relative, parts.query, parts.fragment))
     kind = "tree" if actual.is_dir() else "blob"
-    url = f"https://github.com/profrodai/zeocore/{kind}/main/{quote(path)}"
+    url = f"https://github.com/zeroemployeeorg/zeocore/{kind}/main/{quote(path)}"
     return urlunsplit((*urlsplit(url)[:3], parts.query, parts.fragment))
 
 

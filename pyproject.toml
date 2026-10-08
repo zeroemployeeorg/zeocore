@@ -202,10 +202,10 @@ runtime-host = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/profrodai/zeocore"
-"Bug Tracker" = "https://github.com/profrodai/zeocore/issues"
-"Documentation" = "https://profrodai.github.io/zeocore/"
-"Changelog" = "https://github.com/profrodai/zeocore/blob/main/CHANGELOG.md"
+"Homepage" = "https://github.com/zeroemployeeorg/zeocore"
+"Bug Tracker" = "https://github.com/zeroemployeeorg/zeocore/issues"
+"Documentation" = "https://zeroemployeeorg.github.io/zeocore/"
+"Changelog" = "https://github.com/zeroemployeeorg/zeocore/blob/main/CHANGELOG.md"
 
 [tool.hatch.version]
 path = "src/zeo_core/__init__.py"

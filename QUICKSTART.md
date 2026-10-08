@@ -413,7 +413,7 @@ Small experiments, in increasing order of interest:
 | `5 validation errors for ToolContext` | `ToolContext` was built without its required fields. | It needs `run_id`, `tool_name`, `tool_version`, `logger`, `fs`, `work_dir`, and `output_dir`. |
 
 Still stuck? Open an
-[issue](https://github.com/profrodai/zeocore/issues) with the command
+[issue](https://github.com/zeroemployeeorg/zeocore/issues) with the command
 you ran and the full error text.
 
 ## Where to go next

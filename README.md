@@ -2,12 +2,12 @@
 
 <!-- Teaches CLAUDE.md Rev 17; reviewed 2026-09-10: Runtime host and meeting source APIs. -->
 
-[Documentation](https://profrodai.github.io/zeocore/) · [Release notes](RELEASE_NOTES.md)
+[Documentation](https://zeroemployeeorg.github.io/zeocore/) · [Release notes](RELEASE_NOTES.md)
 
-[![CI](https://github.com/profrodai/zeocore/workflows/CI/badge.svg)](https://github.com/profrodai/zeocore/actions/workflows/ci.yml)
+[![CI](https://github.com/zeroemployeeorg/zeocore/workflows/CI/badge.svg)](https://github.com/zeroemployeeorg/zeocore/actions/workflows/ci.yml)
 [![PyPI version](https://img.shields.io/pypi/v/zeocore.svg)](https://pypi.org/project/zeocore/)
 [![Python versions](https://img.shields.io/pypi/pyversions/zeocore.svg)](https://pypi.org/project/zeocore/)
-[![Coverage](https://img.shields.io/badge/coverage-90%25-brightgreen.svg)](https://github.com/profrodai/zeocore)
+[![Coverage](https://img.shields.io/badge/coverage-90%25-brightgreen.svg)](https://github.com/zeroemployeeorg/zeocore)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 **ZeoCore is a Python framework for writing capabilities: small, typed,
@@ -353,8 +353,8 @@ and how to submit a change. This project follows the
 ## Project links
 
 [PyPI](https://pypi.org/project/zeocore/) ·
-[Source](https://github.com/profrodai/zeocore) ·
-[Issues](https://github.com/profrodai/zeocore/issues) ·
+[Source](https://github.com/zeroemployeeorg/zeocore) ·
+[Issues](https://github.com/zeroemployeeorg/zeocore/issues) ·
 [Quickstart](QUICKSTART.md) ·
 [Docs](docs/README.md) ·
 [Manual](GET-STARTED.md) ·

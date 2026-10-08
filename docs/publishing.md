@@ -42,7 +42,7 @@ Pull requests and dispatches on other branches build without publishing.
 
 In repository **Settings → Pages → Build and deployment**, select
 **Deploy from a branch**, branch **gh-pages**, folder **/ (root)**.
-The published site is <https://profrodai.github.io/zeocore/>.
+The published site is <https://zeroemployeeorg.github.io/zeocore/>.
 
 For an authorized initial publication before the workflow is on main:
 
