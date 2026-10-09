@@ -51,6 +51,7 @@ from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 from zeo_core.integrations.google.youtube.job import (
     PROVIDER_RECORD,
     CaptionFile,
+    Event,
     Job,
     JobDirectory,
     JobError,
@@ -194,39 +195,56 @@ def job_lock(job_dir: Path) -> Iterator[None]:
         os.close(descriptor)
 
 
-def _close_refusal(job: Job, state: JobState, held_seq: int) -> str | None:
+def _close_refusal(
+    job: Job, state: JobState, expect_held_seq: int, step: str
+) -> str | None:
     if state.held is None:
         return "not_held"
-    if state.held_seq != held_seq:
+    if state.held_seq != expect_held_seq:
         return "hold_changed"
     if state.held_step is None or state.held_attempt is None:
         return "hold_step_unknown"
+    if state.held_step != step:
+        return "step_mismatch"
     if state.held_step not in job_steps(job):
         return "unknown_step"
     return None
 
 
+def _closing_event(directory: JobDirectory) -> Event | None:
+    """The studio's close of a hold, if the job has one (the last ``cancelled``)."""
+    closes = [e for e in directory.events() if e.type == "cancelled"]
+    return closes[-1] if closes else None
+
+
 def close_held_job(
     job_dir: Path,
-    held_seq: int,
+    expect_held_seq: int,
+    step: str,
     *,
     clock: Callable[[], datetime] | None = None,
 ) -> RunResult:
-    """Close the job's hold ``held_seq`` on a person's decision.
+    """Close hold ``expect_held_seq`` at ``step``, on a person's decision.
 
     It is the studio's Close for a job held on an outcome ZEOconnect
     recorded. It sends nothing to ZEOconnect: no new key, no new attempt.
-    Under the job's lock it checks four things:
-    - the job is still held;
-    - the hold in force is ``held_seq``, the one the person saw (a stale
-      decision gives ``hold_changed``);
-    - that hold recorded its own step and attempt. Holds zeocore raised
-      itself, and holds from older journals, give ``hold_step_unknown``;
-    - the step is one of the job's steps.
-    It then appends the studio's ``cancelled`` event, naming that hold, its
-    step and its attempt, and writes the REFUSED receipt with reason
-    ``cancelled``. A closed job returns the same result again. While a run
-    holds the lock, it answers ``busy`` (exit 11).
+    ``expect_held_seq`` and ``step`` are what the person was shown. They
+    are compared with the journal under the job's lock, and never taken
+    as authority:
+    - ``not_held``: the job isn't held, or it was released;
+    - ``hold_changed``: another hold is in force (a stale decision);
+    - ``hold_step_unknown``: the hold recorded no typed step or attempt, as
+      with holds zeocore raises itself and holds from older journals;
+    - ``step_mismatch``: the hold is on another step.
+    It then appends the studio's ``cancelled`` event, naming the hold and
+    its recorded step and attempt, and writes the REFUSED receipt with
+    reason ``cancelled``. The receipt itself is unchanged.
+
+    A repeat is compared with the original close: the same hold and step
+    replays unchanged, with nothing appended, and anything else is
+    ``already_closed``. That also holds after an interruption between the
+    event and the receipt. While a run holds the lock, it answers ``busy``
+    (exit 11).
     """
     now = clock or (lambda: datetime.now(UTC))
     directory = JobDirectory(job_dir)
@@ -235,26 +253,51 @@ def close_held_job(
     except JobError as error:
         return RunResult(EXIT_INVALID, {"state": "invalid", "reason": str(error)})
 
-    def refused(reason: str) -> RunResult:
+    def refused(reason: str, **fields: Any) -> RunResult:  # noqa: ANN401 - JSON
         return RunResult(
-            EXIT_INVALID, {"job_id": job.job_id, "state": "invalid", "reason": reason}
+            EXIT_INVALID,
+            {"job_id": job.job_id, "state": "invalid", "reason": reason, **fields},
         )
 
-    cancelled = RunResult(
-        EXIT_DONE, {"job_id": job.job_id, "state": "cancelled", "reason": "cancelled"}
-    )
+    def cancelled(closing: Event) -> RunResult:
+        extra = closing.model_extra or {}
+        return RunResult(
+            EXIT_DONE,
+            {
+                "job_id": job.job_id,
+                "state": "cancelled",
+                "reason": "cancelled",
+                "held_seq": extra.get("held_seq"),
+                "step": extra.get("step"),
+            },
+        )
+
     try:
         with job_lock(directory.path):
             receipt = directory.receipt()
-            if receipt is not None:
-                if receipt.outcome == "REFUSED" and receipt.reason == "cancelled":
-                    return cancelled
+            if receipt is not None and not (
+                receipt.outcome == "REFUSED" and receipt.reason == "cancelled"
+            ):
                 return refused("finished")
             state = directory.state()
-            if not state.cancelled:
-                if (refusal := _close_refusal(job, state, held_seq)) is not None:
+            if state.cancelled:
+                closing = _closing_event(directory)
+                extra = (closing.model_extra if closing else None) or {}
+                if closing is None or (extra.get("held_seq"), extra.get("step")) != (
+                    expect_held_seq,
+                    step,
+                ):
+                    return refused(
+                        "already_closed",
+                        closed_held_seq=extra.get("held_seq"),
+                        closed_step=extra.get("step"),
+                    )
+            else:
+                if (
+                    refusal := _close_refusal(job, state, expect_held_seq, step)
+                ) is not None:
                     return refused(refusal)
-                directory.append(
+                closing = directory.append(
                     actor="studio",
                     type="cancelled",
                     closed_on=state.held,
@@ -262,23 +305,24 @@ def close_held_job(
                     step=state.held_step,
                     attempt=state.held_attempt,
                 )
-            directory.write_receipt(
-                Receipt.model_validate(
-                    {
-                        "schema_version": 1,
-                        "job_id": job.job_id,
-                        "outcome": "REFUSED",
-                        "provider_record": (
-                            PROVIDER_RECORD
-                            if directory.provider_record() is not None
-                            else None
-                        ),
-                        "observed_at": now(),
-                        "reason": "cancelled",
-                    }
+            if receipt is None:
+                directory.write_receipt(
+                    Receipt.model_validate(
+                        {
+                            "schema_version": 1,
+                            "job_id": job.job_id,
+                            "outcome": "REFUSED",
+                            "provider_record": (
+                                PROVIDER_RECORD
+                                if directory.provider_record() is not None
+                                else None
+                            ),
+                            "observed_at": now(),
+                            "reason": "cancelled",
+                        }
+                    )
                 )
-            )
-            return cancelled
+            return cancelled(closing)
     except JobBusyError:
         return RunResult(EXIT_WAIT, {"job_id": job.job_id, "state": "busy"})
 
@@ -1163,7 +1207,9 @@ def _youtube(
 
 
 def _close_command(args: argparse.Namespace) -> int:
-    return _print(close_held_job(Path(args.job_dir).resolve(), args.held_seq))
+    return _print(
+        close_held_job(Path(args.job_dir).resolve(), args.expect_held_seq, args.step)
+    )
 
 
 def _connections(_args: argparse.Namespace) -> int:
@@ -1211,10 +1257,13 @@ def main(argv: list[str] | None = None) -> int:
     )
     close.add_argument("job_dir")
     close.add_argument(
-        "--held-seq",
+        "--expect-held-seq",
         type=int,
         required=True,
-        help="the held event's seq: the exact hold being closed",
+        help="the seq of the held event the person was shown",
+    )
+    close.add_argument(
+        "--step", required=True, help="the hold's step, as the person was shown it"
     )
     close.add_argument(
         "--json", action="store_true", help="one JSON status line (default)"

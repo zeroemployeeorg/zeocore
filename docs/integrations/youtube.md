@@ -90,7 +90,7 @@ python -m zeo_core.integrations.google.youtube.publish pair          # once: pai
 python -m zeo_core.integrations.google.youtube.publish connections   # the YouTube connection IDs
 python -m zeo_core.integrations.google.youtube.publish run JOB_DIR   # advance a job; safe to repeat
 python -m zeo_core.integrations.google.youtube.publish status JOB_DIR
-python -m zeo_core.integrations.google.youtube.publish close JOB_DIR --held-seq N  # close a held job; sends nothing
+python -m zeo_core.integrations.google.youtube.publish close JOB_DIR --expect-held-seq N --step STEP  # close a held job; sends nothing
 python -m zeo_core.integrations.google.youtube.publish retain PUBLISH_ROOT  # daily: the 30-day rule
 ```
 
@@ -114,16 +114,22 @@ ZEOconnect recorded against the step's idempotency key. A `released` event
 doesn't change the key, so the next run gets the same recorded answer and holds
 again. Release can't retry these holds.
 
-`close JOB_DIR --held-seq N` ends such a job on a person's decision. `N` is the
-`seq` of the `held` event the person looked at.
+`close JOB_DIR --expect-held-seq N --step STEP` ends such a job on a person's
+decision. `N` and `STEP` are the `seq` and `step` of the `held` event the person
+was shown. They are compared with the journal under the lock, and never taken as
+authority.
 - **It sends nothing.** There is no new key and no new attempt.
 - **It takes the run's lock** and exits `11` (`busy`) if a run holds it.
-- **It closes only that hold**, rechecked under the lock:
+- **It closes only that hold**, refusing with exit `2`:
   - `not_held`: the job isn't held, or it was released;
   - `hold_changed`: a different hold is in force now (a stale decision);
   - `hold_step_unknown`: the hold recorded no step of its own, as with holds
     zeocore raises itself and holds from older journals. Close never guesses
-    the step from free text or from the caller.
+    the step from free text or from the caller;
+  - `step_mismatch`: the hold is on another step.
+- **A repeat is compared with the original close.** The same hold and step replays
+  unchanged, with nothing appended. A different one is `already_closed`, which
+  names the hold that was closed.
 - **It records the close** as the studio's `cancelled` event, which names the hold
   (`closed_on`, `held_seq`) and the `step` and `attempt` that the hold recorded.
   The REFUSED receipt keeps the reason `cancelled`, which every reader already
