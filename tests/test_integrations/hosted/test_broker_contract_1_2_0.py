@@ -27,6 +27,7 @@ from zeo_core.integrations.hosted import (
     HostedExpectedBinding,
     HostedFenceUnsupportedError,
     HostedOperationResponse,
+    HostedOperationStatus,
     HostedUnavailableError,
     binding_mismatch_of,
 )
@@ -245,3 +246,105 @@ def test_the_verified_binding_is_read_from_the_receipt() -> None:
         "connection_revision": "3",
         "connector_revision": "google-gmail-read@1",
     }
+
+
+# -- Client-side twins of the Broker's fixtures 8 and 10 (zeoconnect asked) ----
+
+
+def test_fixture_8_no_revision_raises_before_any_invoke_is_sent() -> None:
+    paths: list[str] = []
+
+    def handler(http_request: httpx.Request) -> httpx.Response:
+        paths.append(http_request.url.path)
+        return response(200, [_connection()], request=http_request)
+
+    hosted, store = transport(httpx.MockTransport(handler))
+    store.save(session(NOW))
+    (summary,) = hosted.list_connections(session(NOW))
+    with pytest.raises(HostedFenceUnsupportedError):
+        hosted.invoke(
+            request(EFFECT).model_copy(update={"expect": summary.expected_binding()})
+        )
+    assert paths == ["/v1/connections"]
+
+
+def test_fixture_8_expect_null_is_never_serialised() -> None:
+    bodies: list[bytes] = []
+
+    def handler(http_request: httpx.Request) -> httpx.Response:
+        bodies.append(http_request.content)
+        return response(200, CONFIRMED, request=http_request)
+
+    hosted, store = transport(httpx.MockTransport(handler))
+    store.save(session(NOW))
+    hosted.invoke(request(EFFECT).model_copy(update={"expect": None}))
+    assert b"expect" not in bodies[0]
+
+
+@pytest.mark.parametrize(
+    "failure", [httpx.ConnectError("down"), httpx.ReadTimeout("slow")]
+)
+def test_fixture_10_a_lost_fenced_effect_is_never_resent(
+    failure: httpx.TransportError,
+) -> None:
+    sent: list[httpx.Request] = []
+
+    def handler(http_request: httpx.Request) -> httpx.Response:
+        sent.append(http_request)
+        raise failure
+
+    hosted, store = transport(httpx.MockTransport(handler))
+    store.save(session(NOW))
+    with pytest.raises(HostedUnavailableError):
+        hosted.invoke(request(EFFECT).model_copy(update={"expect": BINDING}))
+    assert len(sent) == 1
+
+
+def test_fixture_10_the_one_safe_read_resend_keeps_its_key_and_fence() -> None:
+    bodies: list[dict[str, object]] = []
+
+    def handler(http_request: httpx.Request) -> httpx.Response:
+        bodies.append(json.loads(http_request.content))
+        raise httpx.ConnectError("down")
+
+    hosted, store = transport(httpx.MockTransport(handler))
+    store.save(session(NOW))
+    fenced = request("google.drive.file.download").model_copy(
+        update={"expect": BINDING}
+    )
+    with pytest.raises(HostedUnavailableError):
+        hosted.invoke(fenced)
+    # The safe-read retry after no response is the same request, never an
+    # unfenced or re-keyed one: the Broker's replay rules answer it.
+    assert len(bodies) == 2
+    assert bodies[0] == bodies[1]
+    assert bodies[1]["expect"] == BINDING.model_dump()
+
+
+@pytest.mark.parametrize(
+    ("answer", "fresh_success"),
+    [
+        ({**CONFIRMED, "receipt": {"replayed": True}}, False),
+        (
+            {
+                "status": "ambiguous",
+                "execution_id": "exe-1",
+                "receipt": {"replayed": True},
+            },
+            False,
+        ),
+    ],
+)
+def test_fixture_10_a_later_same_key_call_is_a_replay_never_a_fresh_success(
+    answer: dict[str, object], fresh_success: bool
+) -> None:
+    def handler(http_request: httpx.Request) -> httpx.Response:
+        return response(200, answer, request=http_request)
+
+    hosted, store = transport(httpx.MockTransport(handler))
+    store.save(session(NOW))
+    result = hosted.invoke(request(EFFECT).model_copy(update={"expect": BINDING}))
+    assert result.replayed
+    assert (
+        result.status is HostedOperationStatus.CONFIRMED and not result.replayed
+    ) is fresh_success
