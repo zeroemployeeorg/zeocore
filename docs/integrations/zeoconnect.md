@@ -57,7 +57,7 @@ follows (Broker contract `1.0.0` §9).
 |---|---|---|
 | 403 `{"code": "stopped", "control", "scope"}`, or `failed_safe` with code `STOPPED` or message `stopped:<control>:<scope>` | `HostedStoppedError`, or `stop_of(response)` | A deliberate stop. Never retried or redispatched. |
 | 503 | `HostedUnavailableError` | An outage. Whether an effect happened is **unknown**. |
-| `failed_safe` with code `PROVIDER_UNAVAILABLE`, such as `controls_unavailable:<control>` | `is_outage(response)` | An outage inside the Broker: no provider call was made. The outcome is stored, so the same idempotency key returns it again; try again with a new key. |
+| `failed_safe` with code `PROVIDER_UNAVAILABLE`, such as `controls_unavailable:<control>` | `is_outage(response)` | An outage inside the Broker: no provider call was made. The outcome is stored, so the same idempotency key returns it again. Another attempt needs a new key: it is a new occurrence, sent only under the caller's own authority, never an automatic retry. |
 | no response at all | `HostedUnreachableError` | The same: unknown. Only `google.drive.file.download` is tried once more. |
 | 401 | one session refresh, then the same request once more | A second 401 means the device must be paired again. |
 | 426 | `HostedUpgradeRequiredError` | This zeocore is too old for the Broker. |

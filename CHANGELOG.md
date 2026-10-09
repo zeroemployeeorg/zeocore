@@ -54,7 +54,8 @@ this section becomes "Unreleased".
   recognizes `failed_safe` with `PROVIDER_UNAVAILABLE`, such as
   `controls_unavailable:<control>`, as an outage, never a stop. The Broker
   stores that outcome, so retrying with the same idempotency key replays it;
-  a new attempt needs a new key. YouTube retention defers on it.
+  another attempt needs a new key and is a new occurrence, never an automatic
+  retry. YouTube retention defers on it.
 
 ### Changed
 

@@ -238,7 +238,8 @@ def is_outage(response: HostedOperationResponse) -> bool:
 
     Unlike a 503, this outcome is recorded against the idempotency key.
     Sending the same key again returns it as a replay (``replayed`` is
-    true), so a fresh attempt needs a new key, which makes a new occurrence.
+    true). Another attempt needs a new key: a new occurrence, sent only under
+    the caller's own authority, never an automatic retry (contract 1.2 §4.5).
     """
     error = response.normalized_error
     return (
