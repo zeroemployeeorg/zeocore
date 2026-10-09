@@ -73,3 +73,14 @@ def manifest_inventory(manifests: Sequence[CapabilityManifest]) -> list[dict[str
         )
         inventory.append(data)
     return inventory
+
+
+__all__ = [
+    "MAX_BYTES",
+    "InvalidRequestError",
+    "ProtocolError",
+    "canonical_bytes",
+    "digest",
+    "manifest_inventory",
+    "parse_json",
+]

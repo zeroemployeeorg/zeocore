@@ -347,3 +347,11 @@ def parse_result(raw: bytes, exit_code: int, expected: AttemptBinding) -> HostRe
             "result identity or exit/state disagreement; retain durable evidence"
         )
     return result
+
+
+__all__ = [
+    "EffectPort",
+    "ManagedHost",
+    "parse_result",
+    "prepare_request",
+]
