@@ -90,6 +90,7 @@ request = HostedOperationRequest(
 | `failed_safe`, `PROVIDER_UNAVAILABLE`, `binding_unavailable` | `is_outage(response)` | The binding couldn't be read. It is not a mismatch. The outcome is stored against the key. |
 | 503 `binding is unavailable` | `HostedUnavailableError` | An outage, as for any 503. |
 | no revision in the listing, or 422 to a fenced call | `HostedFenceUnsupportedError` | This Broker can't check the fence. zeocore never resends the request without `expect`. |
+| 400 `kernel connection binding changed` | `HostedConnectionChangedError` | The connection was re-enrolled with a different subject, scopes, resources or credential. Nothing was sent to the provider. Repair the connection in ZEOconnect; don't retry. |
 
 ## Setup metadata and availability
 

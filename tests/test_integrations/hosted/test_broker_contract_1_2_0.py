@@ -24,6 +24,7 @@ from tests.test_integrations.hosted.test_transport import (
 from zeo_core.integrations.hosted import (
     ZEOCONNECT_CAPABILITIES_HEADER,
     HostedClientError,
+    HostedConnectionChangedError,
     HostedExpectedBinding,
     HostedFenceUnsupportedError,
     HostedOperationResponse,
@@ -348,3 +349,47 @@ def test_fixture_10_a_later_same_key_call_is_a_replay_never_a_fresh_success(
     assert (
         result.status is HostedOperationStatus.CONFIRMED and not result.replayed
     ) is fresh_success
+
+
+# -- A re-enrolled connection (zeonewsroom; zeoconnect #59) ----------------------
+
+
+@pytest.mark.parametrize("operation", [EFFECT, "google.drive.file.download"])
+def test_a_changed_connection_is_its_own_reason_and_is_sent_once(
+    operation: str,
+) -> None:
+    sent: list[httpx.Request] = []
+
+    def handler(http_request: httpx.Request) -> httpx.Response:
+        sent.append(http_request)
+        return response(
+            400,
+            {"detail": "kernel connection binding changed"},
+            request=http_request,
+        )
+
+    hosted, store = transport(httpx.MockTransport(handler))
+    store.save(session(NOW))
+    with pytest.raises(HostedConnectionChangedError):
+        hosted.invoke(request(operation))
+    assert len(sent) == 1
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        {"detail": "kernel connection binding changed."},
+        {"detail": "idempotency key conflicts with prior request"},
+        {"detail": ["kernel connection binding changed"]},
+        ["kernel connection binding changed"],
+    ],
+)
+def test_only_the_exact_changed_detail_is_a_changed_connection(body: object) -> None:
+    def handler(http_request: httpx.Request) -> httpx.Response:
+        return response(400, body, request=http_request)
+
+    hosted, store = transport(httpx.MockTransport(handler))
+    store.save(session(NOW))
+    with pytest.raises(HostedClientError, match="refused") as caught:
+        hosted.invoke(request(EFFECT))
+    assert not isinstance(caught.value, HostedConnectionChangedError)

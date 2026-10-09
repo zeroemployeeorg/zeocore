@@ -27,6 +27,12 @@ otherwise in 0.16.0.
     `HostedFenceUnsupportedError`. It never resends the request unfenced.
   - Every request now declares `ZEOconnect-Capabilities: stopped-code,
     expected-binding`.
+- **A re-enrolled connection is its own error.** A connection id re-enrolled
+  with a changed subject, scopes, resources or credential is refused by the
+  Broker with a 400 `kernel connection binding changed` (zeoconnect #59). This
+  now raises `HostedConnectionChangedError` instead of a generic refusal. It
+  comes before any provider call, and the fix is ZEOconnect's repair, never a
+  retry.
 
 ## [Unreleased: 0.14.0]
 

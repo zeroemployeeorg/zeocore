@@ -259,6 +259,22 @@ class HostedFenceUnsupportedError(HostedClientError):
         )
 
 
+class HostedConnectionChangedError(HostedClientError):
+    """The connection was re-enrolled with a changed subject, scopes, resources
+    or credential, so this connection id can't serve fresh calls.
+
+    The Broker refuses before custody or any provider call, and records
+    nothing. The connection needs ZEOconnect's repair path. Retrying won't
+    help, and this is no proof that an earlier attempt was not accepted.
+    """
+
+    def __init__(self) -> None:
+        super().__init__(
+            "ZEOconnect connection changed since it was enrolled; repair it in"
+            " ZEOconnect before using it again"
+        )
+
+
 class HostedUpgradeRequiredError(HostedClientError):
     """The Broker does not speak this client's protocol version (426)."""
 
@@ -355,6 +371,7 @@ __all__ = [
     "HostedArtifactDescriptor",
     "HostedAuthorizedTransport",
     "HostedClientError",
+    "HostedConnectionChangedError",
     "HostedConnectionClient",
     "HostedExpectedBinding",
     "HostedFenceUnsupportedError",

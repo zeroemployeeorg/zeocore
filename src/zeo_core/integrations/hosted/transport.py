@@ -16,6 +16,7 @@ from zeo_core.core.managed_execution import is_managed_execution
 from zeo_core.integrations.hosted.client import (
     CONNECTION_REVISION_PATTERN,
     HostedClientError,
+    HostedConnectionChangedError,
     HostedFenceUnsupportedError,
     HostedOperationRequest,
     HostedOperationResponse,
@@ -50,6 +51,9 @@ ZEOCONNECT_CAPABILITIES_HEADER = "ZEOconnect-Capabilities"
 _CAPABILITIES = "stopped-code, expected-binding"
 _STOP_TOKEN = re.compile(r"^[a-z][a-z0-9_.:-]{0,63}$")
 _REPAIR = "paired device session was refused; pair this device again"
+#: The Broker's exact headered 400 when a connection id was re-enrolled with a
+#: changed subject, scopes, resources or credential (zeoconnect #59).
+_CONNECTION_CHANGED = "kernel connection binding changed"
 _OFF_NETWORK = (
     "ZEOconnect Broker {origin} cannot be reached from this device. This hosted"
     " profile is available only on its organisation's private network. zeocore"
@@ -530,6 +534,8 @@ class ZEOconnectHTTPTransport:
             # An outage the Broker reported (council ruling E7): not a stop,
             # not a refusal, and not proof the request was never accepted.
             raise HostedUnavailableError()
+        if status == 400 and _detail(response) == _CONNECTION_CHANGED:
+            raise HostedConnectionChangedError()
         if status >= 400:
             # Not evidence of non-acceptance either: only a stop is positive.
             raise HostedClientError("hosted request was refused")
@@ -545,6 +551,14 @@ class ZEOconnectHTTPTransport:
                 "Bearer " + session.access_token.get_secret_value()
             )
         return headers
+
+
+def _detail(response: httpx.Response) -> object:
+    try:
+        body = response.json()
+    except ValueError:
+        return None
+    return body.get("detail") if isinstance(body, dict) else None
 
 
 def _is_pending(response: httpx.Response) -> bool:
