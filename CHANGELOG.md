@@ -39,6 +39,12 @@ this section becomes "Unreleased".
   send it; without that capability it sends `REQUEST_REFUSED` with
   `stopped:<control>:<scope>`, which `stop_of` reads the same way.
 - `TransactionQuery` accepts `from` as well as `from_`.
+- Contract `1.1.0` additions (zeoconnect #40), which are additive, so no
+  re-pin is needed: `HostedOperationResponse.replayed` is true when the Broker
+  served its stored outcome, which is never a fresh success. `is_outage(response)`
+  recognizes `failed_safe` with `PROVIDER_UNAVAILABLE`, such as
+  `controls_unavailable:<control>`, as an outage, never a stop. YouTube
+  retention defers on it.
 
 ### Changed
 
