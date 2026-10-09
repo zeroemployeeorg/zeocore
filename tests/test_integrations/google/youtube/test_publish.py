@@ -523,3 +523,90 @@ def test_cli_pair_and_connections_list_only_youtube(
 def test_cli_rejects_bad_chunk_size() -> None:
     with pytest.raises(SystemExit):
         main(["run", "x", "--chunk-mib", "0"])
+
+
+# -- Closing a job held on a recorded outcome (ZBS and ZEO-RT, E10) ----------------
+
+
+def _held_on_refusal(tmp_path: Path, world: tuple) -> Path:
+    yt, broker, links = world
+    broker.refuse.add("youtube.video.upload_session.create")
+    directory = make_job(tmp_path)
+    held = _executor(directory, yt, broker, links).run()
+    assert held.exit_code == EXIT_HELD
+    assert held.status["reason"] == "refused_in_zeoconnect"
+    return directory
+
+
+def test_a_studio_close_of_a_held_job_sends_nothing_and_keeps_the_hold(
+    tmp_path: Path, world: tuple
+) -> None:
+    yt, broker, links = world
+    directory = _held_on_refusal(tmp_path, world)
+    sent = len(broker.calls)
+    JobDirectory(directory).append(
+        actor="studio",
+        type="cancelled",
+        closed_on="refused_in_zeoconnect",
+        step="video",
+    )
+    for _ in range(2):
+        closed = _executor(directory, yt, broker, links).run()
+        assert closed.exit_code == EXIT_DONE
+        assert closed.status["state"] == "cancelled"
+    assert len(broker.calls) == sent
+    receipt = JobDirectory(directory).receipt()
+    assert receipt is not None and receipt.outcome == "REFUSED"
+    # The original outcome stays in the journal, next to the close.
+    held = [e for e in JobDirectory(directory).events() if e.type == "held"]
+    assert [(e.model_extra or {}).get("reason") for e in held] == [
+        "refused_in_zeoconnect"
+    ]
+
+
+def test_a_closed_job_is_not_reopened_by_a_later_release(
+    tmp_path: Path, world: tuple
+) -> None:
+    yt, broker, links = world
+    directory = _held_on_refusal(tmp_path, world)
+    JobDirectory(directory).append(actor="studio", type="cancelled")
+    _executor(directory, yt, broker, links).run()
+    sent = len(broker.calls)
+    JobDirectory(directory).append(actor="studio", type="released")
+    again = _executor(directory, yt, broker, links).run()
+    assert again.status["state"] == "cancelled"
+    assert len(broker.calls) == sent
+
+
+def test_a_run_of_a_held_job_sends_nothing(tmp_path: Path, world: tuple) -> None:
+    yt, broker, links = world
+    directory = _held_on_refusal(tmp_path, world)
+    sent = len(broker.calls)
+    held = _executor(directory, yt, broker, links).run()
+    assert held.exit_code == EXIT_HELD
+    assert len(broker.calls) == sent
+
+
+def test_a_cancel_during_a_run_is_recorded_but_does_not_stop_that_run(
+    tmp_path: Path, world: tuple
+) -> None:
+    """Pinned so a change is deliberate: the studio must not cancel a live run.
+
+    The executor reads ``cancelled`` only when a run starts. An effect already
+    dispatched can't be withdrawn, so the run finishes and the cancel stays in
+    the journal. The studio refuses Cancel once a session was requested,
+    unless the job is held.
+    """
+    yt, broker, links = world
+    directory = make_job(tmp_path)
+
+    def cancel_mid_run(operation: str) -> None:
+        if operation == "youtube.video.upload_session.create":
+            broker.on_invoke = None
+            JobDirectory(directory).append(actor="studio", type="cancelled")
+
+    broker.on_invoke = cancel_mid_run
+    result = _executor(directory, yt, broker, links).run()
+    assert result.status["state"] == "done"
+    types = [e.type for e in JobDirectory(directory).events()]
+    assert types.index("cancelled") < types.index("uploaded")
