@@ -163,6 +163,51 @@ def test_unknown_response_fields_are_ignored_never_passed_through() -> None:
     assert "replayed" not in answer.model_dump()
 
 
+def test_unknown_fields_nested_in_a_response_are_ignored_too() -> None:
+    artifact = {
+        "artifact_id": "art_12345678",
+        "content_sha256": "sha256:" + "0" * 64,
+        "size_bytes": 3,
+        "media_type": "text/plain",
+        "filename": "a.txt",
+        "added_in_1_2": "x",
+    }
+    confirmed = HostedOperationResponse.model_validate(
+        {"status": "confirmed", "execution_id": "exe-1", "artifact": artifact}
+    )
+    assert confirmed.artifact is not None
+    assert "added_in_1_2" not in confirmed.artifact.model_dump()
+    refused = HostedOperationResponse.model_validate(
+        {
+            "status": "failed_safe",
+            "execution_id": "exe-2",
+            "normalized_error": {
+                "code": "REQUEST_REFUSED",
+                "message": "stopped:dispatch:global",
+                "added_in_1_2": "x",
+            },
+        }
+    )
+    stop = stop_of(refused)
+    assert stop is not None
+    assert (stop.control, stop.scope) == ("dispatch", "global")
+
+
+def test_provider_detail_is_still_refused_in_a_nested_error() -> None:
+    with pytest.raises(ValueError, match="provider detail"):
+        HostedOperationResponse.model_validate(
+            {
+                "status": "failed_safe",
+                "execution_id": "exe-3",
+                "normalized_error": {
+                    "code": "REQUEST_REFUSED",
+                    "message": "refused",
+                    "provider_detail": "raw provider text",
+                },
+            }
+        )
+
+
 # -- §9 403 stopped ---------------------------------------------------------------
 
 

@@ -28,6 +28,11 @@ this section becomes "Unreleased".
   the Broker refuses them (zeoconnect #49). httpx 0.27, which zeocore allows,
   would have sent them. The transport now refuses such a body before sending,
   with `HostedClientError("hosted request holds a number JSON cannot carry")`.
+- **Unknown fields nested in a Broker response are ignored too.** 0.14.0 drops
+  unknown top-level fields (contract §10), but an unknown field inside
+  `artifact` or `normalized_error` still refused the whole response. Both now
+  drop unknown fields, so a later Broker can add fields at any level. A
+  `provider_detail` is still refused.
 
 ### Added
 

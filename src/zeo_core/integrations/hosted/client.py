@@ -7,7 +7,16 @@ from collections.abc import Mapping, Sequence
 from enum import StrEnum
 from typing import Protocol, runtime_checkable
 
-from pydantic import BaseModel, ConfigDict, Field, HttpUrl, JsonValue, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    HttpUrl,
+    JsonValue,
+    ValidationInfo,
+    field_validator,
+    model_validator,
+)
 
 from zeo_core.contracts.connections import NormalizedError, NormalizedErrorCode
 
@@ -99,6 +108,25 @@ class HostedOperationResponse(BaseModel):
         provider call. A ``confirmed`` replay is not a new success.
         """
         return self.receipt is not None and self.receipt.get("replayed") is True
+
+    @field_validator("artifact", "normalized_error", mode="before")
+    @classmethod
+    def _ignore_unknown_nested_fields(
+        cls, value: object, info: ValidationInfo
+    ) -> object:
+        # Contract §10 covers every level of a response, not only the top.
+        # Both nested models refuse unknown fields when built directly, and
+        # NormalizedError is shared beyond hosted access, so drop them here.
+        model: type[BaseModel] = (
+            HostedArtifactDescriptor
+            if info.field_name == "artifact"
+            else NormalizedError
+        )
+        if isinstance(value, dict):
+            return {
+                key: item for key, item in value.items() if key in model.model_fields
+            }
+        return value
 
     @model_validator(mode="after")
     def _shape_matches_status(self) -> HostedOperationResponse:
