@@ -660,19 +660,41 @@ def test_a_kill_while_appending_an_event_keeps_the_job_readable(
     assert directory.append(actor="studio", type="cancelled").seq == len(before) + 1
 
 
-def test_files_stay_write_once_and_fall_back_without_hard_links(
+def test_files_stay_write_once_and_fail_closed_without_hard_links(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     target = tmp_path / "once.json"
     job_module._create_exclusive(target, b"{}")
     with pytest.raises(FileExistsError):
-        job_module._create_exclusive(target, b"{}")
+        job_module._create_exclusive(target, b'{"other":1}')
+    assert target.read_bytes() == b"{}"
 
     def no_links(_source: object, _target: object) -> None:
         raise OSError(45, "Operation not supported")
 
     monkeypatch.setattr(job_module.os, "link", no_links)
-    fallback = tmp_path / "fallback.json"
-    job_module._create_exclusive(fallback, b'{"a":1}')
-    assert fallback.read_bytes() == b'{"a":1}'
-    assert [p.name for p in tmp_path.iterdir() if p.name.endswith(".tmp")] == []
+    refused = tmp_path / "refused.json"
+    with pytest.raises(job_module.JobError, match="atomically"):
+        job_module._create_exclusive(refused, b'{"a":1}')
+    # Nothing under the final name, no temporary left, the earlier file intact.
+    assert not refused.exists()
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["once.json"]
+    assert target.read_bytes() == b"{}"
+
+
+def test_a_kill_after_the_temporary_write_leaves_the_job_readable(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    directory = JobDirectory(make_job(tmp_path))
+    before = directory.events()
+
+    def killed(_source: object, _target: object) -> None:
+        raise KeyboardInterrupt("killed before publication")
+
+    monkeypatch.setattr(job_module.os, "link", killed)
+    with pytest.raises(KeyboardInterrupt):
+        directory.append(actor="studio", type="cancelled")
+    monkeypatch.undo()
+    reopened = JobDirectory(directory.path)
+    assert reopened.events() == before
+    assert not [p for p in reopened.events_dir.iterdir() if p.suffix == ".tmp"]

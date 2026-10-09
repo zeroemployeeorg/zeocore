@@ -413,10 +413,14 @@ def _create_exclusive(path: Path, content: bytes) -> None:
     """Create ``path`` holding ``content`` whole, or not at all.
 
     The bytes are written and synced under a temporary name, then hard-linked
-    into place. A process killed mid-write therefore never leaves a partial
-    file under the final name, which would make the job unreadable. The link
-    fails if ``path`` exists, so files stay write-once. On a filesystem
-    without hard links, it falls back to writing ``path`` directly.
+    into place. A process killed at any point therefore leaves either no file
+    under the final name or the whole file, never a partial one. The link
+    fails if ``path`` exists, so files stay write-once.
+
+    A filesystem that can't hard-link is refused (``JobError``) rather than
+    written directly, because a direct write would bring back the partial
+    file. Power-loss durability also depends on the filesystem honouring the
+    file and directory fsyncs. The directory sync is best effort.
     """
     temporary = path.with_name(f".{path.name}.{secrets.token_hex(6)}.tmp")
     descriptor = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)
@@ -429,19 +433,14 @@ def _create_exclusive(path: Path, content: bytes) -> None:
             os.link(temporary, path)
         except FileExistsError:
             raise
-        except OSError:
-            _create_directly(path, content)
+        except OSError as error:
+            raise JobError(
+                "this filesystem can't publish job files atomically"
+                f" (hard link failed: {error.strerror or error.errno})"
+            ) from None
     finally:
         temporary.unlink(missing_ok=True)
     _sync_directory(path.parent)
-
-
-def _create_directly(path: Path, content: bytes) -> None:
-    descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)
-    try:
-        _write_all(descriptor, content)
-    finally:
-        os.close(descriptor)
 
 
 def _sync_directory(directory: Path) -> None:
