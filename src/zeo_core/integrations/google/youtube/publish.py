@@ -58,7 +58,6 @@ from zeo_core.integrations.google.youtube.job import (
     MediaFile,
     ProviderRecord,
     Receipt,
-    cancel_reason,
     job_steps,
     rfc3339_nano,
 )
@@ -195,10 +194,6 @@ def job_lock(job_dir: Path) -> Iterator[None]:
         os.close(descriptor)
 
 
-def _is_cancelled(receipt: Receipt) -> bool:
-    return (receipt.reason or "").split(":", 1)[0] == "cancelled"
-
-
 def close_held_job(
     job_dir: Path,
     step: str,
@@ -223,7 +218,7 @@ def close_held_job(
         with job_lock(directory.path):
             receipt = directory.receipt()
             if receipt is not None:
-                if receipt.outcome == "REFUSED" and _is_cancelled(receipt):
+                if receipt.outcome == "REFUSED" and receipt.reason == "cancelled":
                     return RunResult(
                         EXIT_DONE,
                         {
@@ -256,11 +251,18 @@ def close_held_job(
                             "reason": "unknown_step",
                         },
                     )
+                # The close names the exact hold it ends: its reason, its
+                # event, and the step and attempt it was on. The receipt
+                # keeps its plain "cancelled" for every reader (ZEO-RT SOW-93).
                 directory.append(
-                    actor="studio", type="cancelled", closed_on=state.held, step=step
+                    actor="studio",
+                    type="cancelled",
+                    closed_on=state.held,
+                    held_seq=state.held_seq,
+                    step=step,
+                    attempt=state.step(step).attempt,
                 )
-                state = directory.state()
-            reason = cancel_reason(job, state)
+            reason = "cancelled"
             directory.write_receipt(
                 Receipt.model_validate(
                     {
@@ -354,7 +356,7 @@ class PublishExecutor:
         if receipt is not None:
             return self._finished(receipt)
         if state.cancelled:
-            return self._close("REFUSED", reason=cancel_reason(self.job, state))
+            return self._close("REFUSED", reason="cancelled")
         if state.held is not None:
             return self._result(
                 EXIT_HELD, "held", reason=state.held, detail=state.held_detail
@@ -402,8 +404,8 @@ class PublishExecutor:
         )
 
     def _finished(self, receipt: Receipt) -> RunResult:
-        if receipt.outcome == "REFUSED" and _is_cancelled(receipt):
-            return self._result(EXIT_DONE, "cancelled", reason=receipt.reason)
+        if receipt.outcome == "REFUSED" and receipt.reason == "cancelled":
+            return self._result(EXIT_DONE, "cancelled", reason="cancelled")
         code = EXIT_DONE if receipt.outcome == "SUCCEEDED" else EXIT_HELD
         state = "done" if receipt.outcome == "SUCCEEDED" else receipt.outcome.lower()
         return self._result(code, state, reason=receipt.reason)

@@ -119,9 +119,13 @@ again. Release can't retry these holds.
 - **It takes the run's lock** and exits `11` (`busy`) if a run holds it.
 - **It closes only a held job**, and `STEP` must be one of the job's steps: `video`,
   `thumbnail`, `caption:<language>:<name>` or `playlist`.
-- **It records the close** as the studio's `cancelled` event and writes a REFUSED
-  receipt whose reason is `cancelled:<held reason>:<step>`. The original hold stays
-  in the journal. Whether the video exists is in `provider_record`.
+- **It records the close** as the studio's `cancelled` event. The event names the
+  exact hold it ends: `closed_on` (the hold's reason), `held_seq` (the hold's
+  event), `step` and `attempt`. The REFUSED receipt keeps the reason `cancelled`,
+  which every reader already understands. The original hold stays in the journal.
+- **Whether a video exists** is read from the journal: an `uploaded` event means
+  yes. It is never read from `youtube.json` (`provider_record`), which retention
+  may delete.
 - **Repeating it, or running the job afterwards, gives the same result.**
 
 A new job for the same video is a separate request with a new key. It is not a

@@ -16,9 +16,9 @@ Draft. ZBS asked for it, and it waits for the elders' E10 ruling (org #787).
   same lock as a run, so a close never lands inside a run.
   - It refuses a job that isn't held, has been released, or names an unknown
     step.
-  - The receipt keeps `schema_version` 1 and its fields; its `reason` becomes
-    `cancelled:<held reason>:<step>`. A reader that takes the key before the
-    first `:` still sees `cancelled`.
+  - The studio's `cancelled` event names the exact hold it ends: `closed_on`,
+    `held_seq`, `step` and `attempt`. The receipt is unchanged, with reason
+    `cancelled`, so every existing reader classifies it the same way.
   - A kill between the event and the receipt is finished the same way by
     either the next run or a repeated close.
   - Python callers can use `close_held_job()` and `job_lock()`.

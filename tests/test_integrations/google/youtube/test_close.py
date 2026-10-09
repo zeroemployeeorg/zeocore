@@ -15,7 +15,7 @@ import pytest
 from tests.test_integrations.google.youtube.fakes import FakeBroker, FakeYouTube
 from tests.test_integrations.google.youtube.helpers import make_job
 from tests.test_integrations.google.youtube.test_publish import _executor
-from zeo_core.integrations.google.youtube.job import JobDirectory, cancel_reason
+from zeo_core.integrations.google.youtube.job import Event, JobDirectory
 from zeo_core.integrations.google.youtube.links import InMemoryUploadLinkStore
 from zeo_core.integrations.google.youtube.publish import (
     EXIT_DONE,
@@ -46,43 +46,56 @@ def _held(tmp_path: Path, world: World, operation: str, **job: object) -> Path:
     return directory
 
 
-def test_close_writes_a_structured_reason_and_sends_nothing(
+def _close_event(directory: Path) -> Event:
+    (event,) = [e for e in JobDirectory(directory).events() if e.type == "cancelled"]
+    return event
+
+
+def test_close_binds_the_exact_hold_keeps_the_receipt_plain_and_sends_nothing(
     tmp_path: Path, world: World
 ) -> None:
     yt, broker, links = world
     directory = _held(tmp_path, world, "youtube.video.upload_session.create")
+    (held,) = [e for e in JobDirectory(directory).events() if e.type == "held"]
     sent = len(broker.calls)
     closed = close_held_job(directory, "video")
     assert closed.exit_code == EXIT_DONE
-    assert closed.status["reason"] == "cancelled:refused_in_zeoconnect:video"
+    assert closed.status["reason"] == "cancelled"
+    # Old readers match "cancelled" exactly, so the receipt stays plain
+    # (ZEO-RT SOW-93). The detail lives in the journal, bound to the hold.
     receipt = JobDirectory(directory).receipt()
     assert receipt is not None
-    assert (receipt.outcome, receipt.reason, receipt.provider_record) == (
-        "REFUSED",
-        "cancelled:refused_in_zeoconnect:video",
-        None,
-    )
-    # The executor reads it as cancelled, and a second close is the same.
+    assert (receipt.outcome, receipt.reason) == ("REFUSED", "cancelled")
+    close = _close_event(directory)
+    assert close.actor == "studio"
+    assert close.model_extra == {
+        "closed_on": "refused_in_zeoconnect",
+        "held_seq": held.seq,
+        "step": "video",
+        "attempt": 1,
+    }
     again = _executor(directory, yt, broker, links).run()
     assert again.status == {
         "job_id": closed.status["job_id"],
         "state": "cancelled",
-        "reason": "cancelled:refused_in_zeoconnect:video",
+        "reason": "cancelled",
     }
     assert close_held_job(directory, "video").status == closed.status
     assert len(broker.calls) == sent
 
 
-def test_a_later_step_close_says_where_and_the_video_stays_recorded(
+def test_a_later_step_close_keeps_the_journal_evidence_of_the_upload(
     tmp_path: Path, world: World
 ) -> None:
     directory = _held(
         tmp_path, world, "youtube.thumbnail.upload_session.create", thumbnail=True
     )
-    closed = close_held_job(directory, "thumbnail")
-    assert closed.status["reason"] == "cancelled:refused_in_zeoconnect:thumbnail"
-    receipt = JobDirectory(directory).receipt()
-    assert receipt is not None and receipt.provider_record is not None
+    close_held_job(directory, "thumbnail")
+    types = [e.type for e in JobDirectory(directory).events()]
+    # Whether a video exists is read from the durable journal (uploaded),
+    # never from youtube.json, which retention may delete.
+    assert "uploaded" in types
+    assert (_close_event(directory).model_extra or {})["step"] == "thumbnail"
 
 
 @pytest.mark.parametrize(
@@ -132,22 +145,34 @@ def test_a_kill_between_the_event_and_the_receipt_completes_the_same(
     assert JobDirectory(directory).state().cancelled
     # Either path finishes it the same way: a run, or the close again.
     finished = _executor(directory, yt, broker, links).run()
-    assert finished.status["reason"] == "cancelled:refused_in_zeoconnect:video"
+    assert finished.status["reason"] == "cancelled"
     assert close_held_job(directory, "video").status == finished.status
     assert len(broker.calls) == sent
 
 
-def test_a_studio_value_that_fails_its_check_never_reaches_the_receipt(
-    tmp_path: Path,
+def test_a_run_is_busy_while_a_close_holds_the_lock(
+    tmp_path: Path, world: World
 ) -> None:
-    directory = JobDirectory(make_job(tmp_path))
-    directory.append(
-        actor="studio", type="cancelled", closed_on="Bad Reason!", step="video"
-    )
-    assert cancel_reason(directory.job(), directory.state()) == "cancelled"
-    other = JobDirectory(make_job(tmp_path, job_number=2))
-    other.append(actor="studio", type="cancelled", closed_on="held", step="nope")
-    assert cancel_reason(other.job(), other.state()) == "cancelled"
+    yt, broker, links = world
+    directory = _held(tmp_path, world, "youtube.video.upload_session.create")
+    sent = len(broker.calls)
+    with job_lock(directory):
+        busy = _executor(directory, yt, broker, links).run()
+    assert busy.exit_code == EXIT_WAIT and busy.status["state"] == "busy"
+    assert len(broker.calls) == sent
+
+
+def test_close_rechecks_under_the_lock_not_from_a_stale_snapshot(
+    tmp_path: Path, world: World
+) -> None:
+    directory = _held(tmp_path, world, "youtube.video.upload_session.create")
+    snapshot = JobDirectory(directory).state()
+    assert snapshot.held is not None
+    # A Release lands after the studio looked: the close must see it.
+    JobDirectory(directory).append(actor="studio", type="released")
+    refused = close_held_job(directory, "video")
+    assert refused.status["reason"] == "not_held"
+    assert JobDirectory(directory).receipt() is None
 
 
 def test_the_close_command_prints_one_json_line(
@@ -158,4 +183,4 @@ def test_the_close_command_prints_one_json_line(
     printed = json.loads(capsys.readouterr().out.strip().splitlines()[-1])
     assert code == EXIT_DONE
     assert printed["state"] == "cancelled"
-    assert printed["reason"] == "cancelled:refused_in_zeoconnect:video"
+    assert printed["reason"] == "cancelled"
