@@ -21,6 +21,22 @@ Live operation also requires a compatible deployed ZEOconnect Member API.
     ZEOconnect Broker contract `1.0.0` ship together in zeocore 0.14.0.
     Tracked in org issue 791.
 
+## The Broker origin
+
+From 0.14.0 the transport talks to `https://broker.connect.zeo.ac`, the
+ZEOconnect Broker. The Broker serves paired devices only and is reachable only
+on its organisation's private network (Broker contract `1.0.0` §2). The
+browser-facing site, `https://connect.zeo.ac`, is where a person approves a
+pairing; the transport never calls it. From a device that is not on that
+network, a hosted call fails with:
+
+> ZEOconnect Broker `https://broker.connect.zeo.ac` cannot be reached from this
+> device. This hosted profile is available only on its organisation's private
+> network. zeocore will not use local credentials in its place. To use your
+> own Revolut account directly, select the local profile explicitly.
+
+zeocore never falls back to a local credential when the Broker is unreachable.
+
 ## Protocol failures and stops
 
 Every Broker response carries exactly one `ZEOconnect-Protocol-Version: 1`
@@ -33,6 +49,22 @@ upload around it. It is never reported as a stop. A stop, a refusal or an
 outage is recognized only on a response that carries the header. A relay 503
 *with* the header is an outage, and a YouTube upload backs off and resumes. A
 503 *without* it ends the upload.
+
+On a response that does carry the header, zeocore 0.14.0 reads the status as
+follows (Broker contract `1.0.0` §9).
+
+| Answer | What zeocore reports | What a caller may conclude |
+|---|---|---|
+| 403 `{"code": "stopped", "control", "scope"}`, or `failed_safe` with code `STOPPED` or message `stopped:<control>:<scope>` | `HostedStoppedError`, or `stop_of(response)` | A deliberate stop. Never retried or redispatched. |
+| 503 | `HostedUnavailableError` | An outage. Whether an effect happened is **unknown**. |
+| no response at all | `HostedUnreachableError` | The same: unknown. Only `google.drive.file.download` is tried once more. |
+| 401 | one session refresh, then the same request once more | A second 401 means the device must be paired again. |
+| 426 | `HostedUpgradeRequiredError` | This zeocore is too old for the Broker. |
+| any other status of 400 or more | "hosted request was refused" | The Broker said no. That alone is **not** proof that an effect did not happen. |
+
+zeocore never resends an effect after a 503 or a lost connection. Where an
+outcome is unknown, find it by an authorised read, such as the YouTube
+executor's lookup of a lost upload, never by sending the effect again.
 
 ## Setup metadata and availability
 
@@ -112,7 +144,7 @@ not deployed membership, browser pairing or provider delivery.
 ## Live test account and pairing
 
 1. Provision a separate test identity/member in the deployed ZEOconnect
-   application at [connect.zeroemployee.org](https://connect.zeroemployee.org).
+   application at [connect.zeo.ac](https://connect.zeo.ac).
    If membership or the required connector is not available, that is a live
    prerequisite; no ZeoCore API key can bypass it.
 2. In that identity's connection setup, authorize a dedicated provider test
