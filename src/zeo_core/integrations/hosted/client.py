@@ -9,7 +9,7 @@ from typing import Protocol, runtime_checkable
 
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl, JsonValue, model_validator
 
-from zeo_core.contracts.connections import NormalizedError
+from zeo_core.contracts.connections import NormalizedError, NormalizedErrorCode
 
 _SECRET_KEYS = frozenset(
     {
@@ -75,9 +75,13 @@ class HostedOperationRequest(BaseModel):
 
 
 class HostedOperationResponse(BaseModel):
-    """Bounded broker response with mutually exclusive result shapes."""
+    """Bounded broker response with mutually exclusive result shapes.
 
-    model_config = ConfigDict(frozen=True, extra="forbid")
+    Unknown top-level fields are dropped, never passed through: a 1.y Broker
+    may add response fields that a 1.0 client must ignore (contract §10).
+    """
+
+    model_config = ConfigDict(frozen=True, extra="ignore")
 
     status: HostedOperationStatus
     execution_id: str = Field(..., min_length=1, max_length=200)
@@ -141,7 +145,74 @@ class HostedConnectionClient:
 
 
 class HostedClientError(RuntimeError):
-    """Sanitized failure at the hosted-client trust boundary."""
+    """Sanitized failure at the hosted-client trust boundary.
+
+    Apart from ``HostedStoppedError``, a failure says nothing about whether an
+    effect happened. "Refused" and "unavailable" are never evidence that the
+    Broker did not accept an effectful request.
+    """
+
+
+class HostedUnavailableError(HostedClientError):
+    """An outage: the Broker, or the path to it, could not serve the request.
+
+    Not a stop, and not proof that an effectful request was never accepted
+    (council ruling E7). It grants no retry: only a read named as safe is
+    attempted again, and only after a failure that produced no response.
+    """
+
+    def __init__(self, message: str = "hosted transport is unavailable") -> None:
+        super().__init__(message)
+
+
+class HostedUnreachableError(HostedUnavailableError):
+    """No Broker response arrived: the connection failed or broke off."""
+
+
+class HostedStoppedError(HostedClientError):
+    """The Broker positively reported an operational stop (contract 1.0.0 §9).
+
+    A stop is deliberate and is never retried or redispatched. ``control`` is
+    the control that stopped the request and ``scope`` is where it applies.
+    """
+
+    def __init__(self, *, control: str, scope: str) -> None:
+        self.control = control
+        self.scope = scope
+        super().__init__(f"hosted request was stopped by {control} ({scope})")
+
+
+class HostedUpgradeRequiredError(HostedClientError):
+    """The Broker does not speak this client's protocol version (426)."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            "ZEOconnect Broker does not accept this zeocore's protocol;"
+            " upgrade zeocore to use hosted access"
+        )
+
+
+def stop_of(response: HostedOperationResponse) -> HostedStoppedError | None:
+    """The stop an orchestrated answer reports, or ``None`` (contract §9).
+
+    The Broker reports a stopped invocation as ``failed_safe`` carrying either
+    the STOPPED code or, to clients without that capability, REQUEST_REFUSED
+    with the stable message ``stopped:<control>:<scope>``.
+    """
+    error = response.normalized_error
+    if response.status is not HostedOperationStatus.FAILED_SAFE or error is None:
+        return None
+    if error.code not in {
+        NormalizedErrorCode.STOPPED,
+        NormalizedErrorCode.REQUEST_REFUSED,
+    }:
+        return None
+    parts = error.message.split(":", 2)
+    if len(parts) == 3 and parts[0] == "stopped" and parts[1] and parts[2]:
+        return HostedStoppedError(control=parts[1], scope=parts[2])
+    if error.code is NormalizedErrorCode.STOPPED:
+        return HostedStoppedError(control="unknown", scope="unknown")
+    return None
 
 
 def _contains_secret_key(value: JsonValue | dict[str, JsonValue] | None) -> bool:
@@ -162,4 +233,9 @@ __all__ = [
     "HostedOperationRequest",
     "HostedOperationResponse",
     "HostedOperationStatus",
+    "HostedStoppedError",
+    "HostedUnavailableError",
+    "HostedUnreachableError",
+    "HostedUpgradeRequiredError",
+    "stop_of",
 ]

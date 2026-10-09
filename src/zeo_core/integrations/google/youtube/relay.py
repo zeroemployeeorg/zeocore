@@ -22,12 +22,16 @@ from typing import Protocol, runtime_checkable
 import httpx
 from pydantic import JsonValue
 
-from zeo_core.integrations.hosted.client import HostedClientError
+from zeo_core.integrations.hosted.client import (
+    HostedClientError,
+    HostedStoppedError,
+    HostedUnavailableError,
+)
 
 #: The relay's chunk ceiling (a multiple of 256 KiB).
 RELAY_CHUNK_BYTES = 4 * 1024 * 1024
-#: The only relay failures a later attempt can cure.
-_TRANSIENT = frozenset({"hosted transport is unavailable", "hosted request is pending"})
+#: Besides an outage, the only relay failure a later attempt can cure.
+_PENDING = "hosted request is pending"
 
 
 @runtime_checkable
@@ -85,9 +89,12 @@ class RelayByteHttp:
             )
         except HostedClientError as error:
             message = str(error)
-            if message in _TRANSIENT:
-                # Unreachable or pending: transient, so the transfer backs off.
+            if isinstance(error, HostedUnavailableError) or message == _PENDING:
+                # Unreachable, an outage or pending: the transfer backs off.
                 raise httpx.ConnectError(message) from None
+            if isinstance(error, HostedStoppedError):
+                # A stop is deliberate: one request, never retried.
+                return _RelayResponse(403, text=_reason("relay_stopped"))
             if "refused" in message:
                 # ZEOconnect refused the relay itself (seal, link, connection or
                 # a stop control): terminal, never retried.

@@ -33,6 +33,7 @@ from zeo_core.integrations.google.youtube.transfer import (
 from zeo_core.integrations.hosted import (
     ZEOCONNECT_PROTOCOL_HEADER,
     HostedClientError,
+    HostedStoppedError,
     InMemorySecureSessionStore,
     PairingPendingError,
 )
@@ -108,8 +109,9 @@ def test_a_recognized_stop_needs_the_header_and_is_still_sent_once() -> None:
     hosted, store = transport(httpx.MockTransport(handler))
     store.save(session(NOW))
 
-    with pytest.raises(HostedClientError, match="refused"):
+    with pytest.raises(HostedStoppedError) as stopped:
         hosted.invoke(request("google.drive.file.download"))
+    assert (stopped.value.control, stopped.value.scope) == ("dispatch", "global")
     assert len(sent) == 1
 
 

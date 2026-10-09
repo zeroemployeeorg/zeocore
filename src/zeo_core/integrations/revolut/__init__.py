@@ -1,6 +1,7 @@
 """Read-only Revolut Business client; credential custody belongs to the caller."""
 
 from .client import RevolutBusinessClient
+from .hosted import HostedRevolutBusinessClient
 from .models import (
     MAX_RESULT_BYTES,
     MAX_TRANSACTION_COUNT,
@@ -26,6 +27,7 @@ __all__ = [
     "Account",
     "CardReference",
     "Counterparty",
+    "HostedRevolutBusinessClient",
     "Merchant",
     "RevolutAPIError",
     "RevolutBusinessClient",

@@ -36,6 +36,9 @@ from zeo_core.integrations.google.youtube.job import (
 from zeo_core.integrations.hosted.client import (
     HostedClientError,
     HostedOperationStatus,
+    HostedStoppedError,
+    HostedUnavailableError,
+    stop_of,
 )
 
 if TYPE_CHECKING:
@@ -134,7 +137,11 @@ class RetentionSweep:
                 f"{job.idempotency_key[:32]}:retain:{time.time_ns()}",
             )
         except (HostedClientError, JobError) as error:
-            refused = "refused" in str(error)
+            # A stop or an outage is temporary: defer. Only a refusal means
+            # access has lapsed.
+            refused = "refused" in str(error) and not isinstance(
+                error, (HostedStoppedError, HostedUnavailableError)
+            )
             if refused or age >= self._max_age:
                 reason = (
                     "access lapsed (ZEOconnect refused the read)"
@@ -159,6 +166,14 @@ class RetentionSweep:
                 )
             )
             report.refreshed += 1
+            return
+        if stop_of(response) is not None:
+            # An orchestrated stop is temporary, like an outage.
+            if age >= self._max_age:
+                reason = f"not refreshed within {self._max_age.days} days (stopped)"
+                self._drop(directory, reason, report)
+            else:
+                report.deferred += 1
             return
         message = response.normalized_error.message if response.normalized_error else ""
         self._drop(
