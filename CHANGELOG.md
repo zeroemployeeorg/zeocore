@@ -24,6 +24,10 @@ this section becomes "Unreleased".
   Broker stop or a 503 used to read as "refused", which removed `youtube.json`
   as if access had lapsed. Both now defer, as an unreachable Broker already
   did, until the 30-day limit.
+- **A hosted request never carries NaN or ±Infinity.** They are not JSON, and
+  the Broker refuses them (zeoconnect #49). httpx 0.27, which zeocore allows,
+  would have sent them. The transport now refuses such a body before sending,
+  with `HostedClientError("hosted request holds a number JSON cannot carry")`.
 
 ### Added
 

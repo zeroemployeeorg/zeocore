@@ -370,3 +370,22 @@ def test_unreadable_controls_are_an_outage_never_a_stop() -> None:
         }
     )
     assert is_outage(answer) and stop_of(answer) is None
+
+
+# -- Request bodies (zeoconnect #49) ---------------------------------------------
+
+
+@pytest.mark.parametrize("value", [float("nan"), float("inf"), float("-inf")])
+def test_a_number_json_cannot_carry_is_refused_before_sending(value: float) -> None:
+    sent: list[httpx.Request] = []
+
+    def handler(http_request: httpx.Request) -> httpx.Response:
+        sent.append(http_request)
+        return response(200, CONFIRMED, request=http_request)
+
+    hosted, store = transport(httpx.MockTransport(handler))
+    store.save(session(NOW))
+    effect = request(EFFECT).model_copy(update={"arguments": {"nested": [value]}})
+    with pytest.raises(HostedClientError, match="JSON cannot carry"):
+        hosted.invoke(effect)
+    assert sent == []

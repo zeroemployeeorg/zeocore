@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 from collections.abc import Callable
 from datetime import UTC, datetime
@@ -464,9 +465,19 @@ class ZEOconnectHTTPTransport:
             raise HostedClientError("managed execution forbids member API fallback")
         headers = self._headers(session) if authenticated else self._headers(None)
         if json_body is not None:
-            encoded = httpx.Request(
-                method, "https://local.invalid", json=json_body
-            ).content
+            # NaN and +-Infinity are not JSON, and the Broker refuses them. httpx
+            # 0.27 would send them, so refuse here whatever httpx is installed.
+            try:
+                encoded = json.dumps(
+                    json_body,
+                    ensure_ascii=False,
+                    separators=(",", ":"),
+                    allow_nan=False,
+                ).encode()
+            except ValueError:
+                raise HostedClientError(
+                    "hosted request holds a number JSON cannot carry"
+                ) from None
             if len(encoded) > _MAX_REQUEST_BYTES:
                 raise HostedClientError("hosted request exceeds the client limit")
         try:
