@@ -26,6 +26,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import secrets
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
@@ -397,11 +398,57 @@ def _canonical(value: object) -> bytes:
     ).encode()
 
 
+def _write_all(descriptor: int, content: bytes) -> None:
+    view = memoryview(content)
+    while view:
+        view = view[os.write(descriptor, view) :]
+    os.fsync(descriptor)
+
+
 def _create_exclusive(path: Path, content: bytes) -> None:
+    """Create ``path`` holding ``content`` whole, or not at all.
+
+    The bytes are written and synced under a temporary name, then hard-linked
+    into place. A process killed mid-write therefore never leaves a partial
+    file under the final name, which would make the job unreadable. The link
+    fails if ``path`` exists, so files stay write-once. On a filesystem
+    without hard links, it falls back to writing ``path`` directly.
+    """
+    temporary = path.with_name(f".{path.name}.{secrets.token_hex(6)}.tmp")
+    descriptor = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)
+    try:
+        try:
+            _write_all(descriptor, content)
+        finally:
+            os.close(descriptor)
+        try:
+            os.link(temporary, path)
+        except FileExistsError:
+            raise
+        except OSError:
+            _create_directly(path, content)
+    finally:
+        temporary.unlink(missing_ok=True)
+    _sync_directory(path.parent)
+
+
+def _create_directly(path: Path, content: bytes) -> None:
     descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)
     try:
-        os.write(descriptor, content)
+        _write_all(descriptor, content)
+    finally:
+        os.close(descriptor)
+
+
+def _sync_directory(directory: Path) -> None:
+    try:
+        descriptor = os.open(directory, os.O_RDONLY)
+    except OSError:
+        return
+    try:
         os.fsync(descriptor)
+    except OSError:
+        pass
     finally:
         os.close(descriptor)
 
