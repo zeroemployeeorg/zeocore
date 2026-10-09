@@ -62,7 +62,10 @@ this section becomes "Unreleased".
   and then written. A process killed in between left an empty file, so the next
   run could not read the job at all. Each file is now written and synced
   under a temporary name, then hard-linked into place, which is still
-  write-once. A filesystem without hard links falls back to the direct write.
+  write-once. A filesystem without hard links is refused with `JobError` rather
+  than written directly, because a direct write would bring back the partial
+  file. This protects against a killed process. Power-loss durability also
+  depends on the filesystem honouring fsync.
 - **Unknown fields nested in a Broker response are ignored too.** 0.14.0 drops
   unknown top-level fields (contract §10), but an unknown field inside
   `artifact` or `normalized_error` still refused the whole response. Both now
