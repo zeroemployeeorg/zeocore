@@ -579,7 +579,10 @@ def test_a_closed_job_is_not_reopened_by_a_later_release(
     assert len(broker.calls) == sent
 
 
-def test_a_run_of_a_held_job_sends_nothing(tmp_path: Path, world: tuple) -> None:
+def test_a_sequential_run_of_a_held_job_sends_nothing(
+    tmp_path: Path, world: tuple
+) -> None:
+    """Sequential only: a run after the hold. Close/run interleaving is #92's."""
     yt, broker, links = world
     directory = _held_on_refusal(tmp_path, world)
     sent = len(broker.calls)
