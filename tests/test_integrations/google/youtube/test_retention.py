@@ -138,6 +138,15 @@ def test_unreachable_defers_until_the_limit_then_deletes(tmp_path: Path) -> None
                 code=NormalizedErrorCode.STOPPED, message="stopped:dispatch:global"
             ),
         ),
+        # Contract 1.1.0 §9: a control that could not be read is an outage.
+        HostedOperationResponse(
+            status=HostedOperationStatus.FAILED_SAFE,
+            execution_id="x",
+            normalized_error=NormalizedError(
+                code=NormalizedErrorCode.PROVIDER_UNAVAILABLE,
+                message="controls_unavailable:dispatch",
+            ),
+        ),
     ],
 )
 def test_a_stop_or_an_outage_defers_and_never_reads_as_lapsed_access(

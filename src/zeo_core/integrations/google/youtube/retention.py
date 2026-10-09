@@ -38,6 +38,7 @@ from zeo_core.integrations.hosted.client import (
     HostedOperationStatus,
     HostedStoppedError,
     HostedUnavailableError,
+    is_outage,
     stop_of,
 )
 
@@ -167,10 +168,10 @@ class RetentionSweep:
             )
             report.refreshed += 1
             return
-        if stop_of(response) is not None:
-            # An orchestrated stop is temporary, like an outage.
+        if stop_of(response) is not None or is_outage(response):
+            # An orchestrated stop or outage is temporary, like a 503.
             if age >= self._max_age:
-                reason = f"not refreshed within {self._max_age.days} days (stopped)"
+                reason = f"not refreshed within {self._max_age.days} days (held)"
                 self._drop(directory, reason, report)
             else:
                 report.deferred += 1

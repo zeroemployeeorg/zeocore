@@ -91,6 +91,15 @@ class HostedOperationResponse(BaseModel):
     normalized_error: NormalizedError | None = None
     receipt: dict[str, JsonValue] | None = None
 
+    @property
+    def replayed(self) -> bool:
+        """The Broker served this from its stored record (contract 1.1.0 §6).
+
+        A replay is a read of an earlier outcome, never a fresh act: it made no
+        provider call. A ``confirmed`` replay is not a new success.
+        """
+        return self.receipt is not None and self.receipt.get("replayed") is True
+
     @model_validator(mode="after")
     def _shape_matches_status(self) -> HostedOperationResponse:
         if self.normalized_error is not None and self.normalized_error.provider_detail:
@@ -192,6 +201,21 @@ class HostedUpgradeRequiredError(HostedClientError):
         )
 
 
+def is_outage(response: HostedOperationResponse) -> bool:
+    """An orchestrated outage: ``failed_safe`` with ``PROVIDER_UNAVAILABLE``.
+
+    For example ``controls_unavailable:<control>`` (contract 1.1.0 §9): the
+    Broker could not read a control, so no stop is established and the
+    provider was not called. Temporary, like a 503.
+    """
+    error = response.normalized_error
+    return (
+        response.status is HostedOperationStatus.FAILED_SAFE
+        and error is not None
+        and error.code is NormalizedErrorCode.PROVIDER_UNAVAILABLE
+    )
+
+
 def stop_of(response: HostedOperationResponse) -> HostedStoppedError | None:
     """The stop an orchestrated answer reports, or ``None`` (contract §9).
 
@@ -237,5 +261,6 @@ __all__ = [
     "HostedUnavailableError",
     "HostedUnreachableError",
     "HostedUpgradeRequiredError",
+    "is_outage",
     "stop_of",
 ]

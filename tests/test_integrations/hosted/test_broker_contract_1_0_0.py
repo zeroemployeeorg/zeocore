@@ -35,7 +35,7 @@ from zeo_core.integrations.hosted import (
     InMemorySecureSessionStore,
     ZEOconnectHTTPTransport,
 )
-from zeo_core.integrations.hosted.client import stop_of
+from zeo_core.integrations.hosted.client import is_outage, stop_of
 
 EFFECT = "bluesky.post.create"
 SAFE_READ = "google.drive.file.download"
@@ -336,3 +336,37 @@ def test_a_426_says_to_upgrade() -> None:
     store.save(session(NOW))
     with pytest.raises(HostedUpgradeRequiredError, match="upgrade zeocore"):
         hosted.invoke(request(EFFECT))
+
+
+# -- 1.1.0 additions (zeoconnect #40, 7a62288a): additive, read without a re-pin ---
+
+
+def test_a_replay_is_marked_and_is_not_a_fresh_success() -> None:
+    def handler(http_request: httpx.Request) -> httpx.Response:
+        return response(
+            200, {**CONFIRMED, "receipt": {"replayed": True}}, request=http_request
+        )
+
+    hosted, store = transport(httpx.MockTransport(handler))
+    store.save(session(NOW))
+    answer = hosted.invoke(request(EFFECT))
+    assert answer.status is HostedOperationStatus.CONFIRMED and answer.replayed
+    fresh = HostedOperationResponse.model_validate(CONFIRMED)
+    assert not fresh.replayed
+    assert not HostedOperationResponse.model_validate(
+        {**CONFIRMED, "receipt": {"replayed": "true"}}
+    ).replayed
+
+
+def test_unreadable_controls_are_an_outage_never_a_stop() -> None:
+    answer = HostedOperationResponse.model_validate(
+        {
+            "status": "failed_safe",
+            "execution_id": "exe-1",
+            "normalized_error": {
+                "code": "PROVIDER_UNAVAILABLE",
+                "message": "controls_unavailable:dispatch",
+            },
+        }
+    )
+    assert is_outage(answer) and stop_of(answer) is None
