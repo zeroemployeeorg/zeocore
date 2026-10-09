@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased: binding fence, 0.15.0 or 0.16.0]
 
-Draft for ZEOconnect Broker contract `1.2.0` (zeoconnect #56). It lands after
+For ZEOconnect Broker contract `1.2.0`, pinned at zeoconnect `31da8bda` (#56's merge commit), `docs/contract/broker-contract-v1.md`, sha256 `d2be4901…`. It lands after
 0.14.0. It ships in 0.15.0 if 1.2.0 is pinned before 0.15.0 ships, and
 otherwise in 0.16.0.
 

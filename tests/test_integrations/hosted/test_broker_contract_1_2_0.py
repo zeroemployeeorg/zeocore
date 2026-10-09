@@ -1,6 +1,6 @@
 """zeocore against ZEOconnect Broker contract 1.2.0's expected-binding fence (§6a).
 
-The pin follows zeoconnect #56's merge commit. These tests cover zeocore's
+Pinned at zeoconnect 31da8bda (#56's merge), sha256 d2be4901. These tests cover zeocore's
 side of §8: a static capability, the revision on each connection, ``expect``
 on the request, "fence unsupported" that is never resent unfenced, and the
 parsed ``binding_mismatch:<field>`` reason.
