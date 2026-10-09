@@ -305,8 +305,12 @@ class JobState:
     provider_dropped: str | None = None
     held: str | None = None
     held_detail: str = ""
-    #: The ``held`` event in force, so a close names exactly which hold it ends.
+    #: The ``held`` event in force, and the step and attempt it recorded (only
+    #: holds on a recorded Broker outcome record them), so a close is bound
+    #: to exactly one hold.
     held_seq: int | None = None
+    held_step: str | None = None
+    held_attempt: int | None = None
     cancelled: bool = False
     done: bool = False
     #: YouTube refused a link without a token: chunks go through custody.
@@ -355,6 +359,11 @@ def _job_event(state: JobState, event: Event, extra: dict[str, Any]) -> None:
         case "held":
             state.held = str(extra.get("reason", "held"))
             state.held_seq = event.seq
+            step, attempt = extra.get("step"), extra.get("attempt")
+            state.held_step = step if isinstance(step, str) else None
+            state.held_attempt = (
+                attempt if type(attempt) is int and attempt >= 1 else None
+            )
             state.held_detail = str(extra.get("detail", ""))
         case "released":
             if state.held == "ambiguous_upload":
@@ -363,6 +372,8 @@ def _job_event(state: JobState, event: Event, extra: dict[str, Any]) -> None:
             state.held = None
             state.held_detail = ""
             state.held_seq = None
+            state.held_step = None
+            state.held_attempt = None
         case "relay_engaged":
             state.relay = True
         case "cancelled":

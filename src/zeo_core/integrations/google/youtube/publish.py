@@ -194,19 +194,39 @@ def job_lock(job_dir: Path) -> Iterator[None]:
         os.close(descriptor)
 
 
+def _close_refusal(job: Job, state: JobState, held_seq: int) -> str | None:
+    if state.held is None:
+        return "not_held"
+    if state.held_seq != held_seq:
+        return "hold_changed"
+    if state.held_step is None or state.held_attempt is None:
+        return "hold_step_unknown"
+    if state.held_step not in job_steps(job):
+        return "unknown_step"
+    return None
+
+
 def close_held_job(
     job_dir: Path,
-    step: str,
+    held_seq: int,
     *,
     clock: Callable[[], datetime] | None = None,
 ) -> RunResult:
-    """Close a job held on a recorded outcome, on a person's decision.
+    """Close the job's hold ``held_seq`` on a person's decision.
 
-    It is the studio's Close. It sends nothing to ZEOconnect: no new key, no
-    new attempt. Under the job's lock it checks that the job is held and
-    that ``step`` is one of the job's steps. It then appends the studio's
-    ``cancelled`` event and writes the REFUSED receipt. A job that is already
-    closed returns the same result. A run in progress gives ``busy`` (exit 11).
+    It is the studio's Close for a job held on an outcome ZEOconnect
+    recorded. It sends nothing to ZEOconnect: no new key, no new attempt.
+    Under the job's lock it checks four things:
+    - the job is still held;
+    - the hold in force is ``held_seq``, the one the person saw (a stale
+      decision gives ``hold_changed``);
+    - that hold recorded its own step and attempt. Holds zeocore raised
+      itself, and holds from older journals, give ``hold_step_unknown``;
+    - the step is one of the job's steps.
+    It then appends the studio's ``cancelled`` event, naming that hold, its
+    step and its attempt, and writes the REFUSED receipt with reason
+    ``cancelled``. A closed job returns the same result again. While a run
+    holds the lock, it answers ``busy`` (exit 11).
     """
     now = clock or (lambda: datetime.now(UTC))
     directory = JobDirectory(job_dir)
@@ -214,55 +234,34 @@ def close_held_job(
         job = directory.authorized_job()
     except JobError as error:
         return RunResult(EXIT_INVALID, {"state": "invalid", "reason": str(error)})
+
+    def refused(reason: str) -> RunResult:
+        return RunResult(
+            EXIT_INVALID, {"job_id": job.job_id, "state": "invalid", "reason": reason}
+        )
+
+    cancelled = RunResult(
+        EXIT_DONE, {"job_id": job.job_id, "state": "cancelled", "reason": "cancelled"}
+    )
     try:
         with job_lock(directory.path):
             receipt = directory.receipt()
             if receipt is not None:
                 if receipt.outcome == "REFUSED" and receipt.reason == "cancelled":
-                    return RunResult(
-                        EXIT_DONE,
-                        {
-                            "job_id": job.job_id,
-                            "state": "cancelled",
-                            "reason": receipt.reason,
-                        },
-                    )
-                return RunResult(
-                    EXIT_INVALID,
-                    {"job_id": job.job_id, "state": "invalid", "reason": "finished"},
-                )
+                    return cancelled
+                return refused("finished")
             state = directory.state()
             if not state.cancelled:
-                if state.held is None:
-                    return RunResult(
-                        EXIT_INVALID,
-                        {
-                            "job_id": job.job_id,
-                            "state": "invalid",
-                            "reason": "not_held",
-                        },
-                    )
-                if step not in job_steps(job):
-                    return RunResult(
-                        EXIT_INVALID,
-                        {
-                            "job_id": job.job_id,
-                            "state": "invalid",
-                            "reason": "unknown_step",
-                        },
-                    )
-                # The close names the exact hold it ends: its reason, its
-                # event, and the step and attempt it was on. The receipt
-                # keeps its plain "cancelled" for every reader (ZEO-RT SOW-93).
+                if (refusal := _close_refusal(job, state, held_seq)) is not None:
+                    return refused(refusal)
                 directory.append(
                     actor="studio",
                     type="cancelled",
                     closed_on=state.held,
                     held_seq=state.held_seq,
-                    step=step,
-                    attempt=state.step(step).attempt,
+                    step=state.held_step,
+                    attempt=state.held_attempt,
                 )
-            reason = "cancelled"
             directory.write_receipt(
                 Receipt.model_validate(
                     {
@@ -275,14 +274,11 @@ def close_held_job(
                             else None
                         ),
                         "observed_at": now(),
-                        "reason": reason,
+                        "reason": "cancelled",
                     }
                 )
             )
-            return RunResult(
-                EXIT_DONE,
-                {"job_id": job.job_id, "state": "cancelled", "reason": reason},
-            )
+            return cancelled
     except JobBusyError:
         return RunResult(EXIT_WAIT, {"job_id": job.job_id, "state": "busy"})
 
@@ -397,8 +393,21 @@ class PublishExecutor:
             status["video_url"] = video_url(video_id)
         return RunResult(code, status)
 
-    def _hold(self, reason: str, detail: str = "") -> _EndRunError:
-        self.dir.append(actor="executor", type="held", reason=reason, detail=detail)
+    def _hold(
+        self,
+        reason: str,
+        detail: str = "",
+        *,
+        step: str | None = None,
+        attempt: int | None = None,
+    ) -> _EndRunError:
+        # A hold on a recorded Broker outcome names its step and attempt as
+        # typed fields, so a close is bound to the hold, not to a caller's
+        # word (ZEO-RT SOW-99).
+        bound = {"step": step, "attempt": attempt} if step is not None else {}
+        self.dir.append(
+            actor="executor", type="held", reason=reason, detail=detail, **bound
+        )
         return _EndRunError(
             self._result(EXIT_HELD, "held", reason=reason, detail=detail)
         )
@@ -508,7 +517,12 @@ class PublishExecutor:
                 self._sleep(self._approval_poll)
                 continue
             if status is HostedOperationStatus.REFUSED:
-                raise self._hold("refused_in_zeoconnect", f"{step}: {operation}")
+                raise self._hold(
+                    "refused_in_zeoconnect",
+                    f"{step}: {operation}",
+                    step=step,
+                    attempt=state.attempt,
+                )
             if status is HostedOperationStatus.AMBIGUOUS:
                 # The broker may or may not have done it; the step's own
                 # reconciliation decides on the next run.
@@ -521,7 +535,12 @@ class PublishExecutor:
             message = (
                 response.normalized_error.message if response.normalized_error else ""
             )
-            raise self._hold("provider_refused", f"{step}: {message}".strip())
+            raise self._hold(
+                "provider_refused",
+                f"{step}: {message}".strip(),
+                step=step,
+                attempt=state.attempt,
+            )
 
     def _new_attempt(
         self, step: str, attempt: int, *, final_chunk_sent: bool = False
@@ -1144,7 +1163,7 @@ def _youtube(
 
 
 def _close_command(args: argparse.Namespace) -> int:
-    return _print(close_held_job(Path(args.job_dir).resolve(), args.step))
+    return _print(close_held_job(Path(args.job_dir).resolve(), args.held_seq))
 
 
 def _connections(_args: argparse.Namespace) -> int:
@@ -1191,7 +1210,12 @@ def main(argv: list[str] | None = None) -> int:
         "close", help="close a job held on a recorded outcome (sends nothing)"
     )
     close.add_argument("job_dir")
-    close.add_argument("--step", required=True, help="the step the hold is on")
+    close.add_argument(
+        "--held-seq",
+        type=int,
+        required=True,
+        help="the held event's seq: the exact hold being closed",
+    )
     close.add_argument(
         "--json", action="store_true", help="one JSON status line (default)"
     )

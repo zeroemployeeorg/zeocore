@@ -90,7 +90,7 @@ python -m zeo_core.integrations.google.youtube.publish pair          # once: pai
 python -m zeo_core.integrations.google.youtube.publish connections   # the YouTube connection IDs
 python -m zeo_core.integrations.google.youtube.publish run JOB_DIR   # advance a job; safe to repeat
 python -m zeo_core.integrations.google.youtube.publish status JOB_DIR
-python -m zeo_core.integrations.google.youtube.publish close JOB_DIR --step STEP  # close a held job; sends nothing
+python -m zeo_core.integrations.google.youtube.publish close JOB_DIR --held-seq N  # close a held job; sends nothing
 python -m zeo_core.integrations.google.youtube.publish retain PUBLISH_ROOT  # daily: the 30-day rule
 ```
 
@@ -114,15 +114,20 @@ ZEOconnect recorded against the step's idempotency key. A `released` event
 doesn't change the key, so the next run gets the same recorded answer and holds
 again. Release can't retry these holds.
 
-`close JOB_DIR --step STEP` ends such a job on a person's decision:
+`close JOB_DIR --held-seq N` ends such a job on a person's decision. `N` is the
+`seq` of the `held` event the person looked at.
 - **It sends nothing.** There is no new key and no new attempt.
 - **It takes the run's lock** and exits `11` (`busy`) if a run holds it.
-- **It closes only a held job**, and `STEP` must be one of the job's steps: `video`,
-  `thumbnail`, `caption:<language>:<name>` or `playlist`.
-- **It records the close** as the studio's `cancelled` event. The event names the
-  exact hold it ends: `closed_on` (the hold's reason), `held_seq` (the hold's
-  event), `step` and `attempt`. The REFUSED receipt keeps the reason `cancelled`,
-  which every reader already understands. The original hold stays in the journal.
+- **It closes only that hold**, rechecked under the lock:
+  - `not_held`: the job isn't held, or it was released;
+  - `hold_changed`: a different hold is in force now (a stale decision);
+  - `hold_step_unknown`: the hold recorded no step of its own, as with holds
+    zeocore raises itself and holds from older journals. Close never guesses
+    the step from free text or from the caller.
+- **It records the close** as the studio's `cancelled` event, which names the hold
+  (`closed_on`, `held_seq`) and the `step` and `attempt` that the hold recorded.
+  The REFUSED receipt keeps the reason `cancelled`, which every reader already
+  understands. The original hold stays in the journal.
 - **Whether a video exists** is read from the journal: an `uploaded` event means
   yes. It is never read from `youtube.json` (`provider_record`), which retention
   may delete.

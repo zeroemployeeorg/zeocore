@@ -11,14 +11,16 @@ Draft. ZBS asked for it, and it waits for the elders' E10 ruling (org #787).
 
 ### Added
 
-- **`publish close JOB_DIR --step STEP`** closes a YouTube job held on an
+- **`publish close JOB_DIR --held-seq N`** closes a YouTube job held on an
   outcome ZEOconnect recorded. It sends nothing to ZEOconnect, and it takes the
   same lock as a run, so a close never lands inside a run.
-  - It refuses a job that isn't held, has been released, or names an unknown
-    step.
-  - The studio's `cancelled` event names the exact hold it ends: `closed_on`,
-    `held_seq`, `step` and `attempt`. The receipt is unchanged, with reason
-    `cancelled`, so every existing reader classifies it the same way.
+  - Holds on a recorded outcome (`refused_in_zeoconnect`, `provider_refused`)
+    now record their own `step` and `attempt`.
+  - Close is bound to the exact hold `N`. It refuses `not_held`,
+    `hold_changed` (a stale decision) and `hold_step_unknown` (a hold without
+    a recorded step).
+  - The studio's `cancelled` event names the hold, its step and its attempt.
+    The receipt is unchanged, with reason `cancelled`.
   - A kill between the event and the receipt is finished the same way by
     either the next run or a repeated close.
   - Python callers can use `close_held_job()` and `job_lock()`.
