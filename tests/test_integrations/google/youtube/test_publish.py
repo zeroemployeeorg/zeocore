@@ -9,6 +9,7 @@ from pathlib import Path
 import pytest
 from pydantic import SecretStr
 
+from zeo_core.integrations.google.youtube import job as job_module
 from zeo_core.integrations.google.youtube import publish
 from zeo_core.integrations.google.youtube.job import JobDirectory, ProviderRecord
 from zeo_core.integrations.google.youtube.links import InMemoryUploadLinkStore
@@ -610,3 +611,65 @@ def test_a_cancel_during_a_run_is_recorded_but_does_not_stop_that_run(
     assert result.status["state"] == "done"
     types = [e.type for e in JobDirectory(directory).events()]
     assert types.index("cancelled") < types.index("uploaded")
+
+
+# -- A kill mid-write never leaves a partial file (ZBS, ZEO-RT SOW-90) ----------
+
+
+def _killed_on_write(monkeypatch: pytest.MonkeyPatch) -> None:
+    def killed(_descriptor: int, _data: object) -> int:
+        raise KeyboardInterrupt("killed mid-write")
+
+    monkeypatch.setattr(job_module.os, "write", killed)
+
+
+def test_a_kill_while_closing_leaves_no_receipt_and_the_rerun_closes(
+    tmp_path: Path, world: tuple, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    yt, broker, links = world
+    directory = _held_on_refusal(tmp_path, world)
+    JobDirectory(directory).append(actor="studio", type="cancelled")
+    sent = len(broker.calls)
+    real_write = job_module.os.write
+    _killed_on_write(monkeypatch)
+    with pytest.raises(KeyboardInterrupt):
+        _executor(directory, yt, broker, links).run()
+    monkeypatch.setattr(job_module.os, "write", real_write)
+    assert not (directory / "receipt.json").exists()
+    for _ in range(2):
+        closed = _executor(directory, yt, broker, links).run()
+        assert closed.status["state"] == "cancelled"
+    receipt = JobDirectory(directory).receipt()
+    assert receipt is not None and receipt.outcome == "REFUSED"
+    assert len(broker.calls) == sent
+
+
+def test_a_kill_while_appending_an_event_keeps_the_job_readable(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    directory = JobDirectory(make_job(tmp_path))
+    before = directory.events()
+    _killed_on_write(monkeypatch)
+    with pytest.raises(KeyboardInterrupt):
+        directory.append(actor="studio", type="cancelled")
+    monkeypatch.undo()
+    assert directory.events() == before
+    assert directory.append(actor="studio", type="cancelled").seq == len(before) + 1
+
+
+def test_files_stay_write_once_and_fall_back_without_hard_links(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    target = tmp_path / "once.json"
+    job_module._create_exclusive(target, b"{}")
+    with pytest.raises(FileExistsError):
+        job_module._create_exclusive(target, b"{}")
+
+    def no_links(_source: object, _target: object) -> None:
+        raise OSError(45, "Operation not supported")
+
+    monkeypatch.setattr(job_module.os, "link", no_links)
+    fallback = tmp_path / "fallback.json"
+    job_module._create_exclusive(fallback, b'{"a":1}')
+    assert fallback.read_bytes() == b'{"a":1}'
+    assert [p.name for p in tmp_path.iterdir() if p.name.endswith(".tmp")] == []

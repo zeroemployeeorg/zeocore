@@ -28,6 +28,12 @@ this section becomes "Unreleased".
   the Broker refuses them (zeoconnect #49). httpx 0.27, which zeocore allows,
   would have sent them. The transport now refuses such a body before sending,
   with `HostedClientError("hosted request holds a number JSON cannot carry")`.
+- **A YouTube job survives a kill mid-write.** The job directory's write-once
+  files (each event and `receipt.json`) were created under their final name
+  and then written. A process killed in between left an empty file, so the next
+  run could not read the job at all. Each file is now written and synced
+  under a temporary name, then hard-linked into place, which is still
+  write-once. A filesystem without hard links falls back to the direct write.
 - **Unknown fields nested in a Broker response are ignored too.** 0.14.0 drops
   unknown top-level fields (contract §10), but an unknown field inside
   `artifact` or `normalized_error` still refused the whole response. Both now
