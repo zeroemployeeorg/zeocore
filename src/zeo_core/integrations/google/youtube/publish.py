@@ -58,6 +58,8 @@ from zeo_core.integrations.google.youtube.job import (
     MediaFile,
     ProviderRecord,
     Receipt,
+    cancel_reason,
+    job_steps,
     rfc3339_nano,
 )
 from zeo_core.integrations.google.youtube.links import (
@@ -171,6 +173,118 @@ def video_url(video_id: str) -> str:
     return f"https://youtu.be/{video_id}"
 
 
+class JobBusyError(Exception):
+    """Another process holds the job directory's lock."""
+
+
+@contextmanager
+def job_lock(job_dir: Path) -> Iterator[None]:
+    """The job directory's exclusive lock, taken without waiting.
+
+    A run holds it from start to finish. ``close`` takes the same lock, so a
+    close can never land inside a run.
+    """
+    descriptor = os.open(job_dir / ".lock", os.O_CREAT | os.O_RDWR, 0o644)
+    try:
+        try:
+            fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            raise JobBusyError() from None
+        yield
+    finally:
+        os.close(descriptor)
+
+
+def _is_cancelled(receipt: Receipt) -> bool:
+    return (receipt.reason or "").split(":", 1)[0] == "cancelled"
+
+
+def close_held_job(
+    job_dir: Path,
+    step: str,
+    *,
+    clock: Callable[[], datetime] | None = None,
+) -> RunResult:
+    """Close a job held on a recorded outcome, on a person's decision.
+
+    It is the studio's Close. It sends nothing to ZEOconnect: no new key, no
+    new attempt. Under the job's lock it checks that the job is held and
+    that ``step`` is one of the job's steps. It then appends the studio's
+    ``cancelled`` event and writes the REFUSED receipt. A job that is already
+    closed returns the same result. A run in progress gives ``busy`` (exit 11).
+    """
+    now = clock or (lambda: datetime.now(UTC))
+    directory = JobDirectory(job_dir)
+    try:
+        job = directory.authorized_job()
+    except JobError as error:
+        return RunResult(EXIT_INVALID, {"state": "invalid", "reason": str(error)})
+    try:
+        with job_lock(directory.path):
+            receipt = directory.receipt()
+            if receipt is not None:
+                if receipt.outcome == "REFUSED" and _is_cancelled(receipt):
+                    return RunResult(
+                        EXIT_DONE,
+                        {
+                            "job_id": job.job_id,
+                            "state": "cancelled",
+                            "reason": receipt.reason,
+                        },
+                    )
+                return RunResult(
+                    EXIT_INVALID,
+                    {"job_id": job.job_id, "state": "invalid", "reason": "finished"},
+                )
+            state = directory.state()
+            if not state.cancelled:
+                if state.held is None:
+                    return RunResult(
+                        EXIT_INVALID,
+                        {
+                            "job_id": job.job_id,
+                            "state": "invalid",
+                            "reason": "not_held",
+                        },
+                    )
+                if step not in job_steps(job):
+                    return RunResult(
+                        EXIT_INVALID,
+                        {
+                            "job_id": job.job_id,
+                            "state": "invalid",
+                            "reason": "unknown_step",
+                        },
+                    )
+                directory.append(
+                    actor="studio", type="cancelled", closed_on=state.held, step=step
+                )
+                state = directory.state()
+            reason = cancel_reason(job, state)
+            directory.write_receipt(
+                Receipt.model_validate(
+                    {
+                        "schema_version": 1,
+                        "job_id": job.job_id,
+                        "outcome": "REFUSED",
+                        "provider_record": (
+                            PROVIDER_RECORD
+                            if directory.provider_record() is not None
+                            else None
+                        ),
+                        "observed_at": now(),
+                        "reason": reason,
+                    }
+                )
+            )
+            return RunResult(
+                EXIT_DONE,
+                {"job_id": job.job_id, "state": "cancelled", "reason": reason},
+            )
+    except JobBusyError:
+        return RunResult(EXIT_WAIT, {"job_id": job.job_id, "state": "busy"})
+
+
 class PublishExecutor:
     """Advance one authorized job; safe to run again at any point."""
 
@@ -228,15 +342,11 @@ class PublishExecutor:
 
     @contextmanager
     def _lock(self) -> Iterator[None]:
-        descriptor = os.open(self.dir.path / ".lock", os.O_CREAT | os.O_RDWR, 0o644)
         try:
-            try:
-                fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            except BlockingIOError:
-                raise _EndRunError(self._result(EXIT_WAIT, "busy")) from None
-            yield
-        finally:
-            os.close(descriptor)
+            with job_lock(self.dir.path):
+                yield
+        except JobBusyError:
+            raise _EndRunError(self._result(EXIT_WAIT, "busy")) from None
 
     def _advance(self) -> RunResult:
         receipt = self.dir.receipt()
@@ -244,7 +354,7 @@ class PublishExecutor:
         if receipt is not None:
             return self._finished(receipt)
         if state.cancelled:
-            return self._close("REFUSED", reason="cancelled")
+            return self._close("REFUSED", reason=cancel_reason(self.job, state))
         if state.held is not None:
             return self._result(
                 EXIT_HELD, "held", reason=state.held, detail=state.held_detail
@@ -292,8 +402,8 @@ class PublishExecutor:
         )
 
     def _finished(self, receipt: Receipt) -> RunResult:
-        if receipt.outcome == "REFUSED" and receipt.reason == "cancelled":
-            return self._result(EXIT_DONE, "cancelled", reason="cancelled")
+        if receipt.outcome == "REFUSED" and _is_cancelled(receipt):
+            return self._result(EXIT_DONE, "cancelled", reason=receipt.reason)
         code = EXIT_DONE if receipt.outcome == "SUCCEEDED" else EXIT_HELD
         state = "done" if receipt.outcome == "SUCCEEDED" else receipt.outcome.lower()
         return self._result(code, state, reason=receipt.reason)
@@ -1031,6 +1141,10 @@ def _youtube(
     ]
 
 
+def _close_command(args: argparse.Namespace) -> int:
+    return _print(close_held_job(Path(args.job_dir).resolve(), args.step))
+
+
 def _connections(_args: argparse.Namespace) -> int:
     from zeo_core.integrations.hosted.pairing import HostedConnectionManager
 
@@ -1071,6 +1185,15 @@ def main(argv: list[str] | None = None) -> int:
     pair = commands.add_parser("pair", help="pair this device with ZEOconnect")
     pair.add_argument("--device-name", default="ZEO Broadcasting Studio")
     pair.set_defaults(handler=_pair)
+    close = commands.add_parser(
+        "close", help="close a job held on a recorded outcome (sends nothing)"
+    )
+    close.add_argument("job_dir")
+    close.add_argument("--step", required=True, help="the step the hold is on")
+    close.add_argument(
+        "--json", action="store_true", help="one JSON status line (default)"
+    )
+    close.set_defaults(handler=_close_command)
     listing = commands.add_parser("connections", help="list YouTube connections")
     listing.set_defaults(handler=_connections)
     args = parser.parse_args(argv)
@@ -1093,9 +1216,12 @@ __all__ = [
     "EXIT_WAIT",
     "OPERATIONS",
     "HostedYouTubeBroker",
+    "JobBusyError",
     "PublishExecutor",
     "RunResult",
     "YouTubeBroker",
+    "close_held_job",
+    "job_lock",
     "main",
     "sha256_file",
     "video_url",

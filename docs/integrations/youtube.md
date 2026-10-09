@@ -90,6 +90,7 @@ python -m zeo_core.integrations.google.youtube.publish pair          # once: pai
 python -m zeo_core.integrations.google.youtube.publish connections   # the YouTube connection IDs
 python -m zeo_core.integrations.google.youtube.publish run JOB_DIR   # advance a job; safe to repeat
 python -m zeo_core.integrations.google.youtube.publish status JOB_DIR
+python -m zeo_core.integrations.google.youtube.publish close JOB_DIR --step STEP  # close a held job; sends nothing
 python -m zeo_core.integrations.google.youtube.publish retain PUBLISH_ROOT  # daily: the 30-day rule
 ```
 
@@ -100,11 +101,31 @@ python -m zeo_core.integrations.google.youtube.publish retain PUBLISH_ROOT  # da
 | `0` | done or cancelled | nothing |
 | `10` | waiting for your approval (`approval_url`) | approve in ZEOconnect, then run again |
 | `11` | waiting: not due yet, YouTube processing, paused, or busy | run again later |
-| `20` | held (`reason`) | resolve the reason; append a `released` event |
+| `20` | held (`reason`) | if zeocore raised the hold itself (`ambiguous_upload`, `read_failed`), resolve it and append a `released` event; if ZEOconnect recorded the outcome, see below |
 | `2` | invalid or unauthorized job | fix the job |
 
 A run holds a lock on the job directory, so two runners never work on the same job. It
 stops cleanly at the next chunk boundary on SIGTERM.
+
+### A job held on an outcome ZEOconnect recorded
+
+Holds such as `refused_in_zeoconnect` and `provider_refused` come from an answer
+ZEOconnect recorded against the step's idempotency key. A `released` event
+doesn't change the key, so the next run gets the same recorded answer and holds
+again. Release can't retry these holds.
+
+`close JOB_DIR --step STEP` ends such a job on a person's decision:
+- **It sends nothing.** There is no new key and no new attempt.
+- **It takes the run's lock** and exits `11` (`busy`) if a run holds it.
+- **It closes only a held job**, and `STEP` must be one of the job's steps: `video`,
+  `thumbnail`, `caption:<language>:<name>` or `playlist`.
+- **It records the close** as the studio's `cancelled` event and writes a REFUSED
+  receipt whose reason is `cancelled:<held reason>:<step>`. The original hold stays
+  in the journal. Whether the video exists is in `provider_record`.
+- **Repeating it, or running the job afterwards, gives the same result.**
+
+A new job for the same video is a separate request with a new key. It is not a
+retry of the closed one, and it is not something zeocore starts.
 
 ## When YouTube wants a token on every chunk
 

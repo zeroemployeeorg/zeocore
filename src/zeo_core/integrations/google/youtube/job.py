@@ -26,6 +26,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import secrets
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -306,6 +307,11 @@ class JobState:
     held: str | None = None
     held_detail: str = ""
     cancelled: bool = False
+    #: The hold in force when the studio closed the job, and the step it
+    #: named. Both come from the ``cancelled`` event and are checked again
+    #: before they reach the receipt.
+    closed_on: str | None = None
+    closed_step: str | None = None
     done: bool = False
     #: YouTube refused a link without a token: chunks go through custody.
     relay: bool = False
@@ -363,6 +369,9 @@ def _job_event(state: JobState, event: Event, extra: dict[str, Any]) -> None:
             state.relay = True
         case "cancelled":
             state.cancelled = True
+            closed_on, step = extra.get("closed_on"), extra.get("step")
+            state.closed_on = closed_on if isinstance(closed_on, str) else None
+            state.closed_step = step if isinstance(step, str) else None
         case "done":
             state.done = True
 
@@ -451,6 +460,39 @@ def _sync_directory(directory: Path) -> None:
         pass
     finally:
         os.close(descriptor)
+
+
+def job_steps(job: Job) -> frozenset[str]:
+    """The step names a job's executor can hold on."""
+    steps = {"video"}
+    if job.thumbnail is not None:
+        steps.add("thumbnail")
+    steps.update(f"caption:{c.language}:{c.name}" for c in job.captions)
+    if job.playlist_id is not None:
+        steps.add("playlist")
+    return frozenset(steps)
+
+
+_REASON_TOKEN = re.compile(r"^[a-z][a-z0-9_]{0,63}$")
+
+
+def cancel_reason(job: Job, state: JobState) -> str:
+    """``receipt.reason`` for a cancelled job.
+
+    A close of a held job is ``cancelled:<held reason>:<step>``. Anything
+    else, including a value that fails its check, is plain ``cancelled``.
+    Readers that take the key before the first ``:`` see ``cancelled``
+    either way. The schema and the fields don't change.
+    """
+    held, step = state.closed_on, state.closed_step
+    if (
+        held is not None
+        and step is not None
+        and _REASON_TOKEN.match(held)
+        and step in job_steps(job)
+    ):
+        return f"cancelled:{held}:{step}"
+    return "cancelled"
 
 
 class JobDirectory:
@@ -597,7 +639,9 @@ __all__ = [
     "StepState",
     "ThumbnailFile",
     "VideoFile",
+    "cancel_reason",
     "fold",
+    "job_steps",
     "loop_id_for",
     "rfc3339_nano",
     "runtime_identity",
