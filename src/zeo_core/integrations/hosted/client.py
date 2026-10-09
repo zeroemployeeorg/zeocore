@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 from collections.abc import Mapping, Sequence
 from enum import StrEnum
-from typing import Protocol, runtime_checkable
+from typing import Final, Literal, Protocol, cast, runtime_checkable
 
 from pydantic import (
     BaseModel,
@@ -67,6 +67,26 @@ class HostedArtifactDescriptor(BaseModel):
         return self
 
 
+#: A connection's enrolment revision (contract 1.2.0 §6a.3): a decimal
+#: positive integer as a string, compared as a string.
+CONNECTION_REVISION_PATTERN: Final = r"^[1-9][0-9]{0,18}$"
+
+
+class HostedExpectedBinding(BaseModel):
+    """The enrolment a fenced invocation expects (contract 1.2.0 §6a).
+
+    The Broker compares both values with the connection as it is enrolled,
+    before custody and again before each provider call, and refuses a
+    mismatch. Take them from a fresh ``list_connections`` through
+    ``HostedConnectionSummary.expected_binding()``.
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    external_identity: str = Field(..., min_length=1, max_length=500)
+    connection_revision: str = Field(..., pattern=CONNECTION_REVISION_PATTERN)
+
+
 class HostedOperationRequest(BaseModel):
     """Exact named operation request; no tenant, URL, method, header, or token."""
 
@@ -81,6 +101,9 @@ class HostedOperationRequest(BaseModel):
     operation_id: str = Field(..., min_length=1, max_length=200)
     arguments: dict[str, JsonValue]
     idempotency_key: str = Field(..., min_length=1, max_length=200)
+    # Absent means unfenced. It is never sent as null: the body is dumped
+    # with exclude_none, and the Broker refuses a null (contract 1.2.0 §6a).
+    expect: HostedExpectedBinding | None = None
 
 
 class HostedOperationResponse(BaseModel):
@@ -219,6 +242,23 @@ class HostedStoppedError(HostedClientError):
         super().__init__(f"hosted request was stopped by {control} ({scope})")
 
 
+class HostedFenceUnsupportedError(HostedClientError):
+    """A fence was asked for, but the Broker cannot apply it (contract 1.2.0 §6a).
+
+    Either the listing carried no ``connection_revision``, or the Broker
+    answered a fenced invocation with 422, which is how a 1.1 Broker
+    refuses ``expect``. zeocore never resends the request without
+    ``expect``. Like any refusal, this is no proof that an earlier attempt
+    was not accepted.
+    """
+
+    def __init__(self) -> None:
+        super().__init__(
+            "ZEOconnect Broker cannot check the expected connection binding;"
+            " the request was not sent unfenced"
+        )
+
+
 class HostedUpgradeRequiredError(HostedClientError):
     """The Broker does not speak this client's protocol version (426)."""
 
@@ -272,6 +312,33 @@ def stop_of(response: HostedOperationResponse) -> HostedStoppedError | None:
     return None
 
 
+BindingField = Literal["external_identity", "connection_revision"]
+_BINDING_FIELDS: frozenset[str] = frozenset(
+    {"external_identity", "connection_revision"}
+)
+
+
+def binding_mismatch_of(response: HostedOperationResponse) -> BindingField | None:
+    """Which expected value differed, or ``None`` (contract 1.2.0 §6a).
+
+    The Broker refuses a fenced invocation whose binding has changed as
+    ``failed_safe`` with ``REQUEST_REFUSED`` and the stable message
+    ``binding_mismatch:<field>``. No further provider call and no effect
+    were made. ``receipt["binding"]`` holds the values the Broker found.
+    """
+    error = response.normalized_error
+    if (
+        response.status is not HostedOperationStatus.FAILED_SAFE
+        or error is None
+        or error.code is not NormalizedErrorCode.REQUEST_REFUSED
+    ):
+        return None
+    prefix, _, field = error.message.partition(":")
+    if prefix == "binding_mismatch" and field in _BINDING_FIELDS:
+        return cast("BindingField", field)
+    return None
+
+
 def _contains_secret_key(value: JsonValue | dict[str, JsonValue] | None) -> bool:
     if isinstance(value, Mapping):
         if any(str(key).lower() in _SECRET_KEYS for key in value):
@@ -283,10 +350,14 @@ def _contains_secret_key(value: JsonValue | dict[str, JsonValue] | None) -> bool
 
 
 __all__ = [
+    "CONNECTION_REVISION_PATTERN",
+    "BindingField",
     "HostedArtifactDescriptor",
     "HostedAuthorizedTransport",
     "HostedClientError",
     "HostedConnectionClient",
+    "HostedExpectedBinding",
+    "HostedFenceUnsupportedError",
     "HostedOperationRequest",
     "HostedOperationResponse",
     "HostedOperationStatus",
@@ -294,6 +365,7 @@ __all__ = [
     "HostedUnavailableError",
     "HostedUnreachableError",
     "HostedUpgradeRequiredError",
+    "binding_mismatch_of",
     "is_outage",
     "stop_of",
 ]

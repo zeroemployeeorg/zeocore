@@ -8,6 +8,12 @@ from typing import Generic, Literal, TypeVar
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from zeo_core.integrations.hosted.client import (
+    CONNECTION_REVISION_PATTERN,
+    HostedExpectedBinding,
+    HostedFenceUnsupportedError,
+)
+
 
 class ExecutionProfile(StrEnum):
     """Explicit execution placements; automatic choice is policy, not a profile."""
@@ -105,6 +111,23 @@ class HostedConnectionSummary(BaseModel):
     status: HostedConnectionStatus
     operations: tuple[str, ...]
     resources: tuple[HostedResourceSummary, ...] = ()
+    # Present when the Broker supports the binding fence (contract 1.2.0).
+    connection_revision: str | None = Field(
+        default=None, pattern=CONNECTION_REVISION_PATTERN
+    )
+
+    def expected_binding(self) -> HostedExpectedBinding:
+        """The binding to fence an invocation on this connection with.
+
+        Raises ``HostedFenceUnsupportedError`` when the listing carried no
+        revision: a fence that cannot be checked is never sent unfenced.
+        """
+        if self.connection_revision is None:
+            raise HostedFenceUnsupportedError()
+        return HostedExpectedBinding(
+            external_identity=self.external_identity,
+            connection_revision=self.connection_revision,
+        )
 
     def satisfies(self, requirement: ServiceRequirement) -> bool:
         return self.service == requirement.service and set(

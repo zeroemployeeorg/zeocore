@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased: binding fence, 0.15.0 or 0.16.0]
+
+Draft for ZEOconnect Broker contract `1.2.0` (zeoconnect #56). It lands after
+0.14.0. It ships in 0.15.0 if 1.2.0 is pinned before 0.15.0 ships, and
+otherwise in 0.16.0.
+
+### Added
+
+- **The expected-binding fence** (contract 1.2.0 §6a). A fenced invocation is
+  refused when its connection was re-enrolled or changed between the listing
+  and the call.
+  - `HostedConnectionSummary.connection_revision` is the enrolment's revision.
+  - `summary.expected_binding()` returns a `HostedExpectedBinding` for
+    `HostedOperationRequest.expect`.
+  - The Broker refuses a mismatch with no further provider call.
+    `binding_mismatch_of(response)` names the field that differed, and
+    `receipt["binding"]` holds the values the Broker found.
+  - When the fence can't be checked, because the listing has no revision or
+    the Broker answers a fenced call with 422, zeocore raises
+    `HostedFenceUnsupportedError`. It never resends the request unfenced.
+  - Every request now declares `ZEOconnect-Capabilities: stopped-code,
+    expected-binding`.
+
 ## [Unreleased: 0.14.0]
 
 Draft for the release that conforms to ZEOconnect Broker contract `1.0.0`

@@ -14,7 +14,9 @@ from pydantic import BaseModel, ConfigDict, Field, JsonValue, SecretStr, Validat
 
 from zeo_core.core.managed_execution import is_managed_execution
 from zeo_core.integrations.hosted.client import (
+    CONNECTION_REVISION_PATTERN,
     HostedClientError,
+    HostedFenceUnsupportedError,
     HostedOperationRequest,
     HostedOperationResponse,
     HostedStoppedError,
@@ -41,10 +43,11 @@ from zeo_core.integrations.hosted.profile import (
 ZEOCONNECT_PRODUCTION_ORIGIN = "https://broker.connect.zeo.ac"
 ZEOCONNECT_PROTOCOL_VERSION = "1"
 ZEOCONNECT_PROTOCOL_HEADER = "ZEOconnect-Protocol-Version"
-#: Declared on every request so the Broker may send the STOPPED error code
-#: (contract §9, §10); a Broker that does not know it ignores it.
+#: Declared on every request, statically (contract 1.2.0 §3): the Broker may
+#: send the STOPPED code (§9) and each connection's revision (§6a). A Broker
+#: that does not know a capability ignores it.
 ZEOCONNECT_CAPABILITIES_HEADER = "ZEOconnect-Capabilities"
-_CAPABILITIES = "stopped-code"
+_CAPABILITIES = "stopped-code, expected-binding"
 _STOP_TOKEN = re.compile(r"^[a-z][a-z0-9_.:-]{0,63}$")
 _REPAIR = "paired device session was refused; pair this device again"
 _OFF_NETWORK = (
@@ -139,6 +142,9 @@ class _ConnectionWire(BaseModel):
     status: HostedConnectionStatus
     operations: tuple[str, ...]
     resources: tuple[_ResourceWire, ...] = ()
+    connection_revision: str | None = Field(
+        default=None, pattern=CONNECTION_REVISION_PATTERN
+    )
 
 
 class ZEOconnectHTTPTransport:
@@ -252,6 +258,7 @@ class ZEOconnectHTTPTransport:
                             HostedResourceSummary.model_validate(resource.model_dump())
                             for resource in wire.resources
                         ),
+                        connection_revision=wire.connection_revision,
                     )
                 )
         return tuple(summaries)
@@ -276,6 +283,7 @@ class ZEOconnectHTTPTransport:
                         json_body=body,
                         session=current,
                         authenticated=True,
+                        fenced=request.expect is not None,
                     )
                 )
             except HostedUnreachableError:
@@ -460,6 +468,7 @@ class ZEOconnectHTTPTransport:
         session: DeviceSession | None = None,
         authenticated: bool,
         expect_empty: bool = False,
+        fenced: bool = False,
     ) -> JsonValue | None:
         if is_managed_execution():
             raise HostedClientError("managed execution forbids member API fallback")
@@ -486,7 +495,7 @@ class ZEOconnectHTTPTransport:
             )
         except httpx.TransportError as error:
             raise self._unreachable(error) from None
-        self._validate_response(response)
+        self._validate_response(response, fenced=fenced)
         if expect_empty:
             if response.content:
                 raise HostedClientError("hosted response shape is invalid")
@@ -498,7 +507,9 @@ class ZEOconnectHTTPTransport:
         except Exception:
             raise HostedClientError("hosted response shape is invalid") from None
 
-    def _validate_response(self, response: httpx.Response) -> None:
+    def _validate_response(
+        self, response: httpx.Response, *, fenced: bool = False
+    ) -> None:
         if response.is_redirect:
             raise HostedClientError("hosted redirect is forbidden")
         _require_protocol(response)
@@ -509,12 +520,12 @@ class ZEOconnectHTTPTransport:
             raise stop
         if status == 426:
             raise HostedUpgradeRequiredError()
-        if status in {409, 425, 428}:
-            try:
-                if response.json().get("code") == "authorization_pending":
-                    raise HostedClientError("hosted request is pending")
-            except AttributeError, ValueError:
-                pass
+        if status in {409, 425, 428} and _is_pending(response):
+            raise HostedClientError("hosted request is pending")
+        if status == 422 and fenced:
+            # A 1.1 Broker refuses expect this way (contract 1.2.0 §6a). The
+            # request is never resent without it.
+            raise HostedFenceUnsupportedError()
         if status == 503:
             # An outage the Broker reported (council ruling E7): not a stop,
             # not a refusal, and not proof the request was never accepted.
@@ -534,6 +545,13 @@ class ZEOconnectHTTPTransport:
                 "Bearer " + session.access_token.get_secret_value()
             )
         return headers
+
+
+def _is_pending(response: httpx.Response) -> bool:
+    try:
+        return bool(response.json().get("code") == "authorization_pending")
+    except AttributeError, ValueError:
+        return False
 
 
 def _session(wire: _SessionWire) -> DeviceSession:

@@ -67,6 +67,30 @@ zeocore never resends an effect after a 503 or a lost connection. Where an
 outcome is unknown, find it by an authorised read, such as the YouTube
 executor's lookup of a lost upload, never by sending the effect again.
 
+## The expected-binding fence
+
+Use this when an invocation must act on exactly the account and enrolment the
+caller saw (Broker contract `1.2.0` §6a). Read a fresh listing, then fence the
+request with the values from it:
+
+```python
+(summary,) = transport.list_connections(session)
+request = HostedOperationRequest(
+    connection_id=summary.handle.value,
+    operation_id="google.gmail.messages.read_page",
+    arguments={},
+    idempotency_key=key,
+    expect=summary.expected_binding(),
+)
+```
+
+| Answer | What zeocore reports | What a caller may conclude |
+|---|---|---|
+| `failed_safe`, message `binding_mismatch:<field>` | `binding_mismatch_of(response)` returns the field | The connection changed. No further provider call and no effect were made. `receipt["binding"]` holds the current values. |
+| `failed_safe`, `PROVIDER_UNAVAILABLE`, `binding_unavailable` | `is_outage(response)` | The binding couldn't be read. It is not a mismatch. The outcome is stored against the key. |
+| 503 `binding is unavailable` | `HostedUnavailableError` | An outage, as for any 503. |
+| no revision in the listing, or 422 to a fenced call | `HostedFenceUnsupportedError` | This Broker can't check the fence. zeocore never resends the request without `expect`. |
+
 ## Setup metadata and availability
 
 The unreleased `zeo_core.integrations.hosted.setup_catalog` module exposes
