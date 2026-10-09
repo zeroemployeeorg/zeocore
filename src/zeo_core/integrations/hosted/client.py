@@ -235,6 +235,10 @@ def is_outage(response: HostedOperationResponse) -> bool:
     For example ``controls_unavailable:<control>`` (contract 1.1.0 §9): the
     Broker could not read a control, so no stop is established and the
     provider was not called. Temporary, like a 503.
+
+    Unlike a 503, this outcome is recorded against the idempotency key.
+    Sending the same key again returns it as a replay (``replayed`` is
+    true), so a fresh attempt needs a new key, which makes a new occurrence.
     """
     error = response.normalized_error
     return (

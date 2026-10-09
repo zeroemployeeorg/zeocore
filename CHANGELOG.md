@@ -52,8 +52,9 @@ this section becomes "Unreleased".
   re-pin is needed: `HostedOperationResponse.replayed` is true when the Broker
   served its stored outcome, which is never a fresh success. `is_outage(response)`
   recognizes `failed_safe` with `PROVIDER_UNAVAILABLE`, such as
-  `controls_unavailable:<control>`, as an outage, never a stop. YouTube
-  retention defers on it.
+  `controls_unavailable:<control>`, as an outage, never a stop. The Broker
+  stores that outcome, so retrying with the same idempotency key replays it;
+  a new attempt needs a new key. YouTube retention defers on it.
 
 ### Changed
 
