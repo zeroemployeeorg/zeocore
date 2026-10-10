@@ -18,6 +18,7 @@ from zeo_core.integrations.hosted import (
     HostedConnectionStatus,
     HostedOperationRequest,
     HostedOperationStatus,
+    HostedUnreachableError,
     InMemorySecureSessionStore,
     PairingPendingError,
     ZEOconnectHTTPTransport,
@@ -216,7 +217,7 @@ def test_safe_read_retry_preserves_body_and_effect_never_retries() -> None:
 
     effect, effect_store = transport(httpx.MockTransport(effect_handler))
     effect_store.save(session(NOW))
-    with pytest.raises(HostedClientError, match="transport"):
+    with pytest.raises(HostedUnreachableError):
         effect.invoke(request("bluesky.post.create"))
     assert effect_calls == 1
 

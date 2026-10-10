@@ -102,6 +102,10 @@ class NormalizedErrorCode(StrEnum):
     FAILED_SAFE = "FAILED_SAFE"
     RESULT_AMBIGUOUS = "RESULT_AMBIGUOUS"
     CONNECTOR_REVISION_UNAVAILABLE = "CONNECTOR_REVISION_UNAVAILABLE"
+    #: An operational stop reported by ZEOconnect. The Broker sends it only to
+    #: clients that declare ``ZEOconnect-Capabilities: stopped-code``; others
+    #: get REQUEST_REFUSED with the message ``stopped:<control>:<scope>``.
+    STOPPED = "STOPPED"
 
 
 class ConnectionStatus(StrEnum):

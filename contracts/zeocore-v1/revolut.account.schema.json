@@ -1,0 +1,84 @@
+{
+  "$id": "https://zeocore.zeo.ac/contracts/zeocore-v1/revolut.account.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "account_type": {
+      "anyOf": [
+        {
+          "pattern": "^[a-z][a-z0-9_]{0,63}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Account Type"
+    },
+    "balance": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        }
+      ],
+      "title": "Balance"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "currency": {
+      "pattern": "^[A-Z]{3}$",
+      "title": "Currency",
+      "type": "string"
+    },
+    "id": {
+      "format": "uuid",
+      "title": "Id",
+      "type": "string"
+    },
+    "name": {
+      "anyOf": [
+        {
+          "maxLength": 2000,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Name"
+    },
+    "public": {
+      "title": "Public",
+      "type": "boolean"
+    },
+    "state": {
+      "pattern": "^[a-z][a-z0-9_]{0,63}$",
+      "title": "State",
+      "type": "string"
+    },
+    "updated_at": {
+      "format": "date-time",
+      "title": "Updated At",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "balance",
+    "currency",
+    "state",
+    "public",
+    "created_at",
+    "updated_at"
+  ],
+  "title": "Account",
+  "type": "object"
+}

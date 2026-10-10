@@ -1,0 +1,104 @@
+{
+  "$defs": {
+    "HostedConnectionStatus": {
+      "description": "Sanitized connection states returned by the member API.",
+      "enum": [
+        "active",
+        "repair_required",
+        "revoked",
+        "unavailable"
+      ],
+      "title": "HostedConnectionStatus",
+      "type": "string"
+    },
+    "HostedResourceWire": {
+      "description": "One selected resource of a connection, as GET /v1/connections lists it.",
+      "properties": {
+        "display_name": {
+          "title": "Display Name",
+          "type": "string"
+        },
+        "external_id": {
+          "title": "External Id",
+          "type": "string"
+        },
+        "media_type": {
+          "title": "Media Type",
+          "type": "string"
+        },
+        "operations": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Operations",
+          "type": "array"
+        }
+      },
+      "required": [
+        "external_id",
+        "display_name",
+        "media_type",
+        "operations"
+      ],
+      "title": "HostedResourceWire",
+      "type": "object"
+    }
+  },
+  "$id": "https://zeocore.zeo.ac/contracts/zeocore-v1/hosted.connection-summary.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "One entry of GET /v1/connections, as the Broker sends it (contract §5).",
+  "properties": {
+    "connection_id": {
+      "title": "Connection Id",
+      "type": "string"
+    },
+    "connection_revision": {
+      "anyOf": [
+        {
+          "pattern": "^[1-9][0-9]{0,18}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Connection Revision"
+    },
+    "external_identity": {
+      "title": "External Identity",
+      "type": "string"
+    },
+    "operations": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Operations",
+      "type": "array"
+    },
+    "provider": {
+      "title": "Provider",
+      "type": "string"
+    },
+    "resources": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/HostedResourceWire"
+      },
+      "title": "Resources",
+      "type": "array"
+    },
+    "status": {
+      "$ref": "#/$defs/HostedConnectionStatus"
+    }
+  },
+  "required": [
+    "connection_id",
+    "provider",
+    "external_identity",
+    "status",
+    "operations"
+  ],
+  "title": "HostedConnectionWire",
+  "type": "object"
+}

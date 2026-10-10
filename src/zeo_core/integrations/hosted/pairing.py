@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import sys
 from collections.abc import Callable, Sequence
 from datetime import datetime
@@ -15,6 +16,7 @@ from zeo_core.connections.adapters.subprocess_runner import (
     RealSubprocessRunner,
     SubprocessRunner,
 )
+from zeo_core.integrations.hosted.client import HostedSessionError
 from zeo_core.integrations.hosted.profile import (
     HostedConnectionSummary,
     ServiceRequirement,
@@ -23,10 +25,15 @@ from zeo_core.integrations.hosted.profile import (
 _KEYCHAIN_NOT_FOUND = frozenset({36, 44})
 _KEYCHAIN_SERVICE = "org.zeroemployee.zeocore.zeoconnect-session"
 _KEYCHAIN_ACCOUNT = "zeoconnect-device-session-v1"
+_PROFILE = re.compile(r"[a-z][a-z0-9-]{0,31}")
 
 
 class SecureStoreError(RuntimeError):
     """Sanitized failure at the reusable-device-authority boundary."""
+
+
+class SessionUnavailableError(SecureStoreError, HostedSessionError):
+    """No paired session is stored: a store failure and a session error both."""
 
 
 class PairingPendingError(RuntimeError):
@@ -86,9 +93,27 @@ class InMemorySecureSessionStore:
 
 
 class KeychainSecureSessionStore:
-    """macOS Keychain storage using stdin for secret-bearing writes."""
+    """macOS Keychain storage using stdin for secret-bearing writes.
 
-    def __init__(self, *, runner: SubprocessRunner | None = None) -> None:
+    ``profile`` names one app's own device grant, so one machine can hold
+    several, each paired and revoked on its own. It is attribution, not a
+    security boundary: every profile of one macOS user can read the others.
+    No profile is the original entry, which existing pairings keep using.
+
+    ``origin`` binds the entry to a non-production Broker: a session paired
+    against one origin is never sent to another. None means production, the
+    original entry.
+    """
+
+    def __init__(
+        self,
+        *,
+        runner: SubprocessRunner | None = None,
+        profile: str | None = None,
+        origin: str | None = None,
+    ) -> None:
+        if profile is not None and not _PROFILE.fullmatch(profile):
+            raise SecureStoreError("session profile name is invalid")
         if runner is None and sys.platform != "darwin":
             raise SecureStoreError("secure session storage is unavailable")
         self._runner = runner or RealSubprocessRunner()
@@ -99,6 +124,11 @@ class KeychainSecureSessionStore:
         if state is not None:
             digest = hashlib.sha256(str(state).encode()).hexdigest()[:16]
             self._service = f"{_KEYCHAIN_SERVICE}.{state.name}.{digest}"
+        if profile is not None:
+            self._service = f"{self._service}.profile.{profile}"
+        if origin is not None:
+            digest = hashlib.sha256(origin.encode()).hexdigest()[:16]
+            self._service = f"{self._service}.origin.{digest}"
 
     def load(self) -> DeviceSession | None:
         result = self._runner.run(
@@ -249,7 +279,7 @@ class HostedConnectionManager:
     def _required_session(self) -> DeviceSession:
         session = self._session_store.load()
         if session is None:
-            raise SecureStoreError("paired device session is unavailable")
+            raise SessionUnavailableError("paired device session is unavailable")
         return session
 
     def _publish_catalog(self) -> None:
@@ -267,4 +297,5 @@ __all__ = [
     "PairingTransport",
     "SecureSessionStore",
     "SecureStoreError",
+    "SessionUnavailableError",
 ]

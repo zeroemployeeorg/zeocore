@@ -1,0 +1,55 @@
+{
+  "$defs": {
+    "NormalizedErrorCode": {
+      "description": "Closed taxonomy for provider-specific failures, per packet section 5.6.\n\nProvider detail remains available for diagnosis (see NormalizedError's\n`provider_detail` field) but must never become the only product\nexplanation, and must never carry raw credential or cross-tenant\nmaterial -- that constraint is enforced at the NormalizedError model,\nnot here.",
+      "enum": [
+        "CONNECTION_REVOKED",
+        "CONNECTION_REPAIR_REQUIRED",
+        "PROVIDER_SCOPE_MISSING",
+        "EXTERNAL_IDENTITY_CHANGED",
+        "BUSINESS_RESOURCE_UNAVAILABLE",
+        "RATE_LIMITED",
+        "PROVIDER_UNAVAILABLE",
+        "REQUEST_REFUSED",
+        "FAILED_SAFE",
+        "RESULT_AMBIGUOUS",
+        "CONNECTOR_REVISION_UNAVAILABLE",
+        "STOPPED"
+      ],
+      "title": "NormalizedErrorCode",
+      "type": "string"
+    }
+  },
+  "$id": "https://zeocore.zeo.ac/contracts/zeocore-v1/connections.normalized-error.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "A provider failure normalized into the closed taxonomy of\nNormalizedErrorCode, per packet section 5.6.\n\n`code` is required and always drawn from the closed enum; `message` is a\nshort, human-readable, product-level explanation; `provider_detail` is\noptional raw diagnostic text, present for engineers but never load-\nbearing for product behavior (disposition 15: \"Provider errors map to a\nclosed taxonomy while redacted provider metadata remains available for\noperations\").",
+  "properties": {
+    "code": {
+      "$ref": "#/$defs/NormalizedErrorCode"
+    },
+    "message": {
+      "minLength": 1,
+      "title": "Message",
+      "type": "string"
+    },
+    "provider_detail": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Provider Detail"
+    }
+  },
+  "required": [
+    "code",
+    "message"
+  ],
+  "title": "NormalizedError",
+  "type": "object"
+}
