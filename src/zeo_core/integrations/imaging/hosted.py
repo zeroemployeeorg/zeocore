@@ -19,6 +19,7 @@ from zeo_core.integrations.hosted.client import (
     HostedOperationRequest,
     HostedOperationResponse,
     HostedOperationStatus,
+    HostedSessionError,
     HostedStoppedError,
     HostedUnavailableError,
     HostedUnreachableError,
@@ -210,7 +211,7 @@ class HostedRecraftImages(_HostedImages):
 
 def _raise_if_unpaired(error: HostedClientError) -> None:
     """This device has no usable ZEOconnect session: pairing, not a refusal."""
-    if "paired device session" in str(error) or "pair this device" in str(error):
+    if isinstance(error, HostedSessionError):
         raise ImagingError(
             "not_paired", "this device is not paired with ZEOconnect; run zeocore login"
         ) from None

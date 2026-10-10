@@ -459,3 +459,35 @@ def test_the_client_commands_are_zeocore_commands(broker: Broker) -> None:
         lambda: b'{"file_id": "f"}',
     )
     assert (status, answer["status"]) == (0, "confirmed")
+
+
+def test_upload_sends_one_checked_image_and_answers_its_id(
+    broker: Broker, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from tests.test_integrations.imaging.images import png
+    from zeo_core.integrations.hosted.client import HostedArtifactDescriptor
+
+    _paired(broker)
+    sent: list[tuple[str, bytes, str]] = []
+
+    def upload_artifact(
+        *, connection_id: str, content: bytes, media_type: str
+    ) -> HostedArtifactDescriptor:
+        sent.append((connection_id, content, media_type))
+        return HostedArtifactDescriptor(
+            artifact_id="art_in_12345678",
+            content_sha256="sha256:" + hashlib.sha256(content).hexdigest(),
+            size_bytes=len(content),
+            media_type=media_type,
+            filename="input",
+        )
+
+    monkeypatch.setattr(broker, "upload_artifact", upload_artifact, raising=False)
+    image = tmp_path / "duck.png"
+    image.write_bytes(png(8, 8))
+    status, answer = client.upload([str(image), "--connection", CONNECTION], b"")
+    assert (status, answer["artifact_id"]) == (0, "art_in_12345678")
+    assert sent == [(CONNECTION, png(8, 8), "image/png")]
+    image.write_bytes(b"not an image")
+    assert client.upload([str(image), "--connection", CONNECTION], b"")[0] == 2
+    assert len(sent) == 1

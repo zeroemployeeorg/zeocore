@@ -191,6 +191,7 @@ COMMANDS: Final[dict[str, Command]] = {
     "invoke": client.invoke,
     "login": client.login,
     "logout": client.logout,
+    "upload": client.upload,
     "whoami": client.whoami,
     "schema": _schema,
     "validate": _validate,

@@ -16,6 +16,7 @@ from zeo_core.integrations.hosted.client import (
     HostedConnectionClient,
     HostedOperationRequest,
     HostedOperationResponse,
+    HostedSessionError,
     HostedStoppedError,
     HostedUnavailableError,
     HostedUnreachableError,
@@ -480,7 +481,15 @@ def test_a_role_is_provenance_only_and_never_changes_the_request() -> None:
 )
 def test_an_unpaired_device_is_told_to_log_in(message: str) -> None:
     broker = FakeBroker()
-    broker.answer = HostedClientError(message)
+    broker.answer = HostedSessionError(message)
     with pytest.raises(ImagingError, match="zeocore login") as caught:
         _gemini(broker).run(GeminiGenerate(prompt="x"))
     assert caught.value.outcome == "not_paired"
+
+
+def test_only_the_session_type_means_not_paired() -> None:
+    broker = FakeBroker()
+    broker.answer = HostedClientError("paired device session is unavailable")
+    with pytest.raises(ImagingError) as caught:
+        _gemini(broker).run(GeminiGenerate(prompt="x"))
+    assert caught.value.outcome == "refused"

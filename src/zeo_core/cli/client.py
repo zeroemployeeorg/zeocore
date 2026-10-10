@@ -457,3 +457,35 @@ def _write_new(destination: Path, content: bytes) -> None:
         raise ArgumentsError("--out must be a new file") from None
     finally:
         os.unlink(temporary)
+
+
+# -- upload (Broker contract 1.3.0) ------------------------------------------------
+
+
+def upload(args: Sequence[str], _stdin: bytes) -> Answer:
+    """``upload <file> --connection C``: one input image for billed calls."""
+    parser = Arguments("zeocore upload")
+    parser.add_argument("path")
+    parser.add_argument("--connection", required=True)
+    parser.add_argument("--profile")
+
+    def body() -> Answer:
+        from zeo_core.integrations.imaging.models import ImageInput
+
+        options = parser.parse_args(list(args))
+        try:
+            image = ImageInput.from_path(options.path)
+        except (OSError, ValueError) as error:
+            raise ArgumentsError(f"the file can't be uploaded: {error}") from None
+        store, transport = _open(_profile(options.profile))
+        try:
+            descriptor = HostedConnectionClient(transport=transport).upload_artifact(
+                connection_id=options.connection,
+                content=image.content,
+                media_type=image.media_type,
+            )
+        finally:
+            transport.close()
+        return EXIT_DONE, {"ok": True, **descriptor.model_dump(mode="json")}
+
+    return _guarded(body)

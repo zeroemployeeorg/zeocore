@@ -10,8 +10,10 @@ stdout: the image is written to ``output`` and the answer names it.
 
 Input images are given as ``{"path": ...}``; the bytes are read and checked
 here. The profile is ``ZEOCORE_CONNECTION_PROFILE`` (``local`` or ``hosted``);
-hosted uses this device's ZEOconnect pairing and the connection ids in
-``ZEOCORE_IMAGING_GEMINI_CONNECTION`` / ``ZEOCORE_IMAGING_RECRAFT_CONNECTION``.
+hosted uses this device's ZEOconnect grant (``zeocore login``, chosen by
+``ZEOCORE_PROFILE``), the origin in ``ZEOCONNECT_URL``, and the connection
+ids in ``ZEOCORE_IMAGING_GEMINI_CONNECTION`` /
+``ZEOCORE_IMAGING_RECRAFT_CONNECTION``.
 
 Exit status is the ``zeocore`` family (see ``EXIT_FOR``): 0 done, 2 invalid
 request, 10 approval, 11 waiting, 12 not paired, 13 ambiguous, 20 held or
@@ -72,8 +74,11 @@ def _hosted_service() -> ImagingService:
     )
 
     transport = ZEOconnectHTTPTransport(
-        session_store=KeychainSecureSessionStore(),
-        base_url=os.getenv("ZEOCONNECT_BROKER_ORIGIN", ZEOCONNECT_PRODUCTION_ORIGIN),
+        session_store=KeychainSecureSessionStore(
+            profile=os.getenv("ZEOCORE_PROFILE") or None
+        ),
+        base_url=os.getenv("ZEOCONNECT_URL", ZEOCONNECT_PRODUCTION_ORIGIN),
+        allow_development_origin=os.getenv("ZEOCONNECT_DEVELOPMENT") == "1",
     )
     return build_imaging(
         profile="hosted", hosted_client=HostedConnectionClient(transport=transport)
