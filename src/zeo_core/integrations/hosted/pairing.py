@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import sys
 from collections.abc import Callable, Sequence
 from datetime import datetime
@@ -23,6 +24,7 @@ from zeo_core.integrations.hosted.profile import (
 _KEYCHAIN_NOT_FOUND = frozenset({36, 44})
 _KEYCHAIN_SERVICE = "org.zeroemployee.zeocore.zeoconnect-session"
 _KEYCHAIN_ACCOUNT = "zeoconnect-device-session-v1"
+_PROFILE = re.compile(r"[a-z][a-z0-9-]{0,31}")
 
 
 class SecureStoreError(RuntimeError):
@@ -86,9 +88,19 @@ class InMemorySecureSessionStore:
 
 
 class KeychainSecureSessionStore:
-    """macOS Keychain storage using stdin for secret-bearing writes."""
+    """macOS Keychain storage using stdin for secret-bearing writes.
 
-    def __init__(self, *, runner: SubprocessRunner | None = None) -> None:
+    ``profile`` names one app's own device grant, so one machine can hold
+    several, each paired and revoked on its own. It is attribution, not a
+    security boundary: every profile of one macOS user can read the others.
+    No profile is the original entry, which existing pairings keep using.
+    """
+
+    def __init__(
+        self, *, runner: SubprocessRunner | None = None, profile: str | None = None
+    ) -> None:
+        if profile is not None and not _PROFILE.fullmatch(profile):
+            raise SecureStoreError("session profile name is invalid")
         if runner is None and sys.platform != "darwin":
             raise SecureStoreError("secure session storage is unavailable")
         self._runner = runner or RealSubprocessRunner()
@@ -99,6 +111,8 @@ class KeychainSecureSessionStore:
         if state is not None:
             digest = hashlib.sha256(str(state).encode()).hexdigest()[:16]
             self._service = f"{_KEYCHAIN_SERVICE}.{state.name}.{digest}"
+        if profile is not None:
+            self._service = f"{self._service}.profile.{profile}"
 
     def load(self) -> DeviceSession | None:
         result = self._runner.run(

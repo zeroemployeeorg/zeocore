@@ -133,7 +133,9 @@ class _SessionWire(BaseModel):
     refresh_expires_at: datetime
 
 
-class _ResourceWire(BaseModel):
+class HostedResourceWire(BaseModel):
+    """One selected resource of a connection, as GET /v1/connections lists it."""
+
     model_config = ConfigDict(frozen=True, extra="ignore")
 
     external_id: str
@@ -142,7 +144,9 @@ class _ResourceWire(BaseModel):
     operations: tuple[str, ...]
 
 
-class _ConnectionWire(BaseModel):
+class HostedConnectionWire(BaseModel):
+    """One entry of GET /v1/connections, as the Broker sends it (contract §5)."""
+
     model_config = ConfigDict(frozen=True, extra="ignore")
 
     connection_id: str
@@ -150,7 +154,7 @@ class _ConnectionWire(BaseModel):
     external_identity: str
     status: HostedConnectionStatus
     operations: tuple[str, ...]
-    resources: tuple[_ResourceWire, ...] = ()
+    resources: tuple[HostedResourceWire, ...] = ()
     connection_revision: str | None = Field(
         default=None, pattern=CONNECTION_REVISION_PATTERN
     )
@@ -253,7 +257,7 @@ class ZEOconnectHTTPTransport:
         summaries: list[HostedConnectionSummary] = []
         for raw in payload:
             try:
-                wire = _ConnectionWire.model_validate(raw)
+                wire = HostedConnectionWire.model_validate(raw)
             except ValidationError:
                 raise HostedClientError(
                     "hosted connection response is invalid"

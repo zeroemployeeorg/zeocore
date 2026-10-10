@@ -161,6 +161,17 @@ These change what a caller sees. The session store API and the
     Its errors carry location and type only, never input values.
   - `zeocore digest` is the sha256 of a value's RFC 8785 canonical bytes.
   - `zeocore version` names the release and the protocols.
+- **The ZEOconnect client as `zeocore` commands,** so apps in any language reach
+  the Broker through one client instead of writing their own: `login`, `logout`,
+  `whoami`, `connections`, `invoke` and `artifact get`.
+  - Each app has its own device grant in the Keychain, chosen with `--profile`
+    or `ZEOCORE_PROFILE`. With no Keychain the command fails closed with exit 12.
+  - `invoke` derives its idempotency key from the request, so running the same
+    invocation again replays and never acts twice. It answers `request_key` and
+    `retry`. `--wait-approval` emits the approval link and replays the same key
+    until the person decides.
+  - `KeychainSecureSessionStore(profile=...)` keeps one entry per profile. No
+    profile keeps today's entry.
 
 ### Fixed
 

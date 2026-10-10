@@ -11,6 +11,8 @@ Commands:
   ``{"ok": false, "errors": [{"loc": [...], "type": ...}]}``. Errors never
   echo input values.
 - ``zeocore digest``: the sha256 of stdin's RFC 8785 canonical bytes.
+- ``zeocore login | logout | whoami | connections | invoke | artifact get``:
+  the ZEOconnect Broker client (``zeo_core.cli.client``).
 
 Rules every command keeps (``cli_protocol`` 1):
 
@@ -30,10 +32,9 @@ Rules every command keeps (``cli_protocol`` 1):
 
 from __future__ import annotations
 
-import json
 import sys
 from collections.abc import Callable, Sequence
-from typing import Any, Final
+from typing import Final
 
 from pydantic import ValidationError
 
@@ -44,28 +45,44 @@ from zeo_core.adapters.runtime_host.canonical import (
     parse_json,
 )
 
+from . import client
+from .protocol import (
+    CLI_PROTOCOL,
+    EXIT_AMBIGUOUS,
+    EXIT_APPROVAL,
+    EXIT_DONE,
+    EXIT_HELD,
+    EXIT_INTERNAL,
+    EXIT_INVALID,
+    EXIT_NOT_PAIRED,
+    EXIT_WAIT,
+    Answer,
+    Command,
+    emit,
+    invalid,
+)
 from .schemas import SCHEMAS, adapter, render_schema
 
-#: This command's own protocol: the rules above. A change to them is a new
-#: major version of the command, announced like a contract change.
-CLI_PROTOCOL: Final = "1"
-#: The exit family, the same numbers as the YouTube publish command's.
-EXIT_DONE: Final = 0
-EXIT_INVALID: Final = 2
-EXIT_APPROVAL: Final = 10
-EXIT_WAIT: Final = 11
-EXIT_NOT_PAIRED: Final = 12
-EXIT_AMBIGUOUS: Final = 13
-EXIT_HELD: Final = 20
-EXIT_INTERNAL: Final = 1
 OK, INVALID = EXIT_DONE, EXIT_INVALID
-
-Answer = tuple[int, dict[str, Any]]
-Command = Callable[[Sequence[str], bytes], Answer]
+__all__ = [
+    "CLI_PROTOCOL",
+    "COMMANDS",
+    "EXIT_AMBIGUOUS",
+    "EXIT_APPROVAL",
+    "EXIT_DONE",
+    "EXIT_HELD",
+    "EXIT_INTERNAL",
+    "EXIT_INVALID",
+    "EXIT_NOT_PAIRED",
+    "EXIT_WAIT",
+    "emit",
+    "main",
+    "run",
+]
 
 
 def _invalid(message: str) -> Answer:
-    return INVALID, {"ok": False, "outcome": "invalid_request", "message": message}
+    return invalid(message)
 
 
 def _version(args: Sequence[str], _stdin: bytes) -> Answer:
@@ -153,12 +170,18 @@ def _digest(args: Sequence[str], stdin: bytes) -> Answer:
 
 #: Every command, named explicitly. Nothing is discovered or loaded by name.
 COMMANDS: Final[dict[str, Command]] = {
+    "artifact": client.artifact,
+    "connections": client.connections,
     "digest": _digest,
+    "invoke": client.invoke,
+    "login": client.login,
+    "logout": client.logout,
+    "whoami": client.whoami,
     "schema": _schema,
     "validate": _validate,
     "version": _version,
 }
-_READS_STDIN: Final = frozenset({"digest", "validate"})
+_READS_STDIN: Final = frozenset({"artifact", "digest", "invoke", "validate"})
 
 
 def run(argv: Sequence[str], stdin: Callable[[], bytes]) -> Answer:
@@ -166,12 +189,6 @@ def run(argv: Sequence[str], stdin: Callable[[], bytes]) -> Answer:
         return _invalid("commands: " + ", ".join(sorted(COMMANDS)))
     name, args = argv[0], argv[1:]
     return COMMANDS[name](args, stdin() if name in _READS_STDIN else b"")
-
-
-def emit(line: dict[str, Any]) -> None:
-    """Write one JSON line to stdout: an event now, or the result last."""
-    sys.stdout.write(json.dumps(line, ensure_ascii=False, sort_keys=True) + "\n")
-    sys.stdout.flush()
 
 
 def main(argv: Sequence[str] | None = None) -> None:
