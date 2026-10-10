@@ -18,8 +18,8 @@ Draft. ZBS asked for it, and it waits for the elders' E10 ruling (org #787).
     now record their own `step` and `attempt`.
   - Close compares the hold the person was shown (`N`, `STEP`) with the
     journal under the lock. It refuses `not_held`, `hold_changed` (a stale
-    decision), `hold_step_unknown` (a hold without a recorded step) and
-    `step_mismatch`.
+    decision), `hold_not_closeable` (any hold other than those two),
+    `hold_step_unknown` (a hold without a recorded step) and `step_mismatch`.
   - A repeat replays only the exact original close; any other hold or step
     is `already_closed`.
   - The studio's `cancelled` event names the hold, its step and its attempt.

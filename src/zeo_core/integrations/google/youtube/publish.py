@@ -195,6 +195,12 @@ def job_lock(job_dir: Path) -> Iterator[None]:
         os.close(descriptor)
 
 
+# Holds on an outcome ZEOconnect recorded: the only holds close may end.
+CLOSEABLE_HOLDS: frozenset[str] = frozenset(
+    {"refused_in_zeoconnect", "provider_refused"}
+)
+
+
 def _close_refusal(
     job: Job, state: JobState, expect_held_seq: int, step: str
 ) -> str | None:
@@ -202,6 +208,8 @@ def _close_refusal(
         return "not_held"
     if state.held_seq != expect_held_seq:
         return "hold_changed"
+    if state.held not in CLOSEABLE_HOLDS:
+        return "hold_not_closeable"
     if state.held_step is None or state.held_attempt is None:
         return "hold_step_unknown"
     if state.held_step != step:
@@ -233,8 +241,10 @@ def close_held_job(
     as authority:
     - ``not_held``: the job isn't held, or it was released;
     - ``hold_changed``: another hold is in force (a stale decision);
+    - ``hold_not_closeable``: the hold is not on a recorded outcome, such
+      as ``ambiguous_upload`` or a changed file, even if it names a step;
     - ``hold_step_unknown``: the hold recorded no typed step or attempt, as
-      with holds zeocore raises itself and holds from older journals;
+      with holds from older journals;
     - ``step_mismatch``: the hold is on another step.
     It then appends the studio's ``cancelled`` event, naming the hold and
     its recorded step and attempt, and writes the REFUSED receipt with

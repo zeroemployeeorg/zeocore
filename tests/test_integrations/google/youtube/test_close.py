@@ -147,7 +147,9 @@ def test_a_stale_close_after_release_and_a_new_hold_is_refused(
     assert _close(directory).exit_code == EXIT_DONE
 
 
-@pytest.mark.parametrize("setup", ["not_held", "released", "legacy", "local_hold"])
+@pytest.mark.parametrize(
+    "setup", ["not_held", "released", "legacy", "local_hold", "ambiguous_upload"]
+)
 def test_close_refuses_what_it_must_not_close(
     tmp_path: Path, world: World, setup: str
 ) -> None:
@@ -158,17 +160,30 @@ def test_close_refuses_what_it_must_not_close(
         seq = _hold(directory).seq
         JobDirectory(directory).append(actor="studio", type="released")
         reason = "not_held"
-    else:
-        # A hold with no recorded step: from an older journal, or one that
-        # zeocore raised itself. Close never guesses its step.
+    elif setup == "legacy":
+        # A recorded-outcome hold from an older journal, with no typed step.
+        # Close never guesses its step.
         directory = make_job(tmp_path)
         held = JobDirectory(directory).append(
             actor="executor",
             type="held",
-            reason="refused_in_zeoconnect" if setup == "legacy" else "file_changed",
+            reason="refused_in_zeoconnect",
             detail="video: something",
         )
         seq, reason = held.seq, "hold_step_unknown"
+    else:
+        # A hold zeocore raised itself is never closed, even with a typed step:
+        # an ambiguous upload or a changed file is released after a check.
+        directory = make_job(tmp_path)
+        held = JobDirectory(directory).append(
+            actor="executor",
+            type="held",
+            reason="file_changed" if setup == "local_hold" else "ambiguous_upload",
+            detail="2 uploads match; check the channel, then release",
+            step="video",
+            attempt=1,
+        )
+        seq, reason = held.seq, "hold_not_closeable"
     refused = close_held_job(directory, seq, "video")
     assert refused.exit_code == EXIT_INVALID
     assert refused.status["reason"] == reason
