@@ -93,6 +93,14 @@ def _gemini_images(
     return HostedGeminiImages(client=client, binding=binding)
 
 
+def _llm_chat(
+    *, client: HostedConnectionClient, binding: HostedServiceBinding
+) -> object:
+    from zeo_core.integrations.llms.hosted import HostedLLMChat
+
+    return HostedLLMChat(client=client, binding=binding)
+
+
 def _recraft_images(
     *, client: HostedConnectionClient, binding: HostedServiceBinding
 ) -> object:
@@ -130,6 +138,24 @@ REVIEWED_HOSTED_SERVICES = HostedServiceRegistry(
                 }
             ),
             factory=_recraft_images,
+        ),
+        # Billed LLM chat (proposed contract, draft 3; ZEOCORE-SOW-13).
+        HostedServiceRegistration(
+            service="openai",
+            operations=frozenset(
+                {"openai.responses.create", "openai.chat.completions.create"}
+            ),
+            factory=_llm_chat,
+        ),
+        HostedServiceRegistration(
+            service="anthropic",
+            operations=frozenset({"anthropic.messages.create"}),
+            factory=_llm_chat,
+        ),
+        HostedServiceRegistration(
+            service="nebius",
+            operations=frozenset({"nebius.chat.completions.create"}),
+            factory=_llm_chat,
         ),
     )
 )

@@ -174,6 +174,17 @@ These change what a caller sees. The session store API and the
   - The hosted transport gains `upload_artifact`, the `billed-computation`
     capability, the `BUDGET_EXHAUSTED` and `INPUT_ARTIFACT_UNAVAILABLE` codes,
     a 180 s timeout for billed calls, and `HostedUnreachableError.may_have_arrived`.
+- **Hosted LLM chat through ZEOconnect (draft)** (`zeo_core.integrations.llms.hosted`,
+  `zeocore llm`). OpenAI, Anthropic and Nebius keys stay in Broker custody.
+  - Exact provider bytes go out, and exact bytes come back with the receipt.
+  - The request identity is those bytes plus an occurrence label, so a resume
+    replays and never bills twice.
+  - `HostedChatOnce` provides `chat_once`. Failures raise `HostedLLMError`, and
+    `ambiguous` and `in_flight` are distinct outcomes.
+  - The hosted transport allows 1 MiB bodies and a 200 s wait for these
+    operations.
+  - It follows the proposed billed LLM chat contract, draft 3, and ships only
+    once that is pinned.
 - **The ZEOconnect client as `zeocore` commands,** so apps in any language reach
   the Broker through one client instead of writing their own: `login`, `logout`,
   `whoami`, `connections`, `invoke` and `artifact get`.

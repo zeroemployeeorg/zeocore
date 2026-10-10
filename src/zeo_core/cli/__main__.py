@@ -214,6 +214,7 @@ COMMANDS: Final[dict[str, Command]] = {
     "digest": _digest,
     "image": _image,
     "invoke": client.invoke,
+    "llm": client.llm,
     "login": client.login,
     "logout": client.logout,
     "upload": client.upload,
@@ -222,7 +223,9 @@ COMMANDS: Final[dict[str, Command]] = {
     "validate": _validate,
     "version": _version,
 }
-_READS_STDIN: Final = frozenset({"artifact", "digest", "image", "invoke", "validate"})
+_READS_STDIN: Final = frozenset(
+    {"artifact", "digest", "image", "invoke", "llm", "validate"}
+)
 
 
 def run(argv: Sequence[str], stdin: Callable[[], bytes]) -> Answer:

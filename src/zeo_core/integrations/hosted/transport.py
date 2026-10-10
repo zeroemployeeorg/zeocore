@@ -87,6 +87,19 @@ _BILLED_OPERATIONS = frozenset(
     }
 )
 _BILLED_TIMEOUT = httpx.Timeout(180.0, connect=15.0)
+#: Billed LLM chat (proposed contract, draft 3): a request body of at most
+#: 1 MiB, the third named exception to the 64 KiB bound, and a wait above
+#: the Broker's own 170 s.
+LLM_OPERATIONS = frozenset(
+    {
+        "openai.responses.create",
+        "openai.chat.completions.create",
+        "anthropic.messages.create",
+        "nebius.chat.completions.create",
+    }
+)
+_MAX_LLM_REQUEST_BYTES = 1024 * 1024
+_LLM_TIMEOUT = httpx.Timeout(200.0, connect=15.0)
 #: Relay chunks stay under the hosting platform's 4.5 MB request limit.
 YOUTUBE_RELAY_MAX_CHUNK_BYTES = 4 * 1024 * 1024
 
@@ -200,6 +213,14 @@ class _UploadWire(BaseModel):
             media_type=self.media_type,
             filename="input",
         )
+
+
+def _operation_timeout(operation_id: str) -> httpx.Timeout | None:
+    if operation_id in LLM_OPERATIONS:
+        return _LLM_TIMEOUT
+    if operation_id in _BILLED_OPERATIONS:
+        return _BILLED_TIMEOUT
+    return None
 
 
 class ZEOconnectHTTPTransport:
@@ -342,9 +363,10 @@ class ZEOconnectHTTPTransport:
                         session=current,
                         authenticated=True,
                         fenced=request.expect is not None,
-                        timeout=_BILLED_TIMEOUT
-                        if request.operation_id in _BILLED_OPERATIONS
-                        else None,
+                        timeout=_operation_timeout(request.operation_id),
+                        max_request_bytes=_MAX_LLM_REQUEST_BYTES
+                        if request.operation_id in LLM_OPERATIONS
+                        else _MAX_REQUEST_BYTES,
                     )
                 )
             except HostedUnreachableError:
@@ -612,6 +634,7 @@ class ZEOconnectHTTPTransport:
         expect_empty: bool = False,
         fenced: bool = False,
         timeout: httpx.Timeout | None = None,
+        max_request_bytes: int = _MAX_REQUEST_BYTES,
     ) -> JsonValue | None:
         if is_managed_execution():
             raise HostedClientError("managed execution forbids member API fallback")
@@ -630,7 +653,7 @@ class ZEOconnectHTTPTransport:
                 raise HostedClientError(
                     "hosted request holds a number JSON cannot carry"
                 ) from None
-            if len(encoded) > _MAX_REQUEST_BYTES:
+            if len(encoded) > max_request_bytes:
                 raise HostedClientError("hosted request exceeds the client limit")
         try:
             response = self._client.request(

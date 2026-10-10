@@ -155,3 +155,34 @@ workspace, update that mode's secret, run a small check, then revoke the old
 key. On 401 stop and correct the key; on 403 check project/workspace permissions
 and model entitlement; on 429 inspect quota/rate limits before retrying. Never
 fall back to a production key to make a test pass.
+
+## Hosted chat through ZEOconnect (draft)
+
+!!! warning "Draft"
+    This follows ZEOconnect's proposed billed LLM chat contract (draft 3),
+    which isn't frozen yet. Streaming isn't in the hosted client yet.
+
+`zeo_core.integrations.llms.hosted` sends chat through the ZEOconnect Broker,
+which holds the OpenAI, Anthropic or Nebius key. zeocore never sees it.
+
+- **`HostedLLMChat.send(operation, body_bytes, occurrence=...)`** sends the
+  provider's own request bytes exactly as given, never re-serialized, so key
+  order and number formatting survive. It answers the provider's exact response
+  bytes and the Broker's receipt: model requested and reported, usage, cost,
+  terminal state, and whether it was a replay.
+- **`HostedChatOnce`** implements `chat_once` for OpenAI Chat Completions or
+  Anthropic Messages, building the body from `ChatMessage` and `LLMOptions`.
+  `max_tokens` is required, because it bounds the call's reservation. Anything
+  the contract can't carry (tools, penalties, OpenAI stop sequences, two system
+  messages, a different model) is refused, never dropped.
+- **The request identity** is the exact bytes plus an `occurrence` label. Pass a
+  stable occurrence, such as a record id, and a resume after a crash replays the
+  stored outcome instead of billing again.
+- **Failures** raise `HostedLLMError`, with an `outcome` (`ambiguous`,
+  `in_flight`, `unavailable`, `budget_exhausted`, `stopped`, `refused`,
+  `not_paired`, `invalid_response`) and a `retry` hint (`same_request`,
+  `new_occurrence`, `none`).
+
+From any language: `zeocore llm <operation> --connection C [--occurrence L]
+[--out PATH] < body.json` forwards stdin's exact bytes. See
+[the zeocore command](../reference/cli.md).

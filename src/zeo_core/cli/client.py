@@ -13,6 +13,7 @@ request is an exact replay of the stored outcome, never a second act.
 
 from __future__ import annotations
 
+import base64
 import hashlib
 import os
 import socket
@@ -521,3 +522,92 @@ def upload(args: Sequence[str], _stdin: bytes) -> Answer:
         return EXIT_DONE, {"ok": True, **descriptor.model_dump(mode="json")}
 
     return _guarded(body)
+
+
+# -- llm (billed LLM chat, proposed contract draft 3) ------------------------------
+
+
+def llm(args: Sequence[str], stdin: bytes) -> Answer:
+    """``llm <operation> --connection C``: the provider body on stdin, exactly.
+
+    The bytes are checked as strict JSON but sent as given, never
+    re-serialized, so key order and number formatting survive.
+    """
+    from zeo_core.integrations.hosted.services import HostedServiceBinding
+    from zeo_core.integrations.llms.hosted import (
+        HostedLLMChat,
+        HostedLLMError,
+        LLMOperation,
+    )
+
+    parser = Arguments("zeocore llm")
+    parser.add_argument(
+        "operation",
+        choices=(
+            "openai.responses.create",
+            "openai.chat.completions.create",
+            "anthropic.messages.create",
+            "nebius.chat.completions.create",
+        ),
+    )
+    parser.add_argument("--connection", required=True)
+    parser.add_argument("--occurrence", default="1")
+    parser.add_argument("--out")
+    parser.add_argument("--profile")
+
+    def body() -> Answer:
+        options = parser.parse_args(list(args))
+        try:
+            parse_json(stdin)
+        except ProtocolError as error:
+            raise ArgumentsError(str(error)) from None
+        destination = Path(options.out) if options.out else None
+        if destination is not None and (
+            destination.exists() or not destination.parent.is_dir()
+        ):
+            raise ArgumentsError("--out must be a new file in an existing directory")
+        store, transport = _open(_profile(options.profile))
+        try:
+            chat = HostedLLMChat(
+                client=HostedConnectionClient(transport=transport),
+                binding=HostedServiceBinding(connection_id=options.connection),
+            )
+            operation: LLMOperation = options.operation
+            try:
+                response = chat.send(operation, stdin, occurrence=options.occurrence)
+            except ValueError as error:
+                raise ArgumentsError(str(error)) from None
+            except HostedLLMError as error:
+                return _llm_exit(error.outcome), {
+                    "ok": False,
+                    "outcome": error.outcome,
+                    "message": str(error),
+                    "retry": error.retry,
+                    "request_key": error.request_key,
+                    "execution_id": error.execution_id,
+                }
+        finally:
+            transport.close()
+        answer: dict[str, Any] = {
+            "ok": True,
+            **response.model_dump(mode="json", exclude={"provider_body"}),
+        }
+        if destination is not None:
+            _write_new(destination, response.provider_body)
+            answer["path"] = str(destination)
+        else:
+            answer["provider_body_base64"] = base64.b64encode(
+                response.provider_body
+            ).decode()
+        return EXIT_DONE, answer
+
+    return _guarded(body)
+
+
+def _llm_exit(outcome: str) -> int:
+    return {
+        "in_flight": EXIT_WAIT,
+        "unavailable": EXIT_WAIT,
+        "not_paired": EXIT_NOT_PAIRED,
+        "ambiguous": EXIT_AMBIGUOUS,
+    }.get(outcome, EXIT_HELD)

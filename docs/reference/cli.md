@@ -41,6 +41,7 @@ holds only that app's own device grant, in the macOS Keychain.
 | `connections [--service S]` | no | Lists the grant's connections. |
 | `invoke <operation_id> --connection C [--occurrence L] [--wait-approval SECONDS]` | the arguments object | Runs one operation and answers the Broker's response plus `request_key` and `retry`. |
 | `artifact get --out PATH` | an artifact descriptor | Downloads an output to a new file and checks its size and digest. |
+| `llm <operation> --connection C [--occurrence L] [--out PATH]` | the provider's request body | Sends the exact bytes as one billed chat call (OpenAI, Anthropic or Nebius) and answers the provider's exact bytes, as base64 or to `--out`, plus the receipt. Draft. |
 | `upload <file> --connection C` | no | Sends one png, jpeg or webp input for a billed call (Broker contract 1.3.0) and answers its artifact id. |
 
 Every client command takes `--profile P`, or reads `ZEOCORE_PROFILE`, to choose
