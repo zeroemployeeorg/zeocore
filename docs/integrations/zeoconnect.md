@@ -10,6 +10,30 @@ The current native slice supplies Drive, Docs and Bluesky bindings; it is not
 a claim that every local integration is available through the hosted service.
 Live operation also requires a compatible deployed ZEOconnect Member API.
 
+!!! warning "Hosted access is unavailable in zeocore 0.10.0 through 0.13.0"
+    Every release with the hosted HTTP transport, from 0.10.0 to 0.13.0, pins
+    the hosted origin `https://connect.zeroemployee.org`.
+    The ZEOconnect deployment has been renamed, so the hosted profile cannot
+    reach it, and pairing and hosted calls fail. **Local integrations are
+    unaffected.** At the time of writing the old name has no DNS record. That
+    is a present condition, not a security guarantee, so do not rely on it to
+    keep a token from being sent. The origin correction and conformance to
+    ZEOconnect Broker contract `1.0.0` ship together in zeocore 0.14.0.
+    Tracked in org issue 791.
+
+## Protocol failures and stops
+
+Every Broker response carries exactly one `ZEOconnect-Protocol-Version: 1`
+header (Broker contract `1.0.0` §3). A response without it did not come from
+the Broker; it came from a proxy, the edge or the network. One with another
+value, or with the header twice, is a version mismatch. Either is a **protocol
+failure**, whatever its HTTP status. A protocol failure ends that operation:
+zeocore does not retry it, refresh the session, poll pairing again or resume an
+upload around it. It is never reported as a stop. A stop, a refusal or an
+outage is recognized only on a response that carries the header. A relay 503
+*with* the header is an outage, and a YouTube upload backs off and resumes. A
+503 *without* it ends the upload.
+
 ## Setup metadata and availability
 
 The unreleased `zeo_core.integrations.hosted.setup_catalog` module exposes

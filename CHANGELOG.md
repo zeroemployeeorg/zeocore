@@ -7,6 +7,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **The YouTube custody relay no longer retries a failure no retry can cure.**
+  Until now only a refusal ended a relayed upload: every other client error
+  backed off and probed again, up to 20 times. That covered an incompatible
+  protocol, an invalid answer, an expired or missing device session, and the
+  managed-execution refusal. Now only "unavailable" and "pending" are
+  transient. Anything else holds the job as `upload_rejected` after one
+  request. A refusal, a Broker stop included, still holds it as
+  `session_link_refused`.
+- **A Broker response without its protocol header is terminal everywhere.**
+  On the relay, a 502/503/504 was read as an outage *before* the header was
+  checked. A proxy's headerless 503 was therefore retried as if the Broker had
+  sent it. Now the header is checked first on every Broker response, so a
+  missing, different or doubled header is a protocol failure. It is never
+  retried, refreshed around or read as a stop. A Broker 503 *with* the header is
+  still an outage and is retried (org #787, council ruling E5).
+  **What this means in practice:** a 502 or 503 from a CDN or edge proxy,
+  which carries no Broker header, is the most common real outage. It now ends
+  a relayed YouTube upload at once, holding the job as `upload_rejected`,
+  where before it was waited out. That is E5's choice. When the Broker is
+  reachable again, append a `released` event and the next run resumes the
+  upload.
+
+### Changed
+
+- **One hosted error message is new.** A Broker response with no
+  `ZEOconnect-Protocol-Version` header now raises `HostedClientError("hosted
+  response did not come from the Broker")`. Before, it raised "hosted protocol
+  version is incompatible", which now means only a different or doubled header.
+  No other `HostedClientError` message changes, and neither do the session
+  store API or the `ZEOconnectHTTPTransport` constructor. Callers that match
+  on the old message for a headerless response must match on the new one.
+
+### Known issues
+
+- **Hosted access stays unavailable in this release,** as in every release since
+  0.10.0. The hosted origin is still pinned to `connect.zeroemployee.org`, which
+  no longer names the ZEOconnect deployment; local integrations are unaffected. This release
+  changes relay failure handling. It does not claim conformance to Broker
+  contract `1.0.0` and does not repair the hosted origin; both are for 0.14.0
+  (org #791).
+
 ## [0.12.0] - 2026-10-08
 
 ### Added
