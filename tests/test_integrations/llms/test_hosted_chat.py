@@ -156,6 +156,9 @@ def test_the_key_is_the_bytes_and_the_occurrence() -> None:
     [
         ({"request_sha256": "0" * 64}, "request digest"),
         ({"provider_body_sha256": "0" * 64}, "body digest"),
+        # Missing digests fail closed, never pass as verified.
+        ({"request_sha256": None}, "request digest"),
+        ({"provider_body_sha256": None}, "body digest"),
     ],
 )
 def test_digests_that_do_not_match_are_never_accepted(

@@ -232,17 +232,19 @@ class HostedLLMChat:
             status = result.get("provider_status")
             provider_status = status if isinstance(status, int) else None
         body_sha = hashlib.sha256(body).hexdigest()
-        if receipt.get("provider_body_sha256") not in (None, body_sha):
+        # Both digests are part of the receipt (draft 3 M1, M3). A missing one
+        # is never read as verified: it fails closed.
+        if receipt.get("provider_body_sha256") != body_sha:
             raise HostedLLMError(
                 "invalid_response",
-                "the provider body digest does not match",
+                "the provider body digest is missing or does not match",
                 retry="none",
             )
-        if receipt.get("request_sha256") not in (None, sha):
-            # The Broker sent other bytes than ours: never accept that answer.
+        if receipt.get("request_sha256") != sha:
+            # The Broker sent other bytes than ours, or didn't say: never accept.
             raise HostedLLMError(
                 "invalid_response",
-                "ZEOconnect reports a different request digest",
+                "ZEOconnect's request digest is missing or does not match",
                 retry="none",
             )
         return HostedLLMResponse(
