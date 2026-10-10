@@ -124,6 +124,7 @@ def test_every_kind_has_one_broker_operation() -> None:
         "recraft.generate": "recraft.image.generate",
         "recraft.image_to_image": "recraft.image.image_to_image",
         "recraft.remove_background": "recraft.image.remove_background",
+        "recraft.crisp_upscale": "recraft.image.crisp_upscale",
         "recraft.vectorize": "recraft.image.vectorize",
     }
 
@@ -183,3 +184,77 @@ def test_only_models_verified_live_are_allowed() -> None:
         GeminiGenerate(prompt="x", model=model)
     with pytest.raises(ValidationError):
         GeminiGenerate(prompt="x", model="gemini-3-pro-image-preview")
+
+
+def test_4k_is_allowed_only_where_it_was_verified_live() -> None:
+    # 1.3.0 draft 7 §3: ZBS's thumbnails, gemini-3.1-flash-image only.
+    GeminiGenerate(prompt="x", image_size="4K", aspect_ratio="16:9")
+    with pytest.raises(ValidationError, match="4K"):
+        GeminiGenerate(prompt="x", model="gemini-3-pro-image", image_size="4K")
+    with pytest.raises(ValidationError):
+        GeminiGenerate(prompt="x", image_size="2K")
+
+
+def test_recraftv4_1_takes_only_its_own_arguments() -> None:
+    from zeo_core.integrations.imaging.models import RecraftControls
+
+    request = RecraftGenerate(
+        model="recraftv4_1",
+        prompt="thumbnail",
+        size="1344x768",
+        image_format="png",
+        random_seed=2_147_483_647,
+        controls=RecraftControls.model_validate(
+            {"colors": [{"rgb": [255, 0, 10], "weight": 0.5}, {"rgb": [0, 0, 0]}]}
+        ),
+    )
+    assert request.arguments() == {
+        "model": "recraftv4_1",
+        "prompt": "thumbnail",
+        "size": "1344x768",
+        "random_seed": 2_147_483_647,
+        "image_format": "png",
+        "controls": {
+            "colors": [{"rgb": [255, 0, 10], "weight": 0.5}, {"rgb": [0, 0, 0]}]
+        },
+    }
+    base = {
+        "model": "recraftv4_1",
+        "prompt": "x",
+        "size": "1344x768",
+        "image_format": "png",
+    }
+    cases: list[tuple[dict[str, object], str]] = [
+        ({"style": "digital_illustration"}, "style"),
+        ({"negative_prompt": "no"}, "negative_prompt"),
+        ({"random_seed": 2_147_483_648}, "2147483647"),
+        ({"size": "1024x1024"}, "1344x768"),
+        ({"image_format": None}, "1344x768"),
+    ]
+    for extra, match in cases:
+        with pytest.raises(ValidationError, match=match):
+            RecraftGenerate.model_validate({**base, **extra})
+    for colors in (
+        [],
+        [{"rgb": [0, 0, 0]}] * 6,
+        [{"rgb": [256, 0, 0]}],
+        [{"rgb": [0, 0, 0], "weight": 1.5}],
+    ):
+        with pytest.raises(ValidationError):
+            RecraftGenerate.model_validate({**base, "controls": {"colors": colors}})
+    with pytest.raises(ValidationError, match="recraftv3"):
+        RecraftGenerate(prompt="x", image_format="png")
+
+
+def test_crisp_upscale_takes_any_input_type_within_recrafts_bound() -> None:
+    from zeo_core.integrations.imaging import RecraftCrispUpscale
+
+    for content, media in (
+        (png(), "image/png"),
+        (jpeg(), "image/jpeg"),
+        (webp_vp8x(8, 8), "image/webp"),
+    ):
+        RecraftCrispUpscale(input=ImageInput(content=content, media_type=media))
+    big = ImageInput(content=png(tail=b"\0" * 5_000_000), media_type="image/png")
+    with pytest.raises(ValidationError, match="5,000,000"):
+        RecraftCrispUpscale(input=big)

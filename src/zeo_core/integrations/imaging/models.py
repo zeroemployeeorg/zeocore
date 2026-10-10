@@ -31,6 +31,8 @@ Provider = Literal["gemini", "recraft"]
 #: Broker contract 1.3.0 draft 6 §3: only models verified live.
 GeminiModel = Literal["gemini-3.1-flash-image", "gemini-3-pro-image"]
 RecraftModel = Literal["recraftv3"]
+#: Generation also allows recraftv4_1, with its own arguments (1.3.0 draft 7).
+RecraftGenerateModel = Literal["recraftv3", "recraftv4_1"]
 AspectRatio = Literal["1:1", "2:3", "3:2", "3:4", "4:3", "9:16", "16:9", "21:9"]
 Occurrence = Annotated[
     str, Field(min_length=1, max_length=64, pattern=r"^[A-Za-z0-9][A-Za-z0-9_.:-]*$")
@@ -274,8 +276,9 @@ class GeminiGenerate(BaseImageRequest):
     prompt: str = Field(min_length=1, max_length=16_000)
     inputs: tuple[ImageInput, ...] = Field(default=(), max_length=MAX_GEMINI_INPUTS)
     aspect_ratio: AspectRatio = "1:1"
-    #: 1K only: Broker contract 1.3.0 draft 5 §3 lists only sizes verified live.
-    image_size: Literal["1K"] = "1K"
+    #: Only sizes verified live (Broker contract 1.3.0 draft 7 §3): 1K for
+    #: both models, and 4K for gemini-3.1-flash-image (ZBS's thumbnails).
+    image_size: Literal["1K", "4K"] = "1K"
     #: JPEG only: gemini-3.1-flash-image refuses png output (HTTP 400, seen
     #: live by DuckTyper on 2026-10-10). Another type is added only once a
     #: live run shows it.
@@ -286,22 +289,64 @@ class GeminiGenerate(BaseImageRequest):
     def input_images(self) -> tuple[ImageInput, ...]:
         return self.inputs
 
+    @model_validator(mode="after")
+    def _size_is_verified_for_the_model(self) -> GeminiGenerate:
+        if self.image_size == "4K" and self.model != "gemini-3.1-flash-image":
+            raise ValueError("4K is verified only for gemini-3.1-flash-image")
+        return self
+
+
+class RecraftColor(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    rgb: tuple[
+        Annotated[int, Field(ge=0, le=255)],
+        Annotated[int, Field(ge=0, le=255)],
+        Annotated[int, Field(ge=0, le=255)],
+    ]
+    weight: float | None = Field(default=None, ge=0.0, le=1.0)
+
+
+class RecraftControls(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    colors: tuple[RecraftColor, ...] = Field(min_length=1, max_length=5)
+
 
 class RecraftGenerate(BaseImageRequest):
+    """Recraft generation. Each model takes only its own arguments (draft 7 §3).
+
+    ``recraftv3``: ``style``, ``negative_prompt``, ``size``, ``random_seed``.
+    ``recraftv4_1``: ``size`` 1344x768 and ``image_format`` png (both
+    required), ``random_seed`` and ``controls``; never ``style``.
+    """
+
     kind: Literal["recraft.generate"] = "recraft.generate"
-    model: RecraftModel = "recraftv3"
+    model: RecraftGenerateModel = "recraftv3"
     prompt: str = Field(min_length=1)
     style: StyleToken | None = None
     negative_prompt: str | None = Field(default=None, max_length=1000)
     size: str | None = Field(default=None, pattern=r"^[1-9][0-9]{2,3}x[1-9][0-9]{2,3}$")
     random_seed: int | None = Field(default=None, ge=0, le=2**32 - 1)
+    image_format: Literal["png"] | None = None
+    controls: RecraftControls | None = None
 
     def input_images(self) -> tuple[ImageInput, ...]:
         return ()
 
     @model_validator(mode="after")
-    def _prompt_fits(self) -> RecraftGenerate:
+    def _arguments_fit_the_model(self) -> RecraftGenerate:
         _check_recraft_prompt(self.prompt)
+        if self.model == "recraftv3":
+            if self.image_format is not None or self.controls is not None:
+                raise ValueError("recraftv3 takes no image_format or controls")
+            return self
+        if self.style is not None or self.negative_prompt is not None:
+            raise ValueError("recraftv4_1 takes no style or negative_prompt")
+        if self.size != "1344x768" or self.image_format != "png":
+            raise ValueError("recraftv4_1 needs size 1344x768 and image_format png")
+        if self.random_seed is not None and self.random_seed > 2_147_483_647:
+            raise ValueError("recraftv4_1 seeds run from 0 to 2147483647")
         return self
 
 
@@ -340,6 +385,22 @@ class RecraftRemoveBackground(BaseImageRequest):
         return self
 
 
+class RecraftCrispUpscale(BaseImageRequest):
+    """Recraft crisp upscale: one image in, png out (1.3.0 draft 7)."""
+
+    kind: Literal["recraft.crisp_upscale"] = "recraft.crisp_upscale"
+    input: ImageInput
+
+    def input_images(self) -> tuple[ImageInput, ...]:
+        return (self.input,)
+
+    @model_validator(mode="after")
+    def _recraft_accepts_it(self) -> RecraftCrispUpscale:
+        if len(self.input.content) > MAX_REMOVE_BACKGROUND_BYTES:
+            raise ValueError("Recraft upscales at most 5,000,000 bytes")
+        return self
+
+
 class RecraftVectorize(BaseImageRequest):
     kind: Literal["recraft.vectorize"] = "recraft.vectorize"
     input: ImageInput
@@ -358,6 +419,7 @@ ImageRequest = Annotated[
     | RecraftGenerate
     | RecraftImageToImage
     | RecraftRemoveBackground
+    | RecraftCrispUpscale
     | RecraftVectorize,
     Field(discriminator="kind"),
 ]
@@ -368,6 +430,7 @@ OPERATIONS: Final[dict[str, str]] = {
     "recraft.generate": "recraft.image.generate",
     "recraft.image_to_image": "recraft.image.image_to_image",
     "recraft.remove_background": "recraft.image.remove_background",
+    "recraft.crisp_upscale": "recraft.image.crisp_upscale",
     "recraft.vectorize": "recraft.image.vectorize",
 }
 CREDITS_OPERATION: Final = "recraft.account.read"

@@ -82,6 +82,7 @@ _BILLED_OPERATIONS = frozenset(
         "recraft.image.generate",
         "recraft.image.image_to_image",
         "recraft.image.remove_background",
+        "recraft.image.crisp_upscale",
         "recraft.image.vectorize",
     }
 )

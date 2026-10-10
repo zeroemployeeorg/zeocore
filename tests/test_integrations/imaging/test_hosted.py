@@ -493,3 +493,13 @@ def test_only_the_session_type_means_not_paired() -> None:
     with pytest.raises(ImagingError) as caught:
         _gemini(broker).run(GeminiGenerate(prompt="x"))
     assert caught.value.outcome == "refused"
+
+
+def test_crisp_upscale_runs_on_the_recraft_connection() -> None:
+    from zeo_core.integrations.imaging import RecraftCrispUpscale
+
+    broker = FakeBroker(output=png(64, 64))
+    image = _recraft(broker).run(RecraftCrispUpscale(input=_input()))
+    assert broker.invocations[0].operation_id == "recraft.image.crisp_upscale"
+    assert broker.invocations[0].arguments == {"input_artifact_id": "art_in1_12345678"}
+    assert image.media_type == "image/png"

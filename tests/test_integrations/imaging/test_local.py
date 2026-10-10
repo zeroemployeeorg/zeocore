@@ -16,6 +16,7 @@ from zeo_core.integrations.imaging import (
     ImagingError,
     LocalGeminiImages,
     LocalRecraftImages,
+    RecraftCrispUpscale,
     RecraftGenerate,
     RecraftImageToImage,
     RecraftRemoveBackground,
@@ -283,10 +284,11 @@ def test_recraft_image_to_image_is_multipart_with_the_seed_image() -> None:
             "image/png",
         ),
         (RecraftVectorize, "/v1/images/vectorize", SVG, "image/svg+xml"),
+        (RecraftCrispUpscale, "/v1/images/crispUpscale", png(128, 128), "image/png"),
     ],
 )
 def test_recraft_asset_operations_upload_the_file(
-    request_: type[RecraftRemoveBackground | RecraftVectorize],
+    request_: type[RecraftRemoveBackground | RecraftCrispUpscale | RecraftVectorize],
     path: str,
     output: bytes,
     media_type: str,

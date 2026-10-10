@@ -29,6 +29,7 @@ from .models import (
     GeminiGenerate,
     GeneratedImage,
     ImagingError,
+    RecraftCrispUpscale,
     RecraftGenerate,
     RecraftImageToImage,
     RecraftRemoveBackground,
@@ -261,12 +262,14 @@ class LocalRecraftImages:
                 },
                 headers=self._headers(),
             )
-        elif isinstance(request, RecraftRemoveBackground | RecraftVectorize):
-            path = (
-                "/v1/images/removeBackground"
-                if isinstance(request, RecraftRemoveBackground)
-                else "/v1/images/vectorize"
-            )
+        elif isinstance(
+            request, RecraftRemoveBackground | RecraftCrispUpscale | RecraftVectorize
+        ):
+            path = {
+                RecraftRemoveBackground: "/v1/images/removeBackground",
+                RecraftCrispUpscale: "/v1/images/crispUpscale",
+                RecraftVectorize: "/v1/images/vectorize",
+            }[type(request)]
             http = build(
                 "POST",
                 path,

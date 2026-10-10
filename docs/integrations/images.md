@@ -15,10 +15,11 @@ profile) or let ZEOconnect hold them (the hosted profile).
 
 | Request | Provider call | Output |
 |---|---|---|
-| `GeminiGenerate` | Nano Banana, text to image or edit from up to 6 ordered references (`gemini-3.1-flash-image`, `gemini-3-pro-image`), 1K | JPEG |
-| `RecraftGenerate` | Recraft generation (`recraftv3`), with `style`, `negative_prompt`, `size`, `random_seed` | PNG, or SVG for vector styles |
+| `GeminiGenerate` | Nano Banana, text to image or edit from up to 6 ordered references (`gemini-3.1-flash-image` at 1K or 4K, `gemini-3-pro-image` at 1K) | JPEG |
+| `RecraftGenerate` | Recraft generation: `recraftv3` with `style`, `negative_prompt`, `size`, `random_seed`; or `recraftv4_1` with `size` 1344x768, `image_format` png, `random_seed` and `controls.colors` (1 to 5 colours), never `style` | PNG, or SVG for `recraftv3` vector styles |
 | `RecraftImageToImage` | Restyle one seed image, `strength` 0–1 | PNG |
 | `RecraftRemoveBackground` | Cut out, from png or webp up to 5,000,000 bytes | PNG |
+| `RecraftCrispUpscale` | Upscale one png, jpeg or webp up to 5,000,000 bytes | PNG |
 | `RecraftVectorize` | Raster to vector | SVG |
 
 `ImagingService.credits()` reads the Recraft balance.
@@ -27,8 +28,9 @@ profile) or let ZEOconnect hold them (the hosted profile).
 - **Inputs are checked before anything is sent:** the bytes must be the declared
   png, jpeg or webp, at most 10 MiB and 40 megapixels, within the provider's own
   limits. An unsupported parameter or combination is refused, never dropped.
-- **Gemini output is JPEG at 1K only:** `gemini-3.1-flash-image` refuses png
-  output, and the Broker allows only values verified live.
+- **Only values verified live are allowed** (Broker contract 1.3.0 draft 7 §3).
+  Gemini output is JPEG, because `gemini-3.1-flash-image` refuses png. Its 4K
+  comes from ZBS's live thumbnails.
 - **An SVG must be a genuine, inert vector.** It needs at least one shape, and
   must carry no `<image>`, embedded raster, script, event handler or foreign
   content. This is a structural check, not a visual approval.
