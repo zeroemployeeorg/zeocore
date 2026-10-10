@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 from collections.abc import Callable
@@ -16,6 +17,7 @@ from zeo_core.core.managed_execution import is_managed_execution
 from zeo_core.integrations.hosted.client import (
     CONNECTION_REVISION_PATTERN,
     REQUEST_CHANGED_UNDER_KEY,
+    HostedArtifactDescriptor,
     HostedClientError,
     HostedConnectionChangedError,
     HostedFenceUnsupportedError,
@@ -47,10 +49,11 @@ ZEOCONNECT_PRODUCTION_ORIGIN = "https://broker.connect.zeo.ac"
 ZEOCONNECT_PROTOCOL_VERSION = "1"
 ZEOCONNECT_PROTOCOL_HEADER = "ZEOconnect-Protocol-Version"
 #: Declared on every request, statically (contract 1.2.0 §3): the Broker may
-#: send the STOPPED code (§9) and each connection's revision (§6a). A Broker
-#: that does not know a capability ignores it.
+#: send the STOPPED code (§9) and each connection's revision (§6a), and from
+#: the proposed 1.3.0 the billed-computation codes and operations
+#: (ZEOCORE-SOW-12). A Broker that does not know a capability ignores it.
 ZEOCONNECT_CAPABILITIES_HEADER = "ZEOconnect-Capabilities"
-_CAPABILITIES = "stopped-code, expected-binding"
+_CAPABILITIES = "stopped-code, expected-binding, billed-computation"
 _STOP_TOKEN = re.compile(r"^[a-z][a-z0-9_.:-]{0,63}$")
 _REPAIR = "paired device session was refused; pair this device again"
 #: The Broker's exact headered 400 when a connection id was re-enrolled with a
@@ -69,6 +72,19 @@ _MAX_JSON_BYTES = 1024 * 1024
 _MAX_REQUEST_BYTES = 64 * 1024
 _MAX_ARTIFACT_BYTES = 10 * 1024 * 1024
 _SAFE_RETRY_OPERATIONS = frozenset({"google.drive.file.download"})
+#: Billed computation (proposed contract 1.3.0): an image call can take
+#: minutes, so it waits longer before giving up. Giving up after the request
+#: was sent is ambiguous; the same request then replays the stored outcome.
+_BILLED_OPERATIONS = frozenset(
+    {
+        "gemini.image.generate",
+        "recraft.image.generate",
+        "recraft.image.image_to_image",
+        "recraft.image.remove_background",
+        "recraft.image.vectorize",
+    }
+)
+_BILLED_TIMEOUT = httpx.Timeout(180.0, connect=15.0)
 #: Relay chunks stay under the hosting platform's 4.5 MB request limit.
 YOUTUBE_RELAY_MAX_CHUNK_BYTES = 4 * 1024 * 1024
 
@@ -154,6 +170,30 @@ class _ConnectionWire(BaseModel):
     connection_revision: str | None = Field(
         default=None, pattern=CONNECTION_REVISION_PATTERN
     )
+
+
+_UPLOAD_MEDIA_TYPES = frozenset({"image/png", "image/jpeg", "image/webp"})
+
+
+class _UploadWire(BaseModel):
+    """The upload answer: an artifact descriptor plus when the id expires."""
+
+    model_config = ConfigDict(frozen=True, extra="ignore")
+
+    artifact_id: str
+    content_sha256: str
+    size_bytes: int
+    media_type: str
+    expires_at: datetime
+
+    def descriptor(self) -> HostedArtifactDescriptor:
+        return HostedArtifactDescriptor(
+            artifact_id=self.artifact_id,
+            content_sha256=self.content_sha256,
+            size_bytes=self.size_bytes,
+            media_type=self.media_type,
+            filename="input",
+        )
 
 
 class ZEOconnectHTTPTransport:
@@ -296,6 +336,9 @@ class ZEOconnectHTTPTransport:
                         session=current,
                         authenticated=True,
                         fenced=request.expect is not None,
+                        timeout=_BILLED_TIMEOUT
+                        if request.operation_id in _BILLED_OPERATIONS
+                        else None,
                     )
                 )
             except HostedUnreachableError:
@@ -341,6 +384,56 @@ class ZEOconnectHTTPTransport:
             raise self._unreachable(error) from None
         except Exception:
             raise HostedUnreachableError() from None
+
+    def upload_artifact(
+        self, *, connection_id: str, content: bytes, media_type: str
+    ) -> HostedArtifactDescriptor:
+        """Send one input image for a billed operation (proposed contract 1.3.0).
+
+        At most 10 MiB, the second named exception to the 64 KiB request bound.
+        The Broker checks the digest, the magic bytes, the pixel bound and the
+        connection before it stores anything. The same bytes on the same
+        connection give the same id, so a repeat is harmless.
+        """
+        if not 0 < len(content) <= _MAX_ARTIFACT_BYTES:
+            raise HostedClientError("upload exceeds the client limit")
+        if media_type not in _UPLOAD_MEDIA_TYPES:
+            raise HostedClientError("upload media type is not an accepted image")
+        if is_managed_execution():
+            raise HostedClientError("managed execution forbids member API fallback")
+        return self._authorized(
+            lambda current: self._upload(connection_id, content, media_type, current)
+        )
+
+    def _upload(
+        self,
+        connection_id: str,
+        content: bytes,
+        media_type: str,
+        session: DeviceSession,
+    ) -> HostedArtifactDescriptor:
+        headers = {
+            **self._headers(session),
+            "Content-Type": media_type,
+            "X-Zeo-Connection": connection_id,
+            "X-Zeo-Content-SHA256": hashlib.sha256(content).hexdigest(),
+        }
+        try:
+            response = self._client.post(
+                "/v1/artifacts:upload",
+                content=content,
+                headers=headers,
+                timeout=httpx.Timeout(120.0, connect=15.0),
+            )
+        except httpx.TransportError as error:
+            raise self._unreachable(error) from None
+        self._validate_response(response)
+        if len(response.content) > _MAX_JSON_BYTES:
+            raise HostedClientError("hosted response exceeds the client limit")
+        try:
+            return _UploadWire.model_validate_json(response.content).descriptor()
+        except ValidationError:
+            raise HostedClientError("hosted upload response is invalid") from None
 
     def relay_youtube_chunk(
         self,
@@ -453,11 +546,12 @@ class ZEOconnectHTTPTransport:
             raise HostedClientError(_REPAIR) from None
 
     def _unreachable(self, error: httpx.TransportError) -> HostedUnreachableError:
-        if self._base_url == ZEOCONNECT_PRODUCTION_ORIGIN and isinstance(
-            error, (httpx.ConnectError, httpx.ConnectTimeout)
-        ):
-            return HostedUnreachableError(_OFF_NETWORK.format(origin=self._base_url))
-        return HostedUnreachableError()
+        never_connected = isinstance(error, (httpx.ConnectError, httpx.ConnectTimeout))
+        if self._base_url == ZEOCONNECT_PRODUCTION_ORIGIN and never_connected:
+            return HostedUnreachableError(
+                _OFF_NETWORK.format(origin=self._base_url), may_have_arrived=False
+            )
+        return HostedUnreachableError(may_have_arrived=not never_connected)
 
     def _active_session(self) -> DeviceSession:
         session = self._session_store.load()
@@ -511,6 +605,7 @@ class ZEOconnectHTTPTransport:
         authenticated: bool,
         expect_empty: bool = False,
         fenced: bool = False,
+        timeout: httpx.Timeout | None = None,
     ) -> JsonValue | None:
         if is_managed_execution():
             raise HostedClientError("managed execution forbids member API fallback")
@@ -533,7 +628,11 @@ class ZEOconnectHTTPTransport:
                 raise HostedClientError("hosted request exceeds the client limit")
         try:
             response = self._client.request(
-                method, path, json=json_body, headers=headers
+                method,
+                path,
+                json=json_body,
+                headers=headers,
+                timeout=httpx.USE_CLIENT_DEFAULT if timeout is None else timeout,
             )
         except httpx.TransportError as error:
             raise self._unreachable(error) from None

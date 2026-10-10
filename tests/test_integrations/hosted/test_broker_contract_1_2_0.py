@@ -84,6 +84,8 @@ def test_every_request_declares_both_capabilities() -> None:
         assert {token.strip() for token in header.split(",")} == {
             "stopped-code",
             "expected-binding",
+            # Proposed contract 1.3.0 (ZEOCORE-SOW-12).
+            "billed-computation",
         }
 
 

@@ -85,8 +85,25 @@ class HostedServiceRegistry:
         return registration.factory(client=client, binding=binding)
 
 
-# Exactly what the resolver offered before this registry existed. Adding a
-# service here is a reviewed change to what the hosted profile can resolve.
+def _gemini_images(
+    *, client: HostedConnectionClient, binding: HostedServiceBinding
+) -> object:
+    from zeo_core.integrations.imaging.hosted import HostedGeminiImages
+
+    return HostedGeminiImages(client=client, binding=binding)
+
+
+def _recraft_images(
+    *, client: HostedConnectionClient, binding: HostedServiceBinding
+) -> object:
+    from zeo_core.integrations.imaging.hosted import HostedRecraftImages
+
+    return HostedRecraftImages(client=client, binding=binding)
+
+
+# What the resolver offered before this registry existed, plus the billed image
+# services of the proposed contract 1.3.0 (ZEOCORE-SOW-12). Adding a service
+# here is a reviewed change to what the hosted profile can resolve.
 REVIEWED_HOSTED_SERVICES = HostedServiceRegistry(
     (
         HostedServiceRegistration(
@@ -94,6 +111,24 @@ REVIEWED_HOSTED_SERVICES = HostedServiceRegistry(
             operations=frozenset({"google.drive.file.download"}),
             factory=HostedGoogleDriveService,
             resource_bound_operations=frozenset({"google.drive.file.download"}),
+        ),
+        HostedServiceRegistration(
+            service="gemini.image",
+            operations=frozenset({"gemini.image.generate"}),
+            factory=_gemini_images,
+        ),
+        HostedServiceRegistration(
+            service="recraft",
+            operations=frozenset(
+                {
+                    "recraft.image.generate",
+                    "recraft.image.image_to_image",
+                    "recraft.image.remove_background",
+                    "recraft.image.vectorize",
+                    "recraft.account.read",
+                }
+            ),
+            factory=_recraft_images,
         ),
     )
 )

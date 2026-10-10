@@ -182,11 +182,37 @@ class HostedAuthorizedTransport(Protocol):
     def fetch_artifact(self, *, artifact_id: str, max_bytes: int) -> bytes: ...
 
 
+@runtime_checkable
+class HostedArtifactUploadTransport(Protocol):
+    """A transport that can send input bytes to the Broker (proposed 1.3.0).
+
+    Optional: a transport without it still serves every other operation.
+    """
+
+    def upload_artifact(
+        self, *, connection_id: str, content: bytes, media_type: str
+    ) -> HostedArtifactDescriptor: ...
+
+
 class HostedConnectionClient:
     """Invoke curated operations; credentials remain entirely inside transport."""
 
     def __init__(self, *, transport: HostedAuthorizedTransport) -> None:
         self._transport = transport
+
+    def upload_artifact(
+        self, *, connection_id: str, content: bytes, media_type: str
+    ) -> HostedArtifactDescriptor:
+        """Send input bytes for one connection; the answer must name the same bytes."""
+        if not isinstance(self._transport, HostedArtifactUploadTransport):
+            raise HostedClientError("hosted transport cannot upload artifacts")
+        artifact = self._transport.upload_artifact(
+            connection_id=connection_id, content=content, media_type=media_type
+        )
+        digest = "sha256:" + hashlib.sha256(content).hexdigest()
+        if artifact.size_bytes != len(content) or artifact.content_sha256 != digest:
+            raise HostedClientError("hosted upload receipt names different bytes")
+        return artifact
 
     def invoke(self, request: HostedOperationRequest) -> HostedOperationResponse:
         return self._transport.invoke(request)
@@ -226,7 +252,21 @@ class HostedUnavailableError(HostedClientError):
 
 
 class HostedUnreachableError(HostedUnavailableError):
-    """No Broker response arrived: the connection failed or broke off."""
+    """No Broker response arrived: the connection failed or broke off.
+
+    ``may_have_arrived`` is false only when the connection was never made, so
+    the request cannot have reached the Broker. Otherwise (a read timeout, a
+    dropped connection) it may have arrived and run.
+    """
+
+    def __init__(
+        self,
+        message: str = "hosted transport is unavailable",
+        *,
+        may_have_arrived: bool = True,
+    ) -> None:
+        self.may_have_arrived = may_have_arrived
+        super().__init__(message)
 
 
 class HostedStoppedError(HostedClientError):
@@ -424,6 +464,7 @@ __all__ = [
     "REQUEST_CHANGED_UNDER_KEY",
     "BindingField",
     "HostedArtifactDescriptor",
+    "HostedArtifactUploadTransport",
     "HostedAuthorizedTransport",
     "HostedClientError",
     "HostedConnectionChangedError",

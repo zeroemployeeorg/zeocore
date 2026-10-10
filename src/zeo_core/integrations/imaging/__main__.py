@@ -1,0 +1,127 @@
+"""``zeo-image``: one image call as JSON, for callers outside Python.
+
+Reads one JSON object on stdin and writes one JSON object on stdout.
+
+    {"request": {"kind": "recraft.vectorize", "input": {"path": "duck.png"}},
+     "output": "duck.svg"}
+    {"credits": true}
+
+Input images are given as ``{"path": ...}``; the bytes are read and checked
+here. The profile is ``ZEOCORE_CONNECTION_PROFILE`` (``local`` or ``hosted``);
+hosted uses this device's ZEOconnect pairing and the connection ids in
+``ZEOCORE_IMAGING_GEMINI_CONNECTION`` / ``ZEOCORE_IMAGING_RECRAFT_CONNECTION``.
+
+Exit status: 0 done, 2 the request is invalid, 3 no image (see ``outcome``).
+"""
+
+from __future__ import annotations
+
+import json
+import os
+import sys
+from collections.abc import Callable
+from pathlib import Path
+from typing import Any
+
+from pydantic import TypeAdapter, ValidationError
+
+from .models import GeneratedImage, ImageInput, ImageRequest, ImagingError
+from .service import ImagingService, build_imaging
+
+_REQUEST: TypeAdapter[Any] = TypeAdapter(ImageRequest)
+
+
+def _inputs(request: dict[str, Any]) -> dict[str, Any]:
+    def load(item: object) -> ImageInput:
+        if not isinstance(item, dict) or set(item) != {"path"}:
+            raise ValueError('each input image is {"path": ...}')
+        return ImageInput.from_path(str(item["path"]))
+
+    request = dict(request)
+    if "input" in request:
+        request["input"] = load(request["input"])
+    if "inputs" in request:
+        if not isinstance(request["inputs"], list):
+            raise ValueError("inputs is a list")
+        request["inputs"] = tuple(load(item) for item in request["inputs"])
+    return request
+
+
+def _hosted_service() -> ImagingService:
+    from zeo_core.integrations.hosted.client import HostedConnectionClient
+    from zeo_core.integrations.hosted.pairing import KeychainSecureSessionStore
+    from zeo_core.integrations.hosted.transport import (
+        ZEOCONNECT_PRODUCTION_ORIGIN,
+        ZEOconnectHTTPTransport,
+    )
+
+    transport = ZEOconnectHTTPTransport(
+        session_store=KeychainSecureSessionStore(),
+        base_url=os.getenv("ZEOCONNECT_BROKER_ORIGIN", ZEOCONNECT_PRODUCTION_ORIGIN),
+    )
+    return build_imaging(
+        profile="hosted", hosted_client=HostedConnectionClient(transport=transport)
+    )
+
+
+def _summary(image: GeneratedImage, path: Path) -> dict[str, Any]:
+    return {
+        "ok": True,
+        "path": str(path),
+        **image.model_dump(mode="json", exclude={"content"}),
+    }
+
+
+def run(
+    stdin: str, *, service_factory: Callable[[], ImagingService] | None = None
+) -> tuple[int, dict[str, Any]]:
+    try:
+        command = json.loads(stdin)
+        if not isinstance(command, dict):
+            raise ValueError("the command is a JSON object")
+        if command.get("credits") is True and set(command) == {"credits"}:
+            request = None
+        else:
+            if set(command) != {"request", "output"}:
+                raise ValueError('the command is {"request": ..., "output": ...}')
+            request = _REQUEST.validate_python(_inputs(command["request"]))
+            output = Path(str(command["output"]))
+            if not output.parent.is_dir():
+                raise ValueError("the output directory does not exist")
+    except (ValueError, ValidationError, OSError) as error:
+        message = (
+            "the request does not match the image contract"
+            if isinstance(error, ValidationError)
+            else str(error)
+        )
+        return 2, {"ok": False, "outcome": "invalid_request", "message": message}
+    factory = service_factory or (
+        _hosted_service
+        if os.getenv("ZEOCORE_CONNECTION_PROFILE") == "hosted"
+        else lambda: build_imaging(profile="local")
+    )
+    try:
+        service = factory()
+        if request is None:
+            return 0, {"ok": True, **service.credits().model_dump(mode="json")}
+        image = service.run(request)
+        return 0, _summary(image, image.save(output))
+    except ImagingError as error:
+        return 3, {
+            "ok": False,
+            "outcome": error.outcome,
+            "message": str(error),
+            "retry": error.retry,
+            "request_key": error.request_key,
+            "approval_url": error.approval_url,
+        }
+
+
+def main() -> None:
+    status, answer = run(sys.stdin.read())
+    sys.stdout.write(json.dumps(answer) + "\n")
+    raise SystemExit(status)
+
+
+if __name__ == "__main__":
+    main()
