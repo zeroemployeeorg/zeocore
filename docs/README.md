@@ -98,7 +98,7 @@ required before deploying the generic host.
 | Run working examples | [Example catalog](../examples/README.md) |
 | Look up supported imports | [Public API map](reference/api.md) |
 | Inspect signatures and docstrings | [Generated API reference](reference/generated.md) |
-| Upgrade to 0.11.0 | [Release notes](../RELEASE_NOTES.md) |
+| Upgrade to 0.12.0 | [Release notes](../RELEASE_NOTES.md) |
 | Use complete agent projects | [Sovereign Agent Resources](https://github.com/profrodai/sovereign-agent-resources) |
 
 ## Runnable examples
