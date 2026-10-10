@@ -31,7 +31,7 @@ file under examples/ — every one of them is runnable as printed
 - [docs/tutorials/](docs/tutorials/): MCP with Claude Code/Cursor, Notion,
   Google Calendar.
 - [CHANGELOG.md](CHANGELOG.md): Version history (Keep a Changelog).
-  RELEASE_NOTES.md describes the current 0.11.0 release; CHANGELOG.md is the
+  RELEASE_NOTES.md describes the current 0.12.0 release; CHANGELOG.md is the
   full history.
 - [CONTRIBUTING.md](CONTRIBUTING.md): Dev setup, the gate
   (`make verify` / `make verify-full`), code style, canonical import

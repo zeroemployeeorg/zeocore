@@ -4,7 +4,7 @@ A curated map of ZeoCore's **public** surface: the canonical import path for
 each symbol, the signatures you actually call, and where the boundary sits
 between "supported API" and "internal detail you should not import".
 
-This page is hand-written and covers ZeoCore **0.11.0** (beta — see
+This page is hand-written and covers ZeoCore **0.12.0** (beta — see
 [Stability](#stability)). It is not generated from
 docstrings, and it is not exhaustive: every entry links to the source file,
 which is the authoritative signature. If a symbol is not listed here and not
@@ -85,7 +85,7 @@ wiring a *host application* does (`zeo_core.adapters`).
 
 ## Stability: what this page promises
 
-ZeoCore 0.11.0 is a **beta** library. The API is typed and tested
+ZeoCore 0.12.0 is a **beta** library. The API is typed and tested
 (mypy `--strict` across the tree), but the surface may still shift before
 1.0. Breaking changes are recorded in [CHANGELOG.md](../../CHANGELOG.md).
 
@@ -998,6 +998,9 @@ installation; others require the extra shown below. The parent package
 | `zeo_core.integrations.hubspot` | base install | `HubSpotIntegration`, `HubSpotClient`; [marketing guide](../tutorials/hubspot-marketing.md) |
 | `zeo_core.integrations.kit` | base install | `KitIntegration`, `KitClient`; [marketing guide](../tutorials/kit-marketing.md) |
 | `zeo_core.integrations.environments` | base install | `IntegrationEnvironment`; [test and production](../integrations/environments.md) |
+| `zeo_core.integrations.revolut` | base install, from 0.12.0 | `RevolutBusinessClient`, `RevolutBusinessIntegration`, `RevolutEnvironment`, `TransactionQuery`, `TransactionPage`, `Transaction`, `Account`, `RevolutAPIError`, `MAX_UPSTREAM_BYTES`, `MAX_RESULT_BYTES`; read-only, no credential path of its own; [Revolut Business](../integrations/revolut-business.md) |
+| `zeo_core.integrations.revolut.local` | `revolut`, from 0.12.0 | `LocalRevolutEnrollment`, `LocalCredentialStore`, `EnrollmentState`, `LocalEnrollmentError`, `LocalStoreError`; local enrollment of your own account |
+| `zeo_core.integrations.google.youtube` | `youtube`, from 0.12.0 | `GoogleYouTubeService`, `VideoMetadata`, `VideoSessionRequest`, `ThumbnailSessionRequest`, `CaptionSessionRequest`, `Privacy`, `VideoStatus`; the `job`, `publish`, `transfer` and `retention` submodules; [YouTube](../integrations/youtube.md) |
 | `zeo_core.integrations.notebook` | `notebook` | `execute_notebook`; [execution guide](../integrations/notebook-execution.md) |
 | `zeo_core.integrations.hosted` | base install | `ServiceRequirement`, `ServiceResolver`, `HostedServiceRegistry`, `ExecutionProfile`, resolution states, `build_hosted_runtime`, `ZEOconnectHTTPTransport`, `KeychainSecureSessionStore`, hosted service proxies; from 0.14.0 `HostedStoppedError`, `HostedUnavailableError`, `HostedUnreachableError`, `HostedUpgradeRequiredError`, `ZEOCONNECT_CAPABILITIES_HEADER`; with contract 1.2.0, `HostedExpectedBinding`, `HostedFenceUnsupportedError`, `HostedConnectionChangedError`, `binding_mismatch_of`; with contract 1.2.1, `HostedRequestChangedError`, `request_changed_of` |
 | `zeo_core.integrations.notion` | `notion` | `NotionIntegration`, `NotionClient`, `NotionOperation`, `NotionAPIError`, `NotionPageResult`, typed page/database/data-source/block/user models |
@@ -1064,6 +1067,8 @@ Declared in [`pyproject.toml`](../../pyproject.toml); `uv pip install "zeocore[n
 | `notebook` | Fresh-kernel notebook execution |
 | `bluesky` | Bluesky client |
 | `runtime-host` | Supervised host from 0.11.0, JSON Schema validation and RFC 8785 |
+| `youtube` | YouTube publishing from 0.12.0: resumable upload, job directory and executor |
+| `revolut` | Local Revolut Business enrollment from 0.12.0 (client key, certificate, RS256 assertion); the read client needs no extra |
 | `all` | Integration extras; excludes `http`, `mcp` and `runtime-host`; select those explicitly |
 | `dev`, `lint`, `http-dev`, `mcp-dev` | Contributor tooling — see [CONTRIBUTING.md](../../CONTRIBUTING.md) |
 

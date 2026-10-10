@@ -145,6 +145,21 @@ These change what a caller sees. The session store API and the
 
 ## [Unreleased]
 
+### Added
+
+- **The `zeocore` command**, for callers that don't import Python: the ZEOconnect
+  Broker and WEB, TypeScript pipelines, scripts. JSON on stdin, exactly one JSON
+  object on stdout, exit status 0, 2 or 3 (`docs/reference/cli.md`).
+  - `zeocore schema list` and `zeocore schema <name>` give the public contract
+    models as JSON Schema 2020-12 under stable names, among them
+    `hosted.operation-request`, `hosted.operation-response` and
+    `connections.normalized-error`. The same schemas are committed under
+    `contracts/zeocore-v1/`, and a test fails if a model drifts from its file.
+  - `zeocore validate <name>` checks a value and answers the normalized form.
+    Its errors carry location and type only, never input values.
+  - `zeocore digest` is the sha256 of a value's RFC 8785 canonical bytes.
+  - `zeocore version` names the release and the protocols.
+
 ### Fixed
 
 - **The YouTube custody relay no longer retries a failure no retry can cure.**
