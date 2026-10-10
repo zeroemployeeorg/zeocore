@@ -90,7 +90,7 @@ def test_the_key_is_the_request_so_asking_again_is_a_replay() -> None:
         GeminiGenerate(prompt="a duck", inputs=(_png(),), occurrence="2"),
         GeminiGenerate(prompt="a goose", inputs=(_png(),)),
         GeminiGenerate(prompt="a duck", inputs=(_png(5, 5),)),
-        GeminiGenerate(prompt="a duck", inputs=(_png(),), image_size="2K"),
+        GeminiGenerate(prompt="a duck", inputs=(_png(),), aspect_ratio="16:9"),
         GeminiGenerate(prompt="a duck"),
     ]
     keys = {item.idempotency_key() for item in others}

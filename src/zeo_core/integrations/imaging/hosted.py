@@ -88,7 +88,10 @@ class _HostedImages:
             arguments["input_artifact_id"] = ids[0]
         response = self._invoke(operation, arguments, request.idempotency_key())
         return self._image(operation, response).model_copy(
-            update={"request_key": request.idempotency_key()}
+            update={
+                "request_key": request.idempotency_key(),
+                "inputs": tuple(item.provenance() for item in request.input_images()),
+            }
         )
 
     def _input_id(self, item: ImageInput) -> str:
@@ -144,6 +147,18 @@ class _HostedImages:
     ) -> GeneratedImage:
         _raise_unless_confirmed(response)
         if response.artifact is None:
+            expired = response.result
+            if isinstance(expired, dict) and expired.get("artifact_expired") is True:
+                # A replay after the Broker dropped the bytes (contract 1.3.0
+                # §6): the call succeeded once and is never regenerated.
+                digest = expired.get("content_sha256")
+                raise ImagingError(
+                    "artifact_expired",
+                    "this image was made earlier, but ZEOconnect no longer holds"
+                    " its bytes; a new image needs a new occurrence",
+                    retry="new_occurrence",
+                    content_sha256=digest if isinstance(digest, str) else None,
+                )
             raise ImagingError("invalid_response", "the answer carried no image")
         try:
             content = self._client.download_artifact(response.artifact)
@@ -202,6 +217,11 @@ def _raise_unless_confirmed(response: HostedOperationResponse) -> None:
             approval_url=str(response.approval_url),
         )
     if status is HostedOperationStatus.AMBIGUOUS:
+        if (response.receipt or {}).get("in_flight") is True:
+            raise ImagingError(
+                "ambiguous",
+                "the first call for this request is still running; ask again later",
+            )
         raise ImagingError(
             "ambiguous",
             "the call may have run and been billed; the same request replays"
@@ -223,6 +243,15 @@ def _raise_unless_confirmed(response: HostedOperationResponse) -> None:
         raise ImagingError(
             "budget_exhausted",
             "the connection's budget can't cover this call; raise it in ZEOconnect",
+        )
+    if (
+        code is NormalizedErrorCode.REQUEST_REFUSED
+        and error is not None
+        and error.message == "storage_capacity_exceeded"
+    ):
+        # Refused before any reservation, and not recorded (1.3.0 §5.1).
+        raise ImagingError(
+            "unavailable", "ZEOconnect is out of image storage; try again later"
         )
     if code is NormalizedErrorCode.INPUT_ARTIFACT_UNAVAILABLE:
         raise ImagingError(

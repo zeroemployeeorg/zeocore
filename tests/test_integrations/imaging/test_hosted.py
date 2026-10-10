@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 from typing import Any
 
 import pytest
@@ -386,4 +387,84 @@ def test_an_expired_held_id_is_uploaded_again_next_time() -> None:
     assert len(broker.uploads) == 2
     assert (
         broker.invocations[-1].idempotency_key == broker.invocations[-2].idempotency_key
+    )
+
+
+def test_a_replay_after_the_bytes_expired_never_regenerates() -> None:
+    broker = FakeBroker()
+    digest = "sha256:" + "a" * 64
+    broker.answer = {
+        "status": "confirmed",
+        "execution_id": "exe_old",
+        "result": {"artifact_expired": True, "content_sha256": digest},
+        "receipt": {"replayed": True},
+    }
+    with pytest.raises(ImagingError) as caught:
+        _gemini(broker).run(GeminiGenerate(prompt="a duck"))
+    assert (caught.value.outcome, caught.value.retry) == (
+        "artifact_expired",
+        "new_occurrence",
+    )
+    assert caught.value.content_sha256 == digest
+    assert len(broker.invocations) == 1
+
+
+def test_a_replay_while_the_first_call_runs_says_so() -> None:
+    broker = FakeBroker()
+    broker.answer = {
+        "status": "ambiguous",
+        "execution_id": "exe_x",
+        "receipt": {"replayed": True, "in_flight": True},
+    }
+    with pytest.raises(ImagingError, match="still running") as caught:
+        _gemini(broker).run(GeminiGenerate(prompt="a duck"))
+    assert caught.value.retry == "same_request"
+
+
+def test_storage_capacity_is_a_passing_outage_not_a_refusal() -> None:
+    broker = FakeBroker()
+    broker.answer = {
+        "status": "refused",
+        "execution_id": "exe_x",
+        "normalized_error": {
+            "code": "REQUEST_REFUSED",
+            "message": "storage_capacity_exceeded",
+        },
+    }
+    with pytest.raises(ImagingError) as caught:
+        _gemini(broker).run(GeminiGenerate(prompt="a duck"))
+    assert (caught.value.outcome, caught.value.retry) == ("unavailable", "same_request")
+
+
+def test_inputs_keep_their_order_roles_and_digests() -> None:
+    identity = ImageInput(content=png(4, 4), media_type="image/png", role="identity")
+    guide = ImageInput(content=png(5, 5), media_type="image/png", role="camera_guide")
+    broker = FakeBroker()
+    image = _gemini(broker).run(
+        GeminiGenerate(
+            model="gemini-3-pro-image", prompt="profile", inputs=(identity, guide)
+        )
+    )
+    assert [(item.role, item.sha256) for item in image.inputs] == [
+        ("identity", identity.sha256),
+        ("camera_guide", guide.sha256),
+    ]
+    assert [content for _, content, _ in broker.uploads] == [png(4, 4), png(5, 5)]
+    assert broker.invocations[0].arguments["model"] == "gemini-3-pro-image"
+
+
+def test_a_role_is_provenance_only_and_never_changes_the_request() -> None:
+    plain = GeminiGenerate(prompt="x", inputs=(_input(),))
+    labelled = GeminiGenerate(
+        prompt="x",
+        inputs=(
+            ImageInput(content=png(4, 4), media_type="image/png", role="identity"),
+        ),
+    )
+    assert plain.idempotency_key() == labelled.idempotency_key()
+    assert "role" not in json.dumps(labelled.arguments())
+    swapped = GeminiGenerate(prompt="x", inputs=(_input(5), _input(4)))
+    assert (
+        swapped.idempotency_key()
+        != GeminiGenerate(prompt="x", inputs=(_input(4), _input(5))).idempotency_key()
     )

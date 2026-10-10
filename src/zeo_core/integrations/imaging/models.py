@@ -28,7 +28,9 @@ MAX_GEMINI_INPUTS: Final = 6
 InputMediaType = Literal["image/png", "image/jpeg", "image/webp"]
 OutputMediaType = Literal["image/png", "image/jpeg", "image/webp", "image/svg+xml"]
 Provider = Literal["gemini", "recraft"]
-GeminiModel = Literal["gemini-3.1-flash-image", "gemini-3-pro-image-preview"]
+GeminiModel = Literal[
+    "gemini-3.1-flash-image", "gemini-3-pro-image", "gemini-3-pro-image-preview"
+]
 RecraftModel = Literal["recraftv3"]
 AspectRatio = Literal["1:1", "2:3", "3:2", "3:4", "4:3", "9:16", "16:9", "21:9"]
 Occurrence = Annotated[
@@ -54,6 +56,9 @@ class ImagingError(RuntimeError):
     - ``approval_required``: a person must approve in ZEOconnect first;
       ``approval_url`` says where.
     - ``invalid_response``: the answer did not match the reviewed contract.
+    - ``artifact_expired``: the call succeeded earlier, but the Broker no
+      longer holds the image bytes (after 30 days). It never regenerates;
+      ``content_sha256`` names what was produced.
 
     ``retry`` says what another attempt needs, and ``request_key`` names the
     request, so a caller can record both.
@@ -67,9 +72,11 @@ class ImagingError(RuntimeError):
         approval_url: str | None = None,
         retry: str | None = None,
         request_key: str | None = None,
+        content_sha256: str | None = None,
     ) -> None:
         self.outcome = outcome
         self.approval_url = approval_url
+        self.content_sha256 = content_sha256
         #: What another attempt needs:
         #:
         #: - ``same_request``: asking again with the same request is safe. On
@@ -164,12 +171,21 @@ def _webp_dimensions(content: bytes) -> tuple[int, int]:
 
 
 class ImageInput(BaseModel):
-    """Bytes a caller supplies, checked before any of them leave the machine."""
+    """Bytes a caller supplies, checked before any of them leave the machine.
+
+    ``role`` is the caller's own label for what this input is (for example
+    ``identity`` or ``camera_guide``). It is provenance only: it is never sent
+    to a provider and does not change the request identity. The order of
+    inputs is kept everywhere.
+    """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     content: bytes = Field(repr=False, min_length=1, max_length=MAX_IMAGE_BYTES)
     media_type: InputMediaType
+    role: str | None = Field(
+        default=None, min_length=1, max_length=64, pattern=r"^[a-z][a-z0-9_.-]*$"
+    )
 
     @model_validator(mode="after")
     def _is_the_declared_image(self) -> ImageInput:
@@ -185,12 +201,27 @@ class ImageInput(BaseModel):
         return sha256_hex(self.content)
 
     @classmethod
-    def from_path(cls, path: str | Path) -> ImageInput:
+    def from_path(cls, path: str | Path, *, role: str | None = None) -> ImageInput:
         content = Path(path).read_bytes()
         media_type = sniff_media_type(content)
         if media_type is None:
             raise ValueError("file is not a png, jpeg or webp image")
-        return cls(content=content, media_type=media_type)
+        return cls(content=content, media_type=media_type, role=role)
+
+    def provenance(self) -> InputProvenance:
+        return InputProvenance(
+            sha256=self.sha256, media_type=self.media_type, role=self.role
+        )
+
+
+class InputProvenance(BaseModel):
+    """What went in, in order: never the bytes."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    media_type: InputMediaType
+    role: str | None = None
 
 
 class BaseImageRequest(BaseModel):
@@ -240,7 +271,8 @@ class GeminiGenerate(BaseImageRequest):
     prompt: str = Field(min_length=1, max_length=16_000)
     inputs: tuple[ImageInput, ...] = Field(default=(), max_length=MAX_GEMINI_INPUTS)
     aspect_ratio: AspectRatio = "1:1"
-    image_size: Literal["1K", "2K"] = "1K"
+    #: 1K only: Broker contract 1.3.0 draft 5 §3 lists only sizes verified live.
+    image_size: Literal["1K"] = "1K"
     #: JPEG only: gemini-3.1-flash-image refuses png output (HTTP 400, seen
     #: live by DuckTyper on 2026-10-10). Another type is added only once a
     #: live run shows it.
@@ -372,6 +404,8 @@ class GeneratedImage(BaseModel):
     #: The request's stable identity (its idempotency key): the same request
     #: and occurrence always have the same key.
     request_key: str | None = None
+    #: The inputs, in the order they were sent, with their roles.
+    inputs: tuple[InputProvenance, ...] = ()
 
     @model_validator(mode="after")
     def _digest_matches(self) -> GeneratedImage:

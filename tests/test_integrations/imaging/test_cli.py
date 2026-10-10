@@ -112,6 +112,7 @@ def test_an_imaging_error_exits_3_with_its_outcome(tmp_path: Path) -> None:
     assert status == 3
     assert answer == {
         "ok": False,
+        "content_sha256": None,
         "outcome": "budget_exhausted",
         "message": "raise the budget",
         "retry": "same_request",

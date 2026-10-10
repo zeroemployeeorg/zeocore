@@ -183,6 +183,7 @@ class LocalGeminiImages:
             profile="local",
             model=request.model,
             request_key=request.idempotency_key(),
+            inputs=tuple(item.provenance() for item in request.input_images()),
         )
 
 
@@ -297,6 +298,7 @@ class LocalRecraftImages:
             provider_image_id=image_id if isinstance(image_id, str) else None,
             cost=_credits(payload.get("credits")),
             request_key=request.idempotency_key(),
+            inputs=tuple(item.provenance() for item in request.input_images()),
         )
 
     def credits(self) -> CreditBalance:

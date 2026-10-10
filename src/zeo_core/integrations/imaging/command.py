@@ -34,9 +34,12 @@ _REQUEST: TypeAdapter[Any] = TypeAdapter(ImageRequest)
 
 def _inputs(request: dict[str, Any]) -> dict[str, Any]:
     def load(item: object) -> ImageInput:
-        if not isinstance(item, dict) or set(item) != {"path"}:
-            raise ValueError('each input image is {"path": ...}')
-        return ImageInput.from_path(str(item["path"]))
+        if not isinstance(item, dict) or not {"path"} <= set(item) <= {"path", "role"}:
+            raise ValueError('each input image is {"path": ..., "role"?: ...}')
+        role = item.get("role")
+        if role is not None and not isinstance(role, str):
+            raise ValueError("an input role is a string")
+        return ImageInput.from_path(str(item["path"]), role=role)
 
     request = dict(request)
     if "input" in request:
@@ -110,6 +113,7 @@ def run(
     except ImagingError as error:
         return 3, {
             "ok": False,
+            "content_sha256": error.content_sha256,
             "outcome": error.outcome,
             "message": str(error),
             "retry": error.retry,

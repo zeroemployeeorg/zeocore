@@ -61,6 +61,8 @@ def test_the_upload_sends_raw_bytes_with_their_digest_and_connection() -> None:
     assert request.url.path == "/v1/artifacts:upload"
     assert request.content == CONTENT
     assert request.headers["Content-Type"] == "image/png"
+    # Without it the Broker answers 411 (1.3.0 draft 5 §5.1).
+    assert request.headers["Content-Length"] == str(len(CONTENT))
     assert request.headers["X-Zeo-Connection"] == "con_gemini_12345678"
     assert request.headers["X-Zeo-Content-SHA256"] == DIGEST.removeprefix("sha256:")
     assert request.headers[ZEOCONNECT_PROTOCOL_HEADER] == "1"
