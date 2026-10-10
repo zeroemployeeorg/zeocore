@@ -9,6 +9,7 @@ from pathlib import Path
 import pytest
 from pydantic import SecretStr
 
+from zeo_core.integrations.google.youtube import job as job_module
 from zeo_core.integrations.google.youtube import publish
 from zeo_core.integrations.google.youtube.job import JobDirectory, ProviderRecord
 from zeo_core.integrations.google.youtube.links import InMemoryUploadLinkStore
@@ -523,3 +524,177 @@ def test_cli_pair_and_connections_list_only_youtube(
 def test_cli_rejects_bad_chunk_size() -> None:
     with pytest.raises(SystemExit):
         main(["run", "x", "--chunk-mib", "0"])
+
+
+# -- Closing a job held on a recorded outcome (ZBS and ZEO-RT, E10) ----------------
+
+
+def _held_on_refusal(tmp_path: Path, world: tuple) -> Path:
+    yt, broker, links = world
+    broker.refuse.add("youtube.video.upload_session.create")
+    directory = make_job(tmp_path)
+    held = _executor(directory, yt, broker, links).run()
+    assert held.exit_code == EXIT_HELD
+    assert held.status["reason"] == "refused_in_zeoconnect"
+    return directory
+
+
+def test_a_studio_close_of_a_held_job_sends_nothing_and_keeps_the_hold(
+    tmp_path: Path, world: tuple
+) -> None:
+    yt, broker, links = world
+    directory = _held_on_refusal(tmp_path, world)
+    sent = len(broker.calls)
+    JobDirectory(directory).append(
+        actor="studio",
+        type="cancelled",
+        closed_on="refused_in_zeoconnect",
+        step="video",
+    )
+    for _ in range(2):
+        closed = _executor(directory, yt, broker, links).run()
+        assert closed.exit_code == EXIT_DONE
+        assert closed.status["state"] == "cancelled"
+    assert len(broker.calls) == sent
+    receipt = JobDirectory(directory).receipt()
+    assert receipt is not None and receipt.outcome == "REFUSED"
+    # The original outcome stays in the journal, next to the close.
+    held = [e for e in JobDirectory(directory).events() if e.type == "held"]
+    assert [(e.model_extra or {}).get("reason") for e in held] == [
+        "refused_in_zeoconnect"
+    ]
+
+
+def test_a_closed_job_is_not_reopened_by_a_later_release(
+    tmp_path: Path, world: tuple
+) -> None:
+    yt, broker, links = world
+    directory = _held_on_refusal(tmp_path, world)
+    JobDirectory(directory).append(actor="studio", type="cancelled")
+    _executor(directory, yt, broker, links).run()
+    sent = len(broker.calls)
+    JobDirectory(directory).append(actor="studio", type="released")
+    again = _executor(directory, yt, broker, links).run()
+    assert again.status["state"] == "cancelled"
+    assert len(broker.calls) == sent
+
+
+def test_a_sequential_run_of_a_held_job_sends_nothing(
+    tmp_path: Path, world: tuple
+) -> None:
+    """Sequential only: a run after the hold. Close/run interleaving is #92's."""
+    yt, broker, links = world
+    directory = _held_on_refusal(tmp_path, world)
+    sent = len(broker.calls)
+    held = _executor(directory, yt, broker, links).run()
+    assert held.exit_code == EXIT_HELD
+    assert len(broker.calls) == sent
+
+
+def test_a_cancel_during_a_run_is_recorded_but_does_not_stop_that_run(
+    tmp_path: Path, world: tuple
+) -> None:
+    """Pinned so a change is deliberate: the studio must not cancel a live run.
+
+    The executor reads ``cancelled`` only when a run starts. An effect already
+    dispatched can't be withdrawn, so the run finishes and the cancel stays in
+    the journal. The studio refuses Cancel once a session was requested,
+    unless the job is held.
+    """
+    yt, broker, links = world
+    directory = make_job(tmp_path)
+
+    def cancel_mid_run(operation: str) -> None:
+        if operation == "youtube.video.upload_session.create":
+            broker.on_invoke = None
+            JobDirectory(directory).append(actor="studio", type="cancelled")
+
+    broker.on_invoke = cancel_mid_run
+    result = _executor(directory, yt, broker, links).run()
+    assert result.status["state"] == "done"
+    types = [e.type for e in JobDirectory(directory).events()]
+    assert types.index("cancelled") < types.index("uploaded")
+
+
+# -- A kill mid-write never leaves a partial file (ZBS, ZEO-RT SOW-90) ----------
+
+
+def _killed_on_write(monkeypatch: pytest.MonkeyPatch) -> None:
+    def killed(_descriptor: int, _data: object) -> int:
+        raise KeyboardInterrupt("killed mid-write")
+
+    monkeypatch.setattr(job_module.os, "write", killed)
+
+
+def test_a_kill_while_closing_leaves_no_receipt_and_the_rerun_closes(
+    tmp_path: Path, world: tuple, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    yt, broker, links = world
+    directory = _held_on_refusal(tmp_path, world)
+    JobDirectory(directory).append(actor="studio", type="cancelled")
+    sent = len(broker.calls)
+    real_write = job_module.os.write
+    _killed_on_write(monkeypatch)
+    with pytest.raises(KeyboardInterrupt):
+        _executor(directory, yt, broker, links).run()
+    monkeypatch.setattr(job_module.os, "write", real_write)
+    assert not (directory / "receipt.json").exists()
+    for _ in range(2):
+        closed = _executor(directory, yt, broker, links).run()
+        assert closed.status["state"] == "cancelled"
+    receipt = JobDirectory(directory).receipt()
+    assert receipt is not None and receipt.outcome == "REFUSED"
+    assert len(broker.calls) == sent
+
+
+def test_a_kill_while_appending_an_event_keeps_the_job_readable(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    directory = JobDirectory(make_job(tmp_path))
+    before = directory.events()
+    _killed_on_write(monkeypatch)
+    with pytest.raises(KeyboardInterrupt):
+        directory.append(actor="studio", type="cancelled")
+    monkeypatch.undo()
+    assert directory.events() == before
+    assert directory.append(actor="studio", type="cancelled").seq == len(before) + 1
+
+
+def test_files_stay_write_once_and_fail_closed_without_hard_links(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    target = tmp_path / "once.json"
+    job_module._create_exclusive(target, b"{}")
+    with pytest.raises(FileExistsError):
+        job_module._create_exclusive(target, b'{"other":1}')
+    assert target.read_bytes() == b"{}"
+
+    def no_links(_source: object, _target: object) -> None:
+        raise OSError(45, "Operation not supported")
+
+    monkeypatch.setattr(job_module.os, "link", no_links)
+    refused = tmp_path / "refused.json"
+    with pytest.raises(job_module.JobError, match="atomically"):
+        job_module._create_exclusive(refused, b'{"a":1}')
+    # Nothing under the final name, no temporary left, the earlier file intact.
+    assert not refused.exists()
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["once.json"]
+    assert target.read_bytes() == b"{}"
+
+
+def test_a_kill_after_the_temporary_write_leaves_the_job_readable(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    directory = JobDirectory(make_job(tmp_path))
+    before = directory.events()
+
+    def killed(_source: object, _target: object) -> None:
+        raise KeyboardInterrupt("killed before publication")
+
+    monkeypatch.setattr(job_module.os, "link", killed)
+    with pytest.raises(KeyboardInterrupt):
+        directory.append(actor="studio", type="cancelled")
+    monkeypatch.undo()
+    reopened = JobDirectory(directory.path)
+    assert reopened.events() == before
+    assert not [p for p in reopened.events_dir.iterdir() if p.suffix == ".tmp"]

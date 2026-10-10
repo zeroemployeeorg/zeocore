@@ -1,0 +1,206 @@
+"""``zeocore image``: one JSON call in, one JSON answer out."""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+import pytest
+
+from tests.test_integrations.imaging.images import SVG, png
+from zeo_core.cli.__main__ import run as zeocore
+from zeo_core.integrations.imaging import (
+    BaseImageRequest,
+    CreditBalance,
+    GeneratedImage,
+    ImagingError,
+    ImagingService,
+)
+from zeo_core.integrations.imaging.command import run
+from zeo_core.integrations.imaging.models import sha256_hex
+
+
+class _Recraft:
+    def __init__(self, error: ImagingError | None = None) -> None:
+        self.requests: list[BaseImageRequest] = []
+        self.error = error
+
+    def run(self, request: BaseImageRequest) -> GeneratedImage:
+        self.requests.append(request)
+        if self.error is not None:
+            raise self.error
+        return GeneratedImage(
+            content=SVG,
+            media_type="image/svg+xml",
+            sha256=sha256_hex(SVG),
+            provider="recraft",
+            operation="recraft.image.vectorize",
+            profile="hosted",
+            execution_id="exe_1",
+        )
+
+    def credits(self) -> CreditBalance:
+        return CreditBalance(credits=12)
+
+
+def _call(command: object, backend: _Recraft) -> tuple[int, dict[str, object]]:
+    return run(command, service_factory=lambda: ImagingService(recraft=backend))
+
+
+def test_a_vectorize_call_writes_the_file_and_answers_its_facts(tmp_path: Path) -> None:
+    source = tmp_path / "duck.png"
+    source.write_bytes(png(64, 64))
+    output = tmp_path / "duck.svg"
+    backend = _Recraft()
+    status, answer = _call(
+        {
+            "request": {"kind": "recraft.vectorize", "input": {"path": str(source)}},
+            "output": str(output),
+        },
+        backend,
+    )
+    assert status == 0
+    assert output.read_bytes() == SVG
+    assert answer["ok"] is True
+    assert answer["path"] == str(output)
+    assert answer["sha256"] == sha256_hex(SVG)
+    assert answer["execution_id"] == "exe_1"
+    assert "content" not in answer
+    assert backend.requests[0].input_images()[0].content == png(64, 64)
+
+
+def test_credits(tmp_path: Path) -> None:
+    assert _call({"credits": True}, _Recraft()) == (
+        0,
+        {"ok": True, "provider": "recraft", "credits": 12.0},
+    )
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        [],
+        {"request": {"kind": "recraft.vectorize"}, "output": "x.svg"},
+        {
+            "request": {"kind": "recraft.vectorize", "input": {"path": "/missing.png"}},
+            "output": "x",
+        },
+        {"request": {"kind": "recraft.vectorize", "input": "duck.png"}, "output": "x"},
+        {"request": {"kind": "nope"}, "output": "x"},
+        {
+            "request": {"kind": "gemini.generate", "prompt": "x"},
+            "output": "/missing/dir/x.png",
+        },
+        {"request": {"kind": "gemini.generate", "prompt": "x"}},
+    ],
+)
+def test_an_invalid_command_exits_2_and_calls_nothing(command: object) -> None:
+    backend = _Recraft()
+    status, answer = _call(command, backend)
+    assert status == 2
+    assert answer["outcome"] == "invalid_request"
+    assert backend.requests == []
+
+
+def test_an_imaging_error_exits_3_with_its_outcome(tmp_path: Path) -> None:
+    status, answer = _call(
+        {
+            "request": {"kind": "recraft.generate", "prompt": "a duck"},
+            "output": str(tmp_path / "duck.png"),
+        },
+        _Recraft(ImagingError("budget_exhausted", "raise the budget")),
+    )
+    assert status == 20
+    assert answer == {
+        "ok": False,
+        "content_sha256": None,
+        "outcome": "budget_exhausted",
+        "message": "raise the budget",
+        "retry": "same_request",
+        "request_key": None,
+        "approval_url": None,
+    }
+    assert not (tmp_path / "duck.png").exists()
+
+
+def test_an_unconfigured_provider_is_refused(tmp_path: Path) -> None:
+    status, answer = _call(
+        {
+            "request": {"kind": "gemini.generate", "prompt": "a duck"},
+            "output": str(tmp_path / "duck.png"),
+        },
+        _Recraft(),
+    )
+    assert (status, answer["outcome"]) == (20, "refused")
+
+
+def test_zeocore_image_is_the_imaging_command(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    monkeypatch.setenv("ZEOCORE_CONNECTION_PROFILE", "local")
+    status, answer = zeocore(
+        ["image"],
+        lambda: (
+            b'{"request": {"kind": "gemini.generate", "prompt": "x"}, "output": "."}'
+        ),
+    )
+    # No key on this machine: refused before anything is sent.
+    assert (status, answer["outcome"]) == (20, "refused")
+    assert zeocore(["image", "extra"], lambda: b"{}")[0] == 2
+
+
+def test_zeocore_image_parses_stdin_strictly_first() -> None:
+    status, answer = zeocore(["image"], lambda: b'{"credits": true, "credits": true}')
+    assert (status, answer["outcome"]) == (2, "invalid_request")
+
+
+@pytest.mark.parametrize(
+    ("outcome", "status"),
+    [
+        ("approval_required", 10),
+        ("in_flight", 11),
+        ("unavailable", 11),
+        ("input_unavailable", 11),
+        ("not_paired", 12),
+        ("ambiguous", 13),
+        ("budget_exhausted", 20),
+        ("stopped", 20),
+        ("refused", 20),
+        ("artifact_expired", 20),
+        ("invalid_response", 20),
+    ],
+)
+def test_each_outcome_has_its_exit_status(
+    tmp_path: Path, outcome: str, status: int
+) -> None:
+    got, answer = _call(
+        {
+            "request": {"kind": "recraft.generate", "prompt": "a duck"},
+            "output": str(tmp_path / "duck.png"),
+        },
+        _Recraft(ImagingError(outcome, "x")),
+    )
+    assert (got, answer["outcome"]) == (status, outcome)
+
+
+def test_the_hosted_image_service_uses_the_clients_origin_bound_grant(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    from zeo_core.cli import client
+    from zeo_core.integrations.hosted.pairing import SecureStoreError
+
+    monkeypatch.setenv("ZEOCORE_CONNECTION_PROFILE", "hosted")
+
+    def no_store(profile: str | None) -> object:
+        raise SecureStoreError("secure session storage is unavailable")
+
+    monkeypatch.setattr(client, "make_store", no_store)
+    status, answer = zeocore(
+        ["image"],
+        lambda: json.dumps(
+            {
+                "request": {"kind": "gemini.generate", "prompt": "x"},
+                "output": str(tmp_path / "x.jpg"),
+            }
+        ).encode(),
+    )
+    assert (status, answer["outcome"]) == (12, "not_paired")

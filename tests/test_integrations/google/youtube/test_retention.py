@@ -10,6 +10,7 @@ from pathlib import Path
 
 import pytest
 
+from zeo_core.contracts.connections import NormalizedError, NormalizedErrorCode
 from zeo_core.integrations.google.youtube.job import JobDirectory, ProviderRecord
 from zeo_core.integrations.google.youtube.publish import main
 from zeo_core.integrations.google.youtube.retention import RetentionSweep
@@ -17,6 +18,8 @@ from zeo_core.integrations.hosted.client import (
     HostedClientError,
     HostedOperationResponse,
     HostedOperationStatus,
+    HostedStoppedError,
+    HostedUnavailableError,
 )
 
 from .helpers import make_job
@@ -110,6 +113,48 @@ def test_unreachable_defers_until_the_limit_then_deletes(tmp_path: Path) -> None
     report = _sweep(
         tmp_path, _Broker(HostedClientError("hosted transport is unavailable"))
     ).run()
+    assert report.deferred == 1 and young.provider_record() is not None
+    assert old.provider_record() is None
+    assert "not refreshed within 29 days" in report.dropped[0]["reason"]
+
+
+@pytest.mark.parametrize(
+    "answer",
+    [
+        HostedStoppedError(control="dispatch", scope="global"),
+        HostedUnavailableError(),
+        HostedOperationResponse(
+            status=HostedOperationStatus.FAILED_SAFE,
+            execution_id="x",
+            normalized_error=NormalizedError(
+                code=NormalizedErrorCode.REQUEST_REFUSED,
+                message="stopped:dispatch:global",
+            ),
+        ),
+        HostedOperationResponse(
+            status=HostedOperationStatus.FAILED_SAFE,
+            execution_id="x",
+            normalized_error=NormalizedError(
+                code=NormalizedErrorCode.STOPPED, message="stopped:dispatch:global"
+            ),
+        ),
+        # Contract 1.1.0 §9: a control that could not be read is an outage.
+        HostedOperationResponse(
+            status=HostedOperationStatus.FAILED_SAFE,
+            execution_id="x",
+            normalized_error=NormalizedError(
+                code=NormalizedErrorCode.PROVIDER_UNAVAILABLE,
+                message="controls_unavailable:dispatch",
+            ),
+        ),
+    ],
+)
+def test_a_stop_or_an_outage_defers_and_never_reads_as_lapsed_access(
+    tmp_path: Path, answer: HostedOperationResponse | Exception
+) -> None:
+    young = _published(tmp_path, days_old=22, number=1)
+    old = _published(tmp_path, days_old=29, number=2)
+    report = _sweep(tmp_path, _Broker(answer)).run()
     assert report.deferred == 1 and young.provider_record() is not None
     assert old.provider_record() is None
     assert "not refreshed within 29 days" in report.dropped[0]["reason"]

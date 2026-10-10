@@ -4,14 +4,25 @@ from __future__ import annotations
 
 import json
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 
 import httpx
 import pytest
 from pydantic import JsonValue, SecretStr
 
 from zeo_core.integrations.google.youtube.relay import RELAY_CHUNK_BYTES, RelayByteHttp
-from zeo_core.integrations.google.youtube.transfer import ByteResponse
-from zeo_core.integrations.hosted.client import HostedClientError
+from zeo_core.integrations.google.youtube.transfer import (
+    ByteResponse,
+    FileIdentity,
+    ResumableTransfer,
+    TransferState,
+)
+from zeo_core.integrations.hosted.client import (
+    HostedClientError,
+    HostedStoppedError,
+    HostedUnavailableError,
+    HostedUnreachableError,
+)
 from zeo_core.integrations.hosted.pairing import (
     DeviceSession,
     InMemorySecureSessionStore,
@@ -94,10 +105,17 @@ def test_relay_translates_youtube_answers() -> None:
 def test_relay_refusal_is_terminal_and_outage_is_transient() -> None:
     refused = _put(_Transport(HostedClientError("hosted request was refused")))
     assert refused.status_code == 403
-    with pytest.raises(httpx.TransportError):
-        _put(_Transport(HostedClientError("hosted transport is unavailable")))
-    with pytest.raises(httpx.TransportError):
-        _put(_Transport({"range": None}))
+    for transient in (
+        HostedUnavailableError(),
+        HostedUnreachableError("off the private network"),
+        HostedClientError("hosted request is pending"),
+    ):
+        with pytest.raises(httpx.TransportError):
+            _put(_Transport(transient))
+    stopped = _put(_Transport(HostedStoppedError(control="dispatch", scope="global")))
+    assert stopped.status_code == 403 and "relay_stopped" in stopped.text
+    missing_status = _put(_Transport({"range": None}))
+    assert missing_status.status_code == 400 and "relay_failed" in missing_status.text
     with pytest.raises(ValueError, match="4 MiB"):
         RelayByteHttp(
             _Transport({}), connection_id="c", seal="s", mime_type="video/mp4"
@@ -107,6 +125,61 @@ def test_relay_refusal_is_terminal_and_outage_is_transient() -> None:
             content=b"\0" * (RELAY_CHUNK_BYTES + 1),
             timeout=1,
         )
+
+
+@pytest.mark.parametrize(
+    "message",
+    [
+        "hosted protocol version is incompatible",
+        "hosted response did not come from the Broker",
+        "hosted response shape is invalid",
+        "hosted response exceeds the client limit",
+        "hosted redirect is forbidden",
+        "paired device session is expired",
+        "paired device session is unavailable",
+        "managed execution forbids member API fallback",
+    ],
+)
+def test_a_failure_no_retry_can_cure_is_terminal(message: str) -> None:
+    answer = _put(_Transport(HostedClientError(message)))
+    assert answer.status_code == 400 and "relay_failed" in answer.text
+
+
+def test_a_stopped_relay_is_one_request_and_a_held_transfer(tmp_path: Path) -> None:
+    """A Broker stop on the relay ends the transfer; it never backs off and retries."""
+
+    video = tmp_path / "video.mp4"
+    video.write_bytes(b"0123456789")
+    stat = video.stat()
+    seen: list[httpx.Request] = []
+
+    def stopped(request: httpx.Request) -> httpx.Response:
+        seen.append(request)
+        return httpx.Response(
+            403,
+            headers={ZEOCONNECT_PROTOCOL_HEADER: ZEOCONNECT_PROTOCOL_VERSION},
+            json={"code": "stopped", "message": "stopped:dispatch:global"},
+        )
+
+    sleeps: list[float] = []
+    outcome = ResumableTransfer(
+        url=LINK,
+        file=FileIdentity(
+            path=video, size_bytes=10, mtime_ms=stat.st_mtime_ns // 1_000_000
+        ),
+        mime_type="video/mp4",
+        http=RelayByteHttp(
+            _device(httpx.MockTransport(stopped)),
+            connection_id="con_youtube0001",
+            seal="s",
+            mime_type="video/mp4",
+        ),
+        sleep=sleeps.append,
+    ).run()
+
+    assert outcome.state is TransferState.REFUSED
+    assert len(seen) == 1
+    assert sleeps == []
 
 
 def _device(handler: httpx.MockTransport) -> ZEOconnectHTTPTransport:
@@ -226,7 +299,7 @@ def test_transport_refusals_and_limits() -> None:
     def down(request: httpx.Request) -> httpx.Response:
         raise httpx.ConnectError("down")
 
-    with pytest.raises(HostedClientError, match="unavailable"):
+    with pytest.raises(HostedUnreachableError):
         _device(httpx.MockTransport(down)).relay_youtube_chunk(
             connection_id="c",
             link=LINK,

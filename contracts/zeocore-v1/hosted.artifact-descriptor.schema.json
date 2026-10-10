@@ -1,0 +1,44 @@
+{
+  "$id": "https://zeocore.zeo.ac/contracts/zeocore-v1/hosted.artifact-descriptor.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Bounded metadata for bytes fetched through the authenticated transport.",
+  "properties": {
+    "artifact_id": {
+      "pattern": "^art_[A-Za-z0-9_-]{8,200}$",
+      "title": "Artifact Id",
+      "type": "string"
+    },
+    "content_sha256": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Content Sha256",
+      "type": "string"
+    },
+    "filename": {
+      "maxLength": 255,
+      "minLength": 1,
+      "title": "Filename",
+      "type": "string"
+    },
+    "media_type": {
+      "maxLength": 200,
+      "minLength": 1,
+      "title": "Media Type",
+      "type": "string"
+    },
+    "size_bytes": {
+      "minimum": 0,
+      "title": "Size Bytes",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "artifact_id",
+    "content_sha256",
+    "size_bytes",
+    "media_type",
+    "filename"
+  ],
+  "title": "HostedArtifactDescriptor",
+  "type": "object"
+}

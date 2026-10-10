@@ -102,6 +102,17 @@ class NormalizedErrorCode(StrEnum):
     FAILED_SAFE = "FAILED_SAFE"
     RESULT_AMBIGUOUS = "RESULT_AMBIGUOUS"
     CONNECTOR_REVISION_UNAVAILABLE = "CONNECTOR_REVISION_UNAVAILABLE"
+    #: An operational stop reported by ZEOconnect. The Broker sends it only to
+    #: clients that declare ``ZEOconnect-Capabilities: stopped-code``; others
+    #: get REQUEST_REFUSED with the message ``stopped:<control>:<scope>``.
+    STOPPED = "STOPPED"
+    #: Billed computation (proposed contract 1.3.0, ZEOCORE-SOW-12): the
+    #: connection's budget can't cover the call's worst-case cost, or it has no
+    #: budget. Sent only to clients declaring ``billed-computation``.
+    BUDGET_EXHAUSTED = "BUDGET_EXHAUSTED"
+    #: An input artifact id is unknown, expired or belongs to another
+    #: connection. Sent only to clients declaring ``billed-computation``.
+    INPUT_ARTIFACT_UNAVAILABLE = "INPUT_ARTIFACT_UNAVAILABLE"
 
 
 class ConnectionStatus(StrEnum):

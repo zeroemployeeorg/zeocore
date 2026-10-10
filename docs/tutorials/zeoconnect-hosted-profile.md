@@ -180,8 +180,9 @@ POST /v1/device/revoke
 Every request and response uses `ZEOconnect-Protocol-Version: 1`. Redirects are
 refused. JSON requests are limited to 64 KiB, JSON responses to 1 MiB, and
 artifacts to 10 MiB. The production origin is compiled as
-`https://connect.zeroemployee.org`; only an explicit constructor flag permits a
-localhost development origin. Ambient proxy variables are ignored by the
+`https://broker.connect.zeo.ac`, the tailnet-only Broker (until 0.13.0 it was
+the retired `https://connect.zeroemployee.org`); only an explicit constructor
+flag permits a localhost development origin. Ambient proxy variables are ignored by the
 production client.
 
 The current private ZEOconnect server must add this version header and stop

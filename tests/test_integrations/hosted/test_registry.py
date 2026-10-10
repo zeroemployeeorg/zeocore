@@ -90,8 +90,10 @@ def _resolver(registry: HostedServiceRegistry, *operations: str) -> ServiceResol
     )
 
 
-def test_reviewed_default_is_exactly_the_previous_hard_coded_service() -> None:
-    assert REVIEWED_HOSTED_SERVICES.services == frozenset({"google.drive"})
+def test_reviewed_default_is_the_previous_service_plus_the_image_services() -> None:
+    assert REVIEWED_HOSTED_SERVICES.services == frozenset(
+        {"google.drive", "gemini.image", "recraft", "openai", "anthropic", "nebius"}
+    )
     download = ServiceRequirement(
         service="google.drive", operations=("google.drive.file.download",)
     )
