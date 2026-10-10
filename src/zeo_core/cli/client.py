@@ -367,8 +367,8 @@ def invoke(args: Sequence[str], stdin: bytes, *, out: Emit = emit) -> Answer:
             while True:
                 try:
                     response = client.invoke(request)
-                except HostedUnreachableError:
-                    return EXIT_AMBIGUOUS, _unknown(key)
+                except HostedUnreachableError as error:
+                    return _unreachable(error, key)
                 waiting = response.status is HostedOperationStatus.APPROVAL_REQUIRED
                 if not waiting or deadline is None or time.monotonic() >= deadline:
                     return _answer(response, key)
@@ -386,6 +386,19 @@ def invoke(args: Sequence[str], stdin: bytes, *, out: Emit = emit) -> Answer:
             transport.close()
 
     return _guarded(body)
+
+
+def _unreachable(error: HostedUnreachableError, key: str) -> Answer:
+    if not error.may_have_arrived:
+        # Never connected: the request cannot have arrived.
+        return EXIT_WAIT, {
+            "ok": False,
+            "outcome": "unavailable",
+            "message": str(error),
+            "retry": "same_request",
+            "request_key": key,
+        }
+    return EXIT_AMBIGUOUS, _unknown(key)
 
 
 def _unknown(key: str) -> dict[str, Any]:

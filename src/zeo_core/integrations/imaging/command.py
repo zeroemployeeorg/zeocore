@@ -9,11 +9,10 @@ stdout: the image is written to ``output`` and the answer names it.
     {"credits": true}
 
 Input images are given as ``{"path": ...}``; the bytes are read and checked
-here. The profile is ``ZEOCORE_CONNECTION_PROFILE`` (``local`` or ``hosted``);
-hosted uses this device's ZEOconnect grant (``zeocore login``, chosen by
-``ZEOCORE_PROFILE``), the origin in ``ZEOCONNECT_URL``, and the connection
-ids in ``ZEOCORE_IMAGING_GEMINI_CONNECTION`` /
-``ZEOCORE_IMAGING_RECRAFT_CONNECTION``.
+here. ``zeocore image`` supplies the service: the local profile by default,
+or with ``ZEOCORE_CONNECTION_PROFILE=hosted`` this device's ZEOconnect grant
+(``zeocore login``), bound to its origin, and the connection ids in
+``ZEOCORE_IMAGING_GEMINI_CONNECTION`` / ``ZEOCORE_IMAGING_RECRAFT_CONNECTION``.
 
 Exit status is the ``zeocore`` family (see ``EXIT_FOR``): 0 done, 2 invalid
 request, 10 approval, 11 waiting, 12 not paired, 13 ambiguous, 20 held or
@@ -22,7 +21,6 @@ refused. ``outcome`` and ``retry`` say more.
 
 from __future__ import annotations
 
-import os
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
@@ -65,26 +63,6 @@ def _inputs(request: dict[str, Any]) -> dict[str, Any]:
     return request
 
 
-def _hosted_service() -> ImagingService:
-    from zeo_core.integrations.hosted.client import HostedConnectionClient
-    from zeo_core.integrations.hosted.pairing import KeychainSecureSessionStore
-    from zeo_core.integrations.hosted.transport import (
-        ZEOCONNECT_PRODUCTION_ORIGIN,
-        ZEOconnectHTTPTransport,
-    )
-
-    transport = ZEOconnectHTTPTransport(
-        session_store=KeychainSecureSessionStore(
-            profile=os.getenv("ZEOCORE_PROFILE") or None
-        ),
-        base_url=os.getenv("ZEOCONNECT_URL", ZEOCONNECT_PRODUCTION_ORIGIN),
-        allow_development_origin=os.getenv("ZEOCONNECT_DEVELOPMENT") == "1",
-    )
-    return build_imaging(
-        profile="hosted", hosted_client=HostedConnectionClient(transport=transport)
-    )
-
-
 def _summary(image: GeneratedImage, path: Path) -> dict[str, Any]:
     return {
         "ok": True,
@@ -116,11 +94,7 @@ def run(
             else str(error)
         )
         return 2, {"ok": False, "outcome": "invalid_request", "message": message}
-    factory = service_factory or (
-        _hosted_service
-        if os.getenv("ZEOCORE_CONNECTION_PROFILE") == "hosted"
-        else lambda: build_imaging(profile="local")
-    )
+    factory = service_factory or (lambda: build_imaging(profile="local"))
     try:
         service = factory()
         if request is None:

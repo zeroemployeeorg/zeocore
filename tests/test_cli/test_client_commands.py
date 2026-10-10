@@ -312,6 +312,7 @@ def test_each_broker_answer_has_its_exit_and_retry(
     ("error", "status", "outcome"),
     [
         (HostedUnreachableError(), 13, "ambiguous"),
+        (HostedUnreachableError(may_have_arrived=False), 11, "unavailable"),
         (HostedUnavailableError(), 11, "unavailable"),
         (HostedStoppedError(control="dispatch", scope="global"), 20, "stopped"),
         (HostedSessionError("paired device session is expired"), 12, "not_paired"),

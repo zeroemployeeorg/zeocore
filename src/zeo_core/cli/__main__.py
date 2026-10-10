@@ -34,9 +34,10 @@ Rules every command keeps (``cli_protocol`` 1):
 
 from __future__ import annotations
 
+import os
 import sys
 from collections.abc import Callable, Sequence
-from typing import Final
+from typing import Any, Final
 
 from pydantic import ValidationError
 
@@ -179,7 +180,31 @@ def _image(args: Sequence[str], stdin: bytes) -> Answer:
         return _invalid(str(error))
     from zeo_core.integrations.imaging.command import run as image
 
+    if os.getenv("ZEOCORE_CONNECTION_PROFILE") == "hosted":
+        return image(command, service_factory=_hosted_images)
     return image(command)
+
+
+def _hosted_images() -> Any:  # noqa: ANN401 -- ImagingService, imported lazily
+    """The hosted image service on this profile's grant, bound to its origin."""
+    from zeo_core.integrations.hosted.client import HostedConnectionClient
+    from zeo_core.integrations.hosted.pairing import SecureStoreError
+    from zeo_core.integrations.imaging import ImagingError, build_imaging
+
+    try:
+        store = client.make_store(client._profile(None))
+        transport = client.make_transport(store)
+    except SecureStoreError:
+        raise ImagingError(
+            "not_paired", "no usable secure session store on this machine"
+        ) from None
+    except ValueError:
+        raise ImagingError(
+            "refused", "ZEOCONNECT_URL is not an allowed Broker origin", retry="none"
+        ) from None
+    return build_imaging(
+        profile="hosted", hosted_client=HostedConnectionClient(transport=transport)
+    )
 
 
 #: Every command, named explicitly. Nothing is discovered or loaded by name.

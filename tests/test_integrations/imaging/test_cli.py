@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
@@ -179,3 +180,27 @@ def test_each_outcome_has_its_exit_status(
         _Recraft(ImagingError(outcome, "x")),
     )
     assert (got, answer["outcome"]) == (status, outcome)
+
+
+def test_the_hosted_image_service_uses_the_clients_origin_bound_grant(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    from zeo_core.cli import client
+    from zeo_core.integrations.hosted.pairing import SecureStoreError
+
+    monkeypatch.setenv("ZEOCORE_CONNECTION_PROFILE", "hosted")
+
+    def no_store(profile: str | None) -> object:
+        raise SecureStoreError("secure session storage is unavailable")
+
+    monkeypatch.setattr(client, "make_store", no_store)
+    status, answer = zeocore(
+        ["image"],
+        lambda: json.dumps(
+            {
+                "request": {"kind": "gemini.generate", "prompt": "x"},
+                "output": str(tmp_path / "x.jpg"),
+            }
+        ).encode(),
+    )
+    assert (status, answer["outcome"]) == (12, "not_paired")
