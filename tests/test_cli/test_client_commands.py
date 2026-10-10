@@ -489,8 +489,10 @@ def test_upload_sends_one_checked_image_and_answers_its_id(
     status, answer = client.upload([str(image), "--connection", CONNECTION], b"")
     assert (status, answer["artifact_id"]) == (0, "art_in_12345678")
     assert sent == [(CONNECTION, png(8, 8), "image/png")]
-    image.write_bytes(b"not an image")
-    assert client.upload([str(image), "--connection", CONNECTION], b"")[0] == 2
+    image.write_bytes(b"\x89PNG\r\n\x1a\nsecret-bytes-canary")
+    status, answer = client.upload([str(image), "--connection", CONNECTION], b"")
+    assert status == 2
+    assert "secret-bytes-canary" not in json.dumps(answer)
     assert len(sent) == 1
 
 

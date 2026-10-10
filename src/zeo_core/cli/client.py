@@ -504,8 +504,11 @@ def upload(args: Sequence[str], _stdin: bytes) -> Answer:
         options = parser.parse_args(list(args))
         try:
             image = ImageInput.from_path(options.path)
-        except (OSError, ValueError) as error:
-            raise ArgumentsError(f"the file can't be uploaded: {error}") from None
+        except OSError, ValueError:
+            # A fixed message: a validation error's text can quote the bytes.
+            raise ArgumentsError(
+                "the file is not a readable png, jpeg or webp within the bounds"
+            ) from None
         store, transport = _open(_profile(options.profile))
         try:
             descriptor = HostedConnectionClient(transport=transport).upload_artifact(
