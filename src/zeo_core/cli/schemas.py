@@ -29,6 +29,9 @@ SCHEMAS: Final[dict[str, str]] = {
     "hosted.artifact-descriptor": (
         "zeo_core.integrations.hosted.client:HostedArtifactDescriptor"
     ),
+    "hosted.connection-summary": (
+        "zeo_core.integrations.hosted.transport:HostedConnectionWire"
+    ),
     "hosted.availability-snapshot": (
         "zeo_core.integrations.hosted.setup:AvailabilitySnapshot"
     ),
