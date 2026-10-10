@@ -10,8 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **The `zeocore` command**, for callers that don't import Python: the ZEOconnect
-  Broker and WEB, TypeScript pipelines, scripts. JSON on stdin, exactly one JSON
-  object on stdout, exit status 0, 2 or 3 (`docs/reference/cli.md`).
+  Broker and WEB, TypeScript pipelines, scripts. JSON on stdin and JSON lines on
+  stdout with the result last. Exit codes are the YouTube publish command's
+  family: 0, 2, 10, 11, 20, plus 12 not paired and 13 ambiguous
+  (`docs/reference/cli.md`).
   - `zeocore schema list` and `zeocore schema <name>` give the public contract
     models as JSON Schema 2020-12 under stable names, among them
     `hosted.operation-request`, `hosted.operation-response` and

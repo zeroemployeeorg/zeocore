@@ -1,4 +1,4 @@
-"""``zeocore <command>``: JSON on stdin, one JSON object on stdout.
+"""``zeocore <command>``: JSON on stdin, JSON lines on stdout.
 
 Commands:
 
@@ -12,15 +12,18 @@ Commands:
   echo input values.
 - ``zeocore digest``: the sha256 of stdin's RFC 8785 canonical bytes.
 
-Rules every command keeps: stdout carries exactly one JSON object and
-nothing else; diagnostics go to stderr. Input JSON is strict (no duplicate
-keys, no NaN, at most 1 MiB). Exit status:
+Rules every command keeps (``cli_protocol`` 1):
 
-- 0: done;
-- 2: the command or its input can't be used (unknown command or schema,
-  input that isn't strict JSON);
-- 3: the command ran and said no: a value that doesn't match its schema, or
-  an operation that was refused or failed.
+- stdout is JSON lines and nothing else. Events (a pairing code, an approval
+  link, waiting) carry an ``event`` key; the result is always the last line,
+  carries ``ok`` and never ``event``. A command with no events prints one
+  line. Diagnostics go to stderr.
+- Input JSON is strict: no duplicate keys, no NaN, at most 1 MiB.
+- Exit status is zeocore's one family, shared with the YouTube publish
+  command: 0 done; 2 invalid input, nothing sent; 10 approval required; 11
+  waiting, so try the same request later; 12 not paired; 13 ambiguous,
+  never retried by the command; 20 held or refused (including a value that
+  doesn't match its schema).
 """
 
 from __future__ import annotations
@@ -39,7 +42,15 @@ from .schemas import SCHEMAS, adapter, render_schema
 #: This command's own protocol: the rules above. A change to them is a new
 #: major version of the command, announced like a contract change.
 CLI_PROTOCOL: Final = "1"
-OK, INVALID, FAILED = 0, 2, 3
+#: The exit family, the same numbers as the YouTube publish command's.
+EXIT_DONE: Final = 0
+EXIT_INVALID: Final = 2
+EXIT_APPROVAL: Final = 10
+EXIT_WAIT: Final = 11
+EXIT_NOT_PAIRED: Final = 12
+EXIT_AMBIGUOUS: Final = 13
+EXIT_HELD: Final = 20
+OK, INVALID = EXIT_DONE, EXIT_INVALID
 
 Answer = tuple[int, dict[str, Any]]
 Command = Callable[[Sequence[str], bytes], Answer]
@@ -83,7 +94,7 @@ def _validate(args: Sequence[str], stdin: bytes) -> Answer:
     try:
         model = validator.validate_python(value)
     except ValidationError as error:
-        return FAILED, {
+        return EXIT_HELD, {
             "ok": False,
             "outcome": "invalid",
             # loc and type only: a message or input could quote the value.
@@ -124,11 +135,17 @@ def run(argv: Sequence[str], stdin: Callable[[], bytes]) -> Answer:
     return COMMANDS[name](args, stdin() if name in _READS_STDIN else b"")
 
 
+def emit(line: dict[str, Any]) -> None:
+    """Write one JSON line to stdout: an event now, or the result last."""
+    sys.stdout.write(json.dumps(line, ensure_ascii=False, sort_keys=True) + "\n")
+    sys.stdout.flush()
+
+
 def main(argv: Sequence[str] | None = None) -> None:
     status, answer = run(
         sys.argv[1:] if argv is None else argv, lambda: sys.stdin.buffer.read()
     )
-    sys.stdout.write(json.dumps(answer, ensure_ascii=False, sort_keys=True) + "\n")
+    emit(answer)
     raise SystemExit(status)
 
 
