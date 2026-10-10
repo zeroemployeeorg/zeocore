@@ -316,6 +316,33 @@ fi
 echo ""
 
 # ------------------------------------------------------------------
+# 5. uv.lock agrees with pyproject.toml.
+#
+#    0.12.0 shipped with uv.lock still recording zeocore 0.11.0, so
+#    `uv lock --check` failed on the released trunk. Nothing in the tag
+#    gate looked at the lockfile; the zeocore elders ruled on org issue
+#    #787 (Z2) that release preparation must, so this cannot recur.
+#    `uv lock --check` is the authoritative test (it re-derives the lock
+#    from pyproject without writing); the version line is reported
+#    alongside so the failure says WHAT disagrees, not only that
+#    something does.
+# ------------------------------------------------------------------
+LOCK_VERSION=$(awk '/^name = "zeocore"$/{getline; if ($1=="version") {gsub(/"/,"",$3); print $3}; exit}' uv.lock 2>/dev/null)
+if ! command -v uv >/dev/null 2>&1; then
+    fail "uv not found -- cannot check uv.lock" "command -v uv" \
+         "Install uv (https://docs.astral.sh/uv/), then re-run."
+elif [ ! -f uv.lock ]; then
+    fail "uv.lock missing" "test -f uv.lock" "Run 'uv lock' and commit uv.lock."
+elif uv lock --check >/dev/null 2>&1; then
+    pass "uv.lock is consistent with pyproject.toml (records zeocore ${LOCK_VERSION:-?})"
+else
+    fail "uv.lock is out of date (records zeocore ${LOCK_VERSION:-<unparseable>}, pyproject says ${PYPROJECT_VERSION:-<unparseable>})" \
+         "uv lock --check" \
+         "Run 'uv lock', check that the diff changes only what you expect, and commit uv.lock."
+fi
+echo ""
+
+# ------------------------------------------------------------------
 # Summary
 # ------------------------------------------------------------------
 echo "${BLUE}────────────────────────────────────────────${RESET}"
