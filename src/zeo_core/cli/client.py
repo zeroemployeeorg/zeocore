@@ -37,7 +37,6 @@ from zeo_core.integrations.hosted.client import (
     HostedStoppedError,
     HostedUnavailableError,
     HostedUnreachableError,
-    is_outage,
     stop_of,
 )
 from zeo_core.integrations.hosted.pairing import (
@@ -74,14 +73,24 @@ _APPROVAL_POLL_SECONDS: Final = 5
 
 # Seams a test replaces; production builds the real Keychain store and the
 # fixed-origin transport.
+def origin() -> str:
+    return os.environ.get("ZEOCONNECT_URL", ZEOCONNECT_PRODUCTION_ORIGIN)
+
+
 def make_store(profile: str | None) -> SecureSessionStore:
-    return KeychainSecureSessionStore(profile=profile)
+    # A grant is bound to the origin it was paired with: a production session
+    # never reaches a development Broker, and the reverse.
+    selected = origin()
+    return KeychainSecureSessionStore(
+        profile=profile,
+        origin=None if selected == ZEOCONNECT_PRODUCTION_ORIGIN else selected,
+    )
 
 
 def make_transport(store: SecureSessionStore) -> ZEOconnectHTTPTransport:
     return ZEOconnectHTTPTransport(
         session_store=store,
-        base_url=os.environ.get("ZEOCONNECT_URL", ZEOCONNECT_PRODUCTION_ORIGIN),
+        base_url=origin(),
         allow_development_origin=os.environ.get("ZEOCONNECT_DEVELOPMENT") == "1",
     )
 
@@ -129,7 +138,12 @@ def _open(profile: str | None) -> tuple[SecureSessionStore, ZEOconnectHTTPTransp
         raise _NotPairedError(
             "no_session_store", "no usable secure session store on this machine"
         ) from None
-    return store, make_transport(store)
+    try:
+        transport = make_transport(store)
+    except ValueError:
+        # The origin itself is unusable: a configuration error, nothing sent.
+        raise ArgumentsError("ZEOCONNECT_URL is not an allowed Broker origin") from None
+    return store, transport
 
 
 def _guarded(body: Callable[[], Answer]) -> Answer:
@@ -401,10 +415,12 @@ def _answer(response: HostedOperationResponse, key: str) -> Answer:
             "retry": "same_request",
             **answer,
         }
-    stop = stop_of(response)
-    retry = "same_request" if stop is not None else "new_occurrence"
-    if is_outage(response):
-        retry = "new_occurrence"
+    if stop_of(response) is not None:
+        retry = "same_request"  # a stop is refused before anything is recorded
+    elif status is HostedOperationStatus.FAILED_SAFE:
+        retry = "new_occurrence"  # recorded against the key; it replays
+    else:
+        retry = "none"  # refused: the request itself has to change
     return EXIT_HELD, {"ok": False, "retry": retry, **answer}
 
 
