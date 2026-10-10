@@ -3203,7 +3203,7 @@
 <p>A curated map of ZeoCore's <strong>public</strong> surface: the canonical import path for
 each symbol, the signatures you actually call, and where the boundary sits
 between "supported API" and "internal detail you should not import".</p>
-<p>This page is hand-written and covers ZeoCore <strong>0.11.0</strong> (beta — see
+<p>This page is hand-written and covers ZeoCore <strong>0.12.0</strong> (beta — see
 <a href="#stability">Stability</a>). It is not generated from
 docstrings, and it is not exhaustive: every entry links to the source file,
 which is the authoritative signature. If a symbol is not listed here and not
@@ -3295,7 +3295,7 @@ either infrastructure you may use (<code>zeo_core.core.fs</code>, <code>zeo_core
 wiring a <em>host application</em> does (<code>zeo_core.adapters</code>).</p>
 <p><a id="stability"></a></p>
 <h2 id="stability-what-this-page-promises">Stability: what this page promises<a class="headerlink" href="#stability-what-this-page-promises" title="Permanent link">&para;</a></h2>
-<p>ZeoCore 0.11.0 is a <strong>beta</strong> library. The API is typed and tested
+<p>ZeoCore 0.12.0 is a <strong>beta</strong> library. The API is typed and tested
 (mypy <code>--strict</code> across the tree), but the surface may still shift before
 1.0. Breaking changes are recorded in <a href="../../project/CHANGELOG/">CHANGELOG.md</a>.</p>
 <p>Three tiers, used throughout this page:</p>
@@ -4188,6 +4188,21 @@ installation; others require the extra shown below. The parent package
 <td><code>IntegrationEnvironment</code>; <a href="../../integrations/environments/">test and production</a></td>
 </tr>
 <tr>
+<td><code>zeo_core.integrations.revolut</code></td>
+<td>base install, from 0.12.0</td>
+<td><code>RevolutBusinessClient</code>, <code>RevolutBusinessIntegration</code>, <code>RevolutEnvironment</code>, <code>TransactionQuery</code>, <code>TransactionPage</code>, <code>Transaction</code>, <code>Account</code>, <code>RevolutAPIError</code>, <code>MAX_UPSTREAM_BYTES</code>, <code>MAX_RESULT_BYTES</code>; read-only, no credential path of its own; <a href="../../integrations/revolut-business/">Revolut Business</a></td>
+</tr>
+<tr>
+<td><code>zeo_core.integrations.revolut.local</code></td>
+<td><code>revolut</code>, from 0.12.0</td>
+<td><code>LocalRevolutEnrollment</code>, <code>LocalCredentialStore</code>, <code>EnrollmentState</code>, <code>LocalEnrollmentError</code>, <code>LocalStoreError</code>; local enrollment of your own account</td>
+</tr>
+<tr>
+<td><code>zeo_core.integrations.google.youtube</code></td>
+<td><code>youtube</code>, from 0.12.0</td>
+<td><code>GoogleYouTubeService</code>, <code>VideoMetadata</code>, <code>VideoSessionRequest</code>, <code>ThumbnailSessionRequest</code>, <code>CaptionSessionRequest</code>, <code>Privacy</code>, <code>VideoStatus</code>; the <code>job</code>, <code>publish</code>, <code>transfer</code> and <code>retention</code> submodules; <a href="../../integrations/youtube/">YouTube</a></td>
+</tr>
+<tr>
 <td><code>zeo_core.integrations.notebook</code></td>
 <td><code>notebook</code></td>
 <td><code>execute_notebook</code>; <a href="../../integrations/notebook-execution/">execution guide</a></td>
@@ -4313,6 +4328,14 @@ they consume without importing Sovereign Agent.</p>
 <tr>
 <td><code>runtime-host</code></td>
 <td>Supervised host from 0.11.0, JSON Schema validation and RFC 8785</td>
+</tr>
+<tr>
+<td><code>youtube</code></td>
+<td>YouTube publishing from 0.12.0: resumable upload, job directory and executor</td>
+</tr>
+<tr>
+<td><code>revolut</code></td>
+<td>Local Revolut Business enrollment from 0.12.0 (client key, certificate, RS256 assertion); the read client needs no extra</td>
 </tr>
 <tr>
 <td><code>all</code></td>
