@@ -258,3 +258,15 @@ def test_crisp_upscale_takes_any_input_type_within_recrafts_bound() -> None:
     big = ImageInput(content=png(tail=b"\0" * 5_000_000), media_type="image/png")
     with pytest.raises(ValidationError, match="5,000,000"):
         RecraftCrispUpscale(input=big)
+
+
+def test_crisp_upscale_refuses_more_than_1344x768_pixels() -> None:
+    from zeo_core.integrations.imaging import RecraftCrispUpscale
+
+    RecraftCrispUpscale(
+        input=ImageInput(content=png(1344, 768), media_type="image/png")
+    )
+    with pytest.raises(ValidationError, match="1,032,192"):
+        RecraftCrispUpscale(
+            input=ImageInput(content=png(1344, 769), media_type="image/png")
+        )

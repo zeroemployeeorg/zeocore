@@ -24,6 +24,9 @@ MAX_INPUT_PIXELS: Final = 40_000_000
 #: Recraft's own bound for a background-removal input.
 MAX_REMOVE_BACKGROUND_BYTES: Final = 5_000_000
 MAX_GEMINI_INPUTS: Final = 6
+#: 1344x768: the largest crisp-upscale input whose output stays under 10 MiB
+#: (Broker contract 1.3.0 draft 8, from ZBS's live calls).
+MAX_UPSCALE_INPUT_PIXELS: Final = 1_032_192
 
 InputMediaType = Literal["image/png", "image/jpeg", "image/webp"]
 OutputMediaType = Literal["image/png", "image/jpeg", "image/webp", "image/svg+xml"]
@@ -398,6 +401,10 @@ class RecraftCrispUpscale(BaseImageRequest):
     def _recraft_accepts_it(self) -> RecraftCrispUpscale:
         if len(self.input.content) > MAX_REMOVE_BACKGROUND_BYTES:
             raise ValueError("Recraft upscales at most 5,000,000 bytes")
+        width, height = image_dimensions(self.input.content, self.input.media_type)
+        if width * height > MAX_UPSCALE_INPUT_PIXELS:
+            # About 3.05x per side keeps the png under the 10 MiB bound (draft 8).
+            raise ValueError("crisp upscale takes at most 1,032,192 pixels (1344x768)")
         return self
 
 
