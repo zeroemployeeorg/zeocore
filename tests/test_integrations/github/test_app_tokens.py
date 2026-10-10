@@ -219,3 +219,49 @@ def test_the_keychain_source_reads_only_this_users_item(
     )
     with pytest.raises(AppTokenError, match="Keychain"):
         KeychainAppKeySource(service="mator-merger").load()
+
+
+@pytest.mark.parametrize(
+    "printed",
+    [
+        PEM.get_secret_value(),
+        PEM.get_secret_value()
+        .encode()
+        .hex(),  # how security -w prints a multi-line value
+        base64.b64encode(PEM.get_secret_value().encode()).decode(),
+    ],
+)
+def test_the_keychain_value_is_read_however_it_was_printed(
+    monkeypatch: pytest.MonkeyPatch, printed: str
+) -> None:
+    monkeypatch.setattr(
+        subprocess,
+        "run",
+        lambda args, **kwargs: subprocess.CompletedProcess(args, 0, printed + "\n", ""),
+    )
+    key = KeychainAppKeySource(service="mator-merger").load()
+    assert key.get_secret_value() == PEM.get_secret_value().strip()
+
+
+def test_a_keychain_value_that_is_no_pem_is_refused(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        subprocess,
+        "run",
+        lambda args, **kwargs: subprocess.CompletedProcess(args, 0, "68656c6c6f\n", ""),
+    )
+    with pytest.raises(AppTokenError, match="not a PEM"):
+        KeychainAppKeySource(service="mator-merger").load()
+
+
+def test_a_keychain_that_does_not_answer_is_unavailable(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def slow(args: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
+        raise subprocess.TimeoutExpired(args, 15)
+
+    monkeypatch.setattr(subprocess, "run", slow)
+    with pytest.raises(AppTokenError) as caught:
+        KeychainAppKeySource(service="mator-merger").load()
+    assert caught.value.outcome == "unavailable"

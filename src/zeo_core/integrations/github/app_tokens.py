@@ -30,6 +30,7 @@ from pydantic import SecretStr
 GITHUB_API: Final = "https://api.github.com"
 _REPOSITORY = re.compile(r"[A-Za-z0-9-]{1,39}/[A-Za-z0-9._-]{1,100}")
 _PERMISSION = re.compile(r"[a-z_]{1,64}")
+_HEX = re.compile(r"[0-9a-fA-F]+")
 Access = Literal["read", "write"]
 
 
@@ -62,24 +63,50 @@ class KeychainAppKeySource:
     account: str = "private-key"
 
     def load(self) -> SecretStr:
-        result = subprocess.run(  # noqa: S603 -- fixed binary, no shell
-            [
-                "/usr/bin/security",
-                "find-generic-password",
-                "-s",
-                self.service,
-                "-a",
-                self.account,
-                "-w",
-            ],
-            capture_output=True,
-            text=True,
-            check=False,
-            timeout=15,
-        )
+        try:
+            result = subprocess.run(  # noqa: S603 -- fixed binary, no shell
+                [
+                    "/usr/bin/security",
+                    "find-generic-password",
+                    "-s",
+                    self.service,
+                    "-a",
+                    self.account,
+                    "-w",
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+                timeout=15,
+            )
+        except subprocess.TimeoutExpired:
+            raise AppTokenError("unavailable", "the Keychain did not answer") from None
         if result.returncode != 0 or not result.stdout.strip():
             raise AppTokenError("refused", "the App key is not in this user's Keychain")
-        return SecretStr(result.stdout.strip())
+        return SecretStr(_pem(result.stdout.strip()))
+
+
+def _pem(stored: str) -> str:
+    """The PEM, however ``security -w`` printed it.
+
+    A multi-line PEM comes back as hex (``security`` prints any value with
+    non-printable bytes that way). A key stored base64-encoded, on one line,
+    comes back as is. A plain PEM is used as it is.
+    """
+    if stored.startswith("-----BEGIN "):
+        return stored
+    candidates: list[bytes] = []
+    if _HEX.fullmatch(stored) and len(stored) % 2 == 0:
+        candidates.append(bytes.fromhex(stored))
+    try:
+        candidates.append(base64.b64decode(stored, validate=True))
+    except ValueError:
+        pass
+    for raw in candidates:
+        text = raw.decode("utf-8", errors="replace").strip()
+        if text.startswith("-----BEGIN "):
+            return text
+    raise AppTokenError("refused", "the Keychain item is not a PEM private key")
 
 
 @dataclass(frozen=True)
