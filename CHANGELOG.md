@@ -26,7 +26,10 @@ otherwise in 0.16.0.
     `receipt["binding"]` holds the values the Broker found.
   - When the fence can't be checked, because the listing has no revision or
     the Broker answers a fenced call with 422, zeocore raises
-    `HostedFenceUnsupportedError`. It never resends the request unfenced.
+    `HostedFenceUnsupportedError`. Its `reason` says which:
+    `"no_revision"` or `"invalid_fenced_request"`. A 1.2 Broker answers
+    invalid arguments with the same 422, so the second message does not claim
+    the fence alone was the cause. zeocore never resends the request unfenced.
   - Every request now declares `ZEOconnect-Capabilities: stopped-code,
     expected-binding`.
 - **A re-enrolled connection is its own error.** A connection id re-enrolled

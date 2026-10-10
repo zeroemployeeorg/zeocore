@@ -121,8 +121,11 @@ def test_without_a_revision_a_fence_is_unsupported_never_unfenced() -> None:
     hosted, _ = transport(httpx.MockTransport(handler))
     (summary,) = hosted.list_connections(session(NOW))
     assert summary.connection_revision is None
-    with pytest.raises(HostedFenceUnsupportedError):
+    with pytest.raises(
+        HostedFenceUnsupportedError, match="no connection revision"
+    ) as caught:
         summary.expected_binding()
+    assert caught.value.reason == "no_revision"
 
 
 # -- §6a.2 expect on the request -------------------------------------------------
@@ -169,8 +172,13 @@ def test_a_422_to_a_fenced_invoke_is_fence_unsupported_and_sent_once() -> None:
     fenced = request("google.drive.file.download").model_copy(
         update={"expect": BINDING}
     )
-    with pytest.raises(HostedFenceUnsupportedError):
+    with pytest.raises(
+        HostedFenceUnsupportedError, match="or the request itself"
+    ) as caught:
         hosted.invoke(fenced)
+    # A 1.2 Broker answers invalid arguments with the same 422, so the message
+    # never claims the fence alone was the cause.
+    assert caught.value.reason == "invalid_fenced_request"
     assert len(sent) == 1
     assert "expect" in sent[0]
 

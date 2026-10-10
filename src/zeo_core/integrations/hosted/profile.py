@@ -123,7 +123,7 @@ class HostedConnectionSummary(BaseModel):
         revision: a fence that cannot be checked is never sent unfenced.
         """
         if self.connection_revision is None:
-            raise HostedFenceUnsupportedError()
+            raise HostedFenceUnsupportedError("no_revision")
         return HostedExpectedBinding(
             external_identity=self.external_identity,
             connection_revision=self.connection_revision,

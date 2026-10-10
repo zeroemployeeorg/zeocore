@@ -564,7 +564,7 @@ class ZEOconnectHTTPTransport:
         if status == 422 and fenced:
             # A 1.1 Broker refuses expect this way (contract 1.2.0 §6a). The
             # request is never resent without it.
-            raise HostedFenceUnsupportedError()
+            raise HostedFenceUnsupportedError("invalid_fenced_request")
         if status == 503:
             # An outage the Broker reported (council ruling E7): not a stop,
             # not a refusal, and not proof the request was never accepted.

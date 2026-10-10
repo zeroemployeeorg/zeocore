@@ -242,21 +242,37 @@ class HostedStoppedError(HostedClientError):
         super().__init__(f"hosted request was stopped by {control} ({scope})")
 
 
-class HostedFenceUnsupportedError(HostedClientError):
-    """A fence was asked for, but the Broker cannot apply it (contract 1.2.0 §6a).
+FenceUnsupportedReason = Literal["no_revision", "invalid_fenced_request"]
+_FENCE_UNSUPPORTED: dict[str, str] = {
+    "no_revision": (
+        "ZEOconnect Broker listed no connection revision, so it cannot check"
+        " the expected connection binding; the request was not sent"
+    ),
+    "invalid_fenced_request": (
+        "ZEOconnect Broker refused the fenced request as invalid: either it"
+        " cannot check the expected binding or the request itself is invalid;"
+        " the request was not sent unfenced"
+    ),
+}
 
-    Either the listing carried no ``connection_revision``, or the Broker
-    answered a fenced invocation with 422, which is how a 1.1 Broker
-    refuses ``expect``. zeocore never resends the request without
-    ``expect``. Like any refusal, this is no proof that an earlier attempt
-    was not accepted.
+
+class HostedFenceUnsupportedError(HostedClientError):
+    """A fence was asked for, and zeocore holds (contract 1.2.0 §3 and §6a).
+
+    ``reason`` is ``"no_revision"`` when the listing carried no
+    ``connection_revision``, so nothing was sent. It is
+    ``"invalid_fenced_request"`` when the Broker answered a fenced
+    invocation with 422. A 1.1 Broker refuses ``expect`` that way, but a 1.2
+    Broker gives the same ``request is invalid`` to invalid arguments, and
+    the contract leaves the two indistinguishable. Either way, the contract's
+    rule is to hold. zeocore never resends the request without ``expect``.
+    Like any refusal, this is no proof that an earlier attempt was not
+    accepted.
     """
 
-    def __init__(self) -> None:
-        super().__init__(
-            "ZEOconnect Broker cannot check the expected connection binding;"
-            " the request was not sent unfenced"
-        )
+    def __init__(self, reason: FenceUnsupportedReason) -> None:
+        self.reason = reason
+        super().__init__(_FENCE_UNSUPPORTED[reason])
 
 
 class HostedConnectionChangedError(HostedClientError):
@@ -404,6 +420,7 @@ def _contains_secret_key(value: JsonValue | dict[str, JsonValue] | None) -> bool
 
 __all__ = [
     "CONNECTION_REVISION_PATTERN",
+    "FenceUnsupportedReason",
     "REQUEST_CHANGED_UNDER_KEY",
     "BindingField",
     "HostedArtifactDescriptor",
