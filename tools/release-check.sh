@@ -333,12 +333,19 @@ if ! command -v uv >/dev/null 2>&1; then
          "Install uv (https://docs.astral.sh/uv/), then re-run."
 elif [ ! -f uv.lock ]; then
     fail "uv.lock missing" "test -f uv.lock" "Run 'uv lock' and commit uv.lock."
-elif uv lock --check >/dev/null 2>&1; then
+elif LOCK_CHECK_OUTPUT=$(uv lock --check 2>&1); then
     pass "uv.lock is consistent with pyproject.toml (records zeocore ${LOCK_VERSION:-?})"
-else
+elif printf '%s' "$LOCK_CHECK_OUTPUT" | grep -q "needs to be updated"; then
+    # uv exits 1 for a stale lock and for a resolver that could not run
+    # (no network, a cache miss offline), so only uv's own message says
+    # which. Anything else is reported as the check not running.
     fail "uv.lock is out of date (records zeocore ${LOCK_VERSION:-<unparseable>}, pyproject says ${PYPROJECT_VERSION:-<unparseable>})" \
          "uv lock --check" \
          "Run 'uv lock', check that the diff changes only what you expect, and commit uv.lock."
+else
+    fail "uv lock --check could not run: $(printf '%s' "$LOCK_CHECK_OUTPUT" | tail -n 5 | tr -s ' \n' ' ')" \
+         "uv lock --check" \
+         "This is not a verdict on uv.lock. Fix what uv reports (often the network or the package index), then re-run."
 fi
 echo ""
 
