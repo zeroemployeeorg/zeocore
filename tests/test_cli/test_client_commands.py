@@ -295,7 +295,7 @@ APPROVAL = {
             "same_request",
         ),
         (_refused(NormalizedErrorCode.REQUEST_REFUSED), 20, "new_occurrence"),
-        ({"status": "refused", "execution_id": "e"}, 20, "new_occurrence"),
+        ({"status": "refused", "execution_id": "e"}, 20, "none"),
     ],
 )
 def test_each_broker_answer_has_its_exit_and_retry(
@@ -459,3 +459,36 @@ def test_the_client_commands_are_zeocore_commands(broker: Broker) -> None:
         lambda: b'{"file_id": "f"}',
     )
     assert (status, answer["status"]) == (0, "confirmed")
+
+
+def test_a_grant_is_bound_to_the_origin_it_was_paired_with(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    built: list[KeychainSecureSessionStore] = []
+    real = KeychainSecureSessionStore
+
+    def store(**kwargs: Any) -> KeychainSecureSessionStore:  # noqa: ANN401
+        built.append(real(runner=KeychainRunner(), **kwargs))
+        return built[-1]
+
+    monkeypatch.setattr(client, "KeychainSecureSessionStore", store)
+    monkeypatch.delenv("ZEOCONNECT_URL", raising=False)
+    production = client.make_store(None)
+    monkeypatch.setenv("ZEOCONNECT_URL", "http://localhost:8000")
+    development = client.make_store(None)
+    assert production._service == "org.zeroemployee.zeocore.zeoconnect-session"  # type: ignore[attr-defined]
+    assert development._service.startswith(production._service + ".origin.")  # type: ignore[attr-defined]
+    monkeypatch.setenv("ZEOCONNECT_URL", "http://localhost:8001")
+    assert client.make_store(None)._service != development._service  # type: ignore[attr-defined]
+
+
+def test_an_unusable_origin_is_invalid_input_not_an_internal_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        client, "make_store", lambda profile: InMemorySecureSessionStore()
+    )
+    monkeypatch.setenv("ZEOCONNECT_URL", "http://evil.example")
+    monkeypatch.delenv("ZEOCONNECT_DEVELOPMENT", raising=False)
+    status, answer = client.whoami([], b"")
+    assert (status, answer["outcome"]) == (2, "invalid_request")

@@ -99,10 +99,18 @@ class KeychainSecureSessionStore:
     several, each paired and revoked on its own. It is attribution, not a
     security boundary: every profile of one macOS user can read the others.
     No profile is the original entry, which existing pairings keep using.
+
+    ``origin`` binds the entry to a non-production Broker: a session paired
+    against one origin is never sent to another. None means production, the
+    original entry.
     """
 
     def __init__(
-        self, *, runner: SubprocessRunner | None = None, profile: str | None = None
+        self,
+        *,
+        runner: SubprocessRunner | None = None,
+        profile: str | None = None,
+        origin: str | None = None,
     ) -> None:
         if profile is not None and not _PROFILE.fullmatch(profile):
             raise SecureStoreError("session profile name is invalid")
@@ -118,6 +126,9 @@ class KeychainSecureSessionStore:
             self._service = f"{_KEYCHAIN_SERVICE}.{state.name}.{digest}"
         if profile is not None:
             self._service = f"{self._service}.profile.{profile}"
+        if origin is not None:
+            digest = hashlib.sha256(origin.encode()).hexdigest()[:16]
+            self._service = f"{self._service}.origin.{digest}"
 
     def load(self) -> DeviceSession | None:
         result = self._runner.run(
