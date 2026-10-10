@@ -109,7 +109,7 @@ def test_an_imaging_error_exits_3_with_its_outcome(tmp_path: Path) -> None:
         },
         _Recraft(ImagingError("budget_exhausted", "raise the budget")),
     )
-    assert status == 3
+    assert status == 20
     assert answer == {
         "ok": False,
         "content_sha256": None,
@@ -130,7 +130,7 @@ def test_an_unconfigured_provider_is_refused(tmp_path: Path) -> None:
         },
         _Recraft(),
     )
-    assert (status, answer["outcome"]) == (3, "refused")
+    assert (status, answer["outcome"]) == (20, "refused")
 
 
 def test_zeocore_image_is_the_imaging_command(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -143,10 +143,39 @@ def test_zeocore_image_is_the_imaging_command(monkeypatch: pytest.MonkeyPatch) -
         ),
     )
     # No key on this machine: refused before anything is sent.
-    assert (status, answer["outcome"]) == (3, "refused")
+    assert (status, answer["outcome"]) == (20, "refused")
     assert zeocore(["image", "extra"], lambda: b"{}")[0] == 2
 
 
 def test_zeocore_image_parses_stdin_strictly_first() -> None:
     status, answer = zeocore(["image"], lambda: b'{"credits": true, "credits": true}')
     assert (status, answer["outcome"]) == (2, "invalid_request")
+
+
+@pytest.mark.parametrize(
+    ("outcome", "status"),
+    [
+        ("approval_required", 10),
+        ("in_flight", 11),
+        ("unavailable", 11),
+        ("input_unavailable", 11),
+        ("not_paired", 12),
+        ("ambiguous", 13),
+        ("budget_exhausted", 20),
+        ("stopped", 20),
+        ("refused", 20),
+        ("artifact_expired", 20),
+        ("invalid_response", 20),
+    ],
+)
+def test_each_outcome_has_its_exit_status(
+    tmp_path: Path, outcome: str, status: int
+) -> None:
+    got, answer = _call(
+        {
+            "request": {"kind": "recraft.generate", "prompt": "a duck"},
+            "output": str(tmp_path / "duck.png"),
+        },
+        _Recraft(ImagingError(outcome, "x")),
+    )
+    assert (got, answer["outcome"]) == (status, outcome)

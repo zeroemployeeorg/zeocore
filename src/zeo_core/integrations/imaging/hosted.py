@@ -109,6 +109,7 @@ class _HostedImages:
                 "unavailable", "ZEOconnect could not take the input image"
             ) from None
         except HostedClientError as error:
+            _raise_if_unpaired(error)
             raise ImagingError("refused", f"input upload failed: {error}") from None
         return artifact.artifact_id
 
@@ -140,6 +141,7 @@ class _HostedImages:
         except HostedUnavailableError as error:
             raise ImagingError("unavailable", str(error)) from None
         except HostedClientError as error:
+            _raise_if_unpaired(error)
             raise ImagingError("refused", str(error), retry="none") from None
 
     def _image(
@@ -206,6 +208,14 @@ class HostedRecraftImages(_HostedImages):
         return CreditBalance(credits=balance)
 
 
+def _raise_if_unpaired(error: HostedClientError) -> None:
+    """This device has no usable ZEOconnect session: pairing, not a refusal."""
+    if "paired device session" in str(error) or "pair this device" in str(error):
+        raise ImagingError(
+            "not_paired", "this device is not paired with ZEOconnect; run zeocore login"
+        ) from None
+
+
 def _raise_unless_confirmed(response: HostedOperationResponse) -> None:
     status = response.status
     if status is HostedOperationStatus.CONFIRMED:
@@ -219,7 +229,7 @@ def _raise_unless_confirmed(response: HostedOperationResponse) -> None:
     if status is HostedOperationStatus.AMBIGUOUS:
         if (response.receipt or {}).get("in_flight") is True:
             raise ImagingError(
-                "ambiguous",
+                "in_flight",
                 "the first call for this request is still running; ask again later",
             )
         raise ImagingError(

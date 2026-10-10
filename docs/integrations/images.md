@@ -15,7 +15,7 @@ profile) or let ZEOconnect hold them (the hosted profile).
 
 | Request | Provider call | Output |
 |---|---|---|
-| `GeminiGenerate` | Nano Banana, text to image or edit from up to 6 references (`gemini-3.1-flash-image`, `gemini-3-pro-image-preview`) | JPEG |
+| `GeminiGenerate` | Nano Banana, text to image or edit from up to 6 ordered references (`gemini-3.1-flash-image`, `gemini-3-pro-image`, `gemini-3-pro-image-preview`), 1K | JPEG |
 | `RecraftGenerate` | Recraft generation (`recraftv3`), with `style`, `negative_prompt`, `size`, `random_seed` | PNG, or SVG for vector styles |
 | `RecraftImageToImage` | Restyle one seed image, `strength` 0–1 | PNG |
 | `RecraftRemoveBackground` | Cut out, from png or webp up to 5,000,000 bytes | PNG |
@@ -27,7 +27,8 @@ profile) or let ZEOconnect hold them (the hosted profile).
 - **Inputs are checked before anything is sent:** the bytes must be the declared
   png, jpeg or webp, at most 10 MiB and 40 megapixels, within the provider's own
   limits. An unsupported parameter or combination is refused, never dropped.
-- **Gemini output is JPEG only:** `gemini-3.1-flash-image` refuses png output.
+- **Gemini output is JPEG at 1K only:** `gemini-3.1-flash-image` refuses png
+  output, and the Broker allows only values verified live.
 - **An SVG must be a genuine, inert vector.** It needs at least one shape, and
   must carry no `<image>`, embedded raster, script, event handler or foreign
   content. This is a structural check, not a visual approval.
@@ -68,10 +69,26 @@ $ echo '{"credits": true}' | zeocore image
 {"ok": true, "provider": "recraft", "credits": 980.0}
 ```
 
-Input images are given as `{"path": …}`: `input` for Recraft, and `inputs` (a
-list) for Gemini. The exit status is 0 when done, 2 for an invalid request
-(nothing was sent), and 3 for no image. On 3 the answer carries `outcome`,
-`message`, `retry`, `request_key` and `approval_url`.
+Input images are given as `{"path": …, "role": …}`, where `role` is optional:
+`input` for Recraft, and `inputs` (an ordered list) for Gemini. The answer's
+`inputs` lists each input's sha256, media type and role, in order. A role is
+never sent to the provider and doesn't change `request_key`.
+
+The result is the last JSON line on stdout. The exit status is the `zeocore`
+family ([the zeocore command](../reference/cli.md)):
+
+| Exit | Outcomes |
+|---|---|
+| 0 | done |
+| 2 | invalid request; nothing was sent |
+| 10 | `approval_required` |
+| 11 | `in_flight`, `unavailable`, `input_unavailable`: ask again later |
+| 12 | `not_paired`: run `zeocore login` |
+| 13 | `ambiguous` |
+| 20 | `refused`, `budget_exhausted`, `stopped`, `artifact_expired`, `invalid_response` |
+
+A failed answer carries `outcome`, `message`, `retry`, `request_key`,
+`approval_url` and, for `artifact_expired`, `content_sha256`.
 
 ## Failures and retries
 
@@ -84,8 +101,7 @@ needs:
 | `new_occurrence` | The failure is recorded against this request, or (local profile) the call may have run. Another attempt is a new call with a new `occurrence`, and may bill. |
 | `none` | The request itself has to change. |
 
-The outcomes are `refused`, `budget_exhausted`, `input_unavailable`, `stopped`,
-`unavailable`, `ambiguous`, `approval_required` and `invalid_response`. Nothing
+The outcomes are listed in the exit table above. Nothing
 is retried automatically, and there is never a fallback to another provider or
 model.
 

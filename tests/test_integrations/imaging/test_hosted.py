@@ -418,7 +418,7 @@ def test_a_replay_while_the_first_call_runs_says_so() -> None:
     }
     with pytest.raises(ImagingError, match="still running") as caught:
         _gemini(broker).run(GeminiGenerate(prompt="a duck"))
-    assert caught.value.retry == "same_request"
+    assert (caught.value.outcome, caught.value.retry) == ("in_flight", "same_request")
 
 
 def test_storage_capacity_is_a_passing_outage_not_a_refusal() -> None:
@@ -468,3 +468,19 @@ def test_a_role_is_provenance_only_and_never_changes_the_request() -> None:
         swapped.idempotency_key()
         != GeminiGenerate(prompt="x", inputs=(_input(4), _input(5))).idempotency_key()
     )
+
+
+@pytest.mark.parametrize(
+    "message",
+    [
+        "paired device session is unavailable",
+        "paired device session is expired",
+        "paired device session was refused; pair this device again",
+    ],
+)
+def test_an_unpaired_device_is_told_to_log_in(message: str) -> None:
+    broker = FakeBroker()
+    broker.answer = HostedClientError(message)
+    with pytest.raises(ImagingError, match="zeocore login") as caught:
+        _gemini(broker).run(GeminiGenerate(prompt="x"))
+    assert caught.value.outcome == "not_paired"

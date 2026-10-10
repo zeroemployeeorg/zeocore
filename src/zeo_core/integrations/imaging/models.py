@@ -55,6 +55,8 @@ class ImagingError(RuntimeError):
       replay, so a repeat may bill again.
     - ``approval_required``: a person must approve in ZEOconnect first;
       ``approval_url`` says where.
+    - ``in_flight``: the first call for this request is still running.
+    - ``not_paired``: this device has no ZEOconnect session.
     - ``invalid_response``: the answer did not match the reviewed contract.
     - ``artifact_expired``: the call succeeded earlier, but the Broker no
       longer holds the image bytes (after 30 days). It never regenerates;
@@ -96,6 +98,8 @@ _RETRY = dict.fromkeys(
     (
         "ambiguous",
         "approval_required",
+        "in_flight",
+        "not_paired",
         "unavailable",
         "stopped",
         "budget_exhausted",

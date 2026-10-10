@@ -13,8 +13,9 @@ here. The profile is ``ZEOCORE_CONNECTION_PROFILE`` (``local`` or ``hosted``);
 hosted uses this device's ZEOconnect pairing and the connection ids in
 ``ZEOCORE_IMAGING_GEMINI_CONNECTION`` / ``ZEOCORE_IMAGING_RECRAFT_CONNECTION``.
 
-Exit status: 0 done, 2 the request is invalid, 3 no image (see ``outcome``
-and ``retry``).
+Exit status is the ``zeocore`` family (see ``EXIT_FOR``): 0 done, 2 invalid
+request, 10 approval, 11 waiting, 12 not paired, 13 ambiguous, 20 held or
+refused. ``outcome`` and ``retry`` say more.
 """
 
 from __future__ import annotations
@@ -28,6 +29,17 @@ from pydantic import TypeAdapter, ValidationError
 
 from .models import GeneratedImage, ImageInput, ImageRequest, ImagingError
 from .service import ImagingService, build_imaging
+
+#: Each outcome's exit status, in the zeocore family (zeo_core.cli).
+EXIT_FOR: dict[str, int] = {
+    "approval_required": 10,
+    "in_flight": 11,
+    "unavailable": 11,
+    "input_unavailable": 11,
+    "not_paired": 12,
+    "ambiguous": 13,
+}
+EXIT_HELD = 20
 
 _REQUEST: TypeAdapter[Any] = TypeAdapter(ImageRequest)
 
@@ -111,7 +123,7 @@ def run(
         image = service.run(request)
         return 0, _summary(image, image.save(output))
     except ImagingError as error:
-        return 3, {
+        return EXIT_FOR.get(error.outcome, EXIT_HELD), {
             "ok": False,
             "content_sha256": error.content_sha256,
             "outcome": error.outcome,
