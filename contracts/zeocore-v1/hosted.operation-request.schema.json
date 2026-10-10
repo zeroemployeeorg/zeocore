@@ -1,0 +1,58 @@
+{
+  "$defs": {
+    "JsonValue": {}
+  },
+  "$id": "https://zeocore.zeo.ac/contracts/zeocore-v1/hosted.operation-request.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Exact named operation request; no tenant, URL, method, header, or token.",
+  "properties": {
+    "arguments": {
+      "additionalProperties": {
+        "$ref": "#/$defs/JsonValue"
+      },
+      "title": "Arguments",
+      "type": "object"
+    },
+    "connection_id": {
+      "maxLength": 200,
+      "minLength": 1,
+      "title": "Connection Id",
+      "type": "string"
+    },
+    "connector_revision": {
+      "anyOf": [
+        {
+          "maxLength": 200,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Connector Revision"
+    },
+    "idempotency_key": {
+      "maxLength": 200,
+      "minLength": 1,
+      "title": "Idempotency Key",
+      "type": "string"
+    },
+    "operation_id": {
+      "maxLength": 200,
+      "minLength": 1,
+      "title": "Operation Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "connection_id",
+    "operation_id",
+    "arguments",
+    "idempotency_key"
+  ],
+  "title": "HostedOperationRequest",
+  "type": "object"
+}

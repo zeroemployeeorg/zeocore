@@ -1,0 +1,53 @@
+{
+  "$defs": {
+    "ObservationArtifactRef": {
+      "additionalProperties": false,
+      "description": "Opaque locator for bounded observation bytes held by an artifact store.",
+      "properties": {
+        "value": {
+          "minLength": 1,
+          "title": "Value",
+          "type": "string"
+        }
+      },
+      "required": [
+        "value"
+      ],
+      "title": "ObservationArtifactRef",
+      "type": "object"
+    }
+  },
+  "$id": "https://zeocore.zeo.ac/contracts/zeocore-v1/connections.observation-artifact.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Secret-free metadata for bounded bytes stored outside the receipt.",
+  "properties": {
+    "artifact_ref": {
+      "$ref": "#/$defs/ObservationArtifactRef"
+    },
+    "content_sha256": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Content Sha256",
+      "type": "string"
+    },
+    "media_type": {
+      "maxLength": 200,
+      "minLength": 1,
+      "title": "Media Type",
+      "type": "string"
+    },
+    "size_bytes": {
+      "minimum": 0,
+      "title": "Size Bytes",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "artifact_ref",
+    "content_sha256",
+    "size_bytes",
+    "media_type"
+  ],
+  "title": "ObservationArtifact",
+  "type": "object"
+}
