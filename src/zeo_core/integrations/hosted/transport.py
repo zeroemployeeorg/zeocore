@@ -56,6 +56,9 @@ _REPAIR = "paired device session was refused; pair this device again"
 #: The Broker's exact headered 400 when a connection id was re-enrolled with a
 #: changed subject, scopes, resources or credential (zeoconnect #59).
 _CONNECTION_CHANGED = "kernel connection binding changed"
+#: The same 400's code, for a client declaring expected-binding (contract
+#: 1.2.2 §9). The detail stays byte-identical, so it remains the fallback.
+_CONNECTION_CHANGED_CODE = "connection_binding_changed"
 _OFF_NETWORK = (
     "ZEOconnect Broker {origin} cannot be reached from this device. This hosted"
     " profile is available only on its organisation's private network. zeocore"
@@ -590,9 +593,10 @@ class ZEOconnectHTTPTransport:
 
 def _raise_marked_refusal(response: httpx.Response) -> None:
     """Raise the reason a 400 names, if it names one exactly."""
-    if _detail(response) == _CONNECTION_CHANGED:
+    code = _code(response)
+    if code == _CONNECTION_CHANGED_CODE or _detail(response) == _CONNECTION_CHANGED:
         raise HostedConnectionChangedError()
-    if _code(response) == REQUEST_CHANGED_UNDER_KEY:
+    if code == REQUEST_CHANGED_UNDER_KEY:
         # Contract 1.2.1 §6a.5, marked for a declared client. The key's
         # original outcome stands; a changed request needs a new key.
         raise HostedRequestChangedError()

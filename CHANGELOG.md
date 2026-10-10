@@ -9,7 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For ZEOconnect Broker contract `1.2.0`, pinned at zeoconnect `31da8bda` (#56's merge commit), `docs/contract/broker-contract-v1.md`, sha256 `d2be4901…`.
 The changed-request marker follows `1.2.1`, pinned at zeoconnect `707bb91b`
-(#67's merge commit), `contract/broker-contract-v1.md`, sha256 `dc2e951f…`. It lands after
+(#67's merge commit), `contract/broker-contract-v1.md`, sha256 `dc2e951f…`.
+The re-enrolment code follows `1.2.2`, pinned at zeoconnect `243409bc`
+(#70's merge commit), `contract/broker-contract-v1.md`, sha256 `358bcb0f…`. It lands after
 0.14.0. It ships in 0.15.0 if 1.2.0 is pinned before 0.15.0 ships, and
 otherwise in 0.16.0.
 
@@ -37,7 +39,10 @@ otherwise in 0.16.0.
   Broker with a 400 `kernel connection binding changed` (zeoconnect #59). This
   now raises `HostedConnectionChangedError` instead of a generic refusal. It
   comes before any provider call, and the fix is ZEOconnect's repair, never a
-  retry.
+  retry. From contract 1.2.2 the Broker also marks it `"code":
+  "connection_binding_changed"` for a client declaring `expected-binding`.
+  zeocore reads the code first and keeps the detail string as the fallback,
+  so a 1.2.1 Broker is still recognised.
 - **A changed request under a used key is its own error** (contract 1.2.1
   §6a.5). The same idempotency key with different arguments or a different
   `expect` is refused, nothing is recorded, and the key's original outcome

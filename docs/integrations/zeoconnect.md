@@ -91,7 +91,7 @@ request = HostedOperationRequest(
 | 503 `binding is unavailable` | `HostedUnavailableError` | An outage, as for any 503. |
 | no revision in the listing | `HostedFenceUnsupportedError`, `reason` `"no_revision"` | This Broker can't check the fence. Nothing was sent. |
 | 422 to a fenced call | `HostedFenceUnsupportedError`, `reason` `"invalid_fenced_request"` | Either the Broker can't check the fence (a 1.1 Broker) or the request is invalid. The contract gives both the same `request is invalid`. zeocore holds and never resends the request without `expect`. |
-| 400 `kernel connection binding changed` | `HostedConnectionChangedError` | The connection was re-enrolled with a different subject, scopes, resources or credential. Nothing was sent to the provider. Repair the connection in ZEOconnect; don't retry. |
+| 400 `kernel connection binding changed`, or 400 with `code` `connection_binding_changed` (1.2.2 §9) | `HostedConnectionChangedError` | The connection was re-enrolled with a different subject, scopes, resources or credential. Nothing was sent to the provider. Repair the connection in ZEOconnect; don't retry. |
 | 400 with `code` `request_changed_under_key` (1.2.1 §6a.5) | `HostedRequestChangedError` | The key was already used for a different request: other arguments, or another `expect`. Nothing was recorded, and the key's first outcome stands. A changed request needs a new key. |
 | `failed_safe`, `REQUEST_REFUSED`, `request_changed_under_key` | `request_changed_of(response)` | The same, for a read. No provider call was made. |
 
