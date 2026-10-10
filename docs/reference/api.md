@@ -988,6 +988,12 @@ Bound compatibility on both the zeocore release and
 `RUNTIME_HOST_PROTOCOL_VERSION`. The schemas and vectors are not in the wheel:
 pin them by sha256 from the source tree at the release tag.
 
+From 0.15.0, while zeocore is 0.x, a removal or an incompatible change to
+these names lands only in a minor release, never a patch, and is listed
+under "Breaking" in [CHANGELOG.md](../../CHANGELOG.md). From 1.0.0 it needs a
+major version. A wire-incompatible change to a runtime-host-v1 model also
+raises `RUNTIME_HOST_PROTOCOL_VERSION`.
+
 The executable [schemas and canonical vectors](../../contracts/runtime-host-v1/)
 and [protocol guide](../how-to/runtime-host.md) define this candidate surface.
 It ships in 0.11.0; joint Runtime/ZEOconnect interoperability acceptance is still required.
