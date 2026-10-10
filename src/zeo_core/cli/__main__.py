@@ -25,7 +25,9 @@ Rules every command keeps (``cli_protocol`` 1):
   command: 0 done; 2 invalid input, nothing sent; 10 approval required; 11
   waiting, so try the same request later; 12 not paired; 13 ambiguous,
   never retried by the command; 20 held or refused (including a value that
-  doesn't match its schema).
+  doesn't match its schema). 1 is an internal error in zeocore itself, with
+  ``{"ok": false, "outcome": "internal"}`` and no detail; for an operation,
+  treat it like 13: its state is unknown.
 """
 
 from __future__ import annotations
@@ -37,7 +39,12 @@ from typing import Any, Final
 
 from pydantic import ValidationError
 
-from zeo_core.adapters.runtime_host.canonical import ProtocolError, digest, parse_json
+from zeo_core.adapters.runtime_host.canonical import (
+    MAX_BYTES,
+    ProtocolError,
+    digest,
+    parse_json,
+)
 
 from .schemas import SCHEMAS, adapter, render_schema
 
@@ -52,6 +59,7 @@ EXIT_WAIT: Final = 11
 EXIT_NOT_PAIRED: Final = 12
 EXIT_AMBIGUOUS: Final = 13
 EXIT_HELD: Final = 20
+EXIT_INTERNAL: Final = 1
 OK, INVALID = EXIT_DONE, EXIT_INVALID
 
 Answer = tuple[int, dict[str, Any]]
@@ -96,12 +104,21 @@ def _validate(args: Sequence[str], stdin: bytes) -> Answer:
     try:
         model = validator.validate_python(value)
     except ValidationError as error:
+        declared = _field_names(render_schema(args[0]))
         return EXIT_HELD, {
             "ok": False,
             "outcome": "invalid",
-            # loc and type only: a message or input could quote the value.
+            # loc and type only: a message or input could quote the value. A
+            # key that isn't a declared field (one inside a free-form object,
+            # or an unknown extra) is the caller's data, so it shows as "*".
             "errors": [
-                {"loc": list(item["loc"]), "type": item["type"]}
+                {
+                    "loc": [
+                        part if isinstance(part, int) or part in declared else "*"
+                        for part in item["loc"]
+                    ],
+                    "type": item["type"],
+                }
                 for item in error.errors(include_url=False, include_input=False)
             ],
         }
@@ -109,6 +126,22 @@ def _validate(args: Sequence[str], stdin: bytes) -> Answer:
         "ok": True,
         "value": validator.dump_python(model, mode="json", by_alias=True),
     }
+
+
+def _field_names(schema: object) -> frozenset[str]:
+    """Every property name the schema declares, at any depth."""
+    names: set[str] = set()
+    stack = [schema]
+    while stack:
+        node = stack.pop()
+        if isinstance(node, dict):
+            properties = node.get("properties")
+            if isinstance(properties, dict):
+                names.update(properties)
+            stack.extend(node.values())
+        elif isinstance(node, list):
+            stack.extend(node)
+    return frozenset(names)
 
 
 def _digest(args: Sequence[str], stdin: bytes) -> Answer:
@@ -157,9 +190,16 @@ def emit(line: dict[str, Any]) -> None:
 
 
 def main(argv: Sequence[str] | None = None) -> None:
-    status, answer = run(
-        sys.argv[1:] if argv is None else argv, lambda: sys.stdin.buffer.read()
-    )
+    try:
+        status, answer = run(
+            sys.argv[1:] if argv is None else argv,
+            # One byte past the limit is enough to refuse an oversized input.
+            lambda: sys.stdin.buffer.read(MAX_BYTES + 1),
+        )
+    except Exception:
+        # Never a traceback in place of the answer. The detail could quote
+        # input, so it goes nowhere.
+        status, answer = EXIT_INTERNAL, {"ok": False, "outcome": "internal"}
     emit(answer)
     raise SystemExit(status)
 

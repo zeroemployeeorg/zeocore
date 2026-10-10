@@ -120,9 +120,9 @@ def test_a_value_that_does_not_match_is_held_and_never_echoes_input() -> None:
     assert status == 20
     assert answer["outcome"] == "invalid"
     assert {"loc": ["code"], "type": "enum"} in answer["errors"]  # type: ignore[operator]
-    # The unknown field's name is its loc, which is the caller's own key; no
-    # value is ever repeated.
-    assert json.dumps(answer).count(canary) == 1
+    # Not even as a key: an undeclared key shows as "*".
+    assert canary not in json.dumps(answer)
+    assert {"loc": ["*"], "type": "extra_forbidden"} in answer["errors"]  # type: ignore[operator]
 
 
 def test_validation_errors_carry_only_loc_and_type() -> None:
@@ -190,3 +190,60 @@ def test_main_writes_exactly_one_json_line_and_exits_with_the_status(
     with pytest.raises(SystemExit) as exited:
         main(["nope"])
     assert exited.value.code == 2
+
+
+def test_keys_inside_free_form_objects_are_redacted_and_fields_kept() -> None:
+    status, answer = _call(
+        "validate",
+        "hosted.operation-request",
+        stdin=json.dumps(
+            {
+                "connection_id": "con_google_12345678",
+                "operation_id": "google.drive.file.download",
+                "arguments": {"patient-name-canary": {}},
+                "idempotency_key": "",
+            }
+        ).encode(),
+    )
+    assert status == 20
+    assert "patient-name-canary" not in json.dumps(answer)
+    assert {"loc": ["idempotency_key"], "type": "string_too_short"} in answer["errors"]  # type: ignore[operator]
+
+
+def test_an_internal_error_still_answers_one_line(
+    capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from zeo_core.cli import __main__ as cli
+
+    def broken(args: object, stdin: bytes) -> object:
+        raise RuntimeError("detail that could quote input: secret-canary")
+
+    monkeypatch.setitem(cli.COMMANDS, "version", broken)
+    with pytest.raises(SystemExit) as exited:
+        main(["version"])
+    assert exited.value.code == 1
+    out = capsys.readouterr().out
+    assert json.loads(out) == {"ok": False, "outcome": "internal"}
+    assert "secret-canary" not in out
+
+
+def test_stdin_is_read_only_one_byte_past_the_limit(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    from zeo_core.adapters.runtime_host.canonical import MAX_BYTES
+
+    asked: list[int] = []
+
+    class Stdin:
+        class buffer:  # noqa: N801
+            @staticmethod
+            def read(size: int = -1) -> bytes:
+                asked.append(size)
+                return b"x" * (size if size > 0 else 10 * MAX_BYTES)
+
+    monkeypatch.setattr("sys.stdin", Stdin)
+    with pytest.raises(SystemExit) as exited:
+        main(["digest"])
+    assert asked == [MAX_BYTES + 1]
+    assert exited.value.code == 2
+    capsys.readouterr()
