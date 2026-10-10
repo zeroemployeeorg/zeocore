@@ -5,6 +5,52 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased: binding fence, 0.15.0 or 0.16.0]
+
+For ZEOconnect Broker contract `1.2.0`, pinned at zeoconnect `31da8bda` (#56's merge commit), `docs/contract/broker-contract-v1.md`, sha256 `d2be4901…`.
+The changed-request marker follows `1.2.1`, pinned at zeoconnect `707bb91b`
+(#67's merge commit), `contract/broker-contract-v1.md`, sha256 `dc2e951f…`.
+The re-enrolment code follows `1.2.2`, pinned at zeoconnect `243409bc`
+(#70's merge commit), `contract/broker-contract-v1.md`, sha256 `358bcb0f…`. It lands after
+0.14.0. It ships in 0.15.0 if 1.2.0 is pinned before 0.15.0 ships, and
+otherwise in 0.16.0.
+
+### Added
+
+- **The expected-binding fence** (contract 1.2.0 §6a). A fenced invocation is
+  refused when its connection was re-enrolled or changed between the listing
+  and the call.
+  - `HostedConnectionSummary.connection_revision` is the enrolment's revision.
+  - `summary.expected_binding()` returns a `HostedExpectedBinding` for
+    `HostedOperationRequest.expect`.
+  - The Broker refuses a mismatch with no further provider call.
+    `binding_mismatch_of(response)` names the field that differed, and
+    `receipt["binding"]` holds the values the Broker found.
+  - When the fence can't be checked, because the listing has no revision or
+    the Broker answers a fenced call with 422, zeocore raises
+    `HostedFenceUnsupportedError`. Its `reason` says which:
+    `"no_revision"` or `"invalid_fenced_request"`. A 1.2 Broker answers
+    invalid arguments with the same 422, so the second message does not claim
+    the fence alone was the cause. zeocore never resends the request unfenced.
+  - Every request now declares `ZEOconnect-Capabilities: stopped-code,
+    expected-binding`.
+- **A re-enrolled connection is its own error.** A connection id re-enrolled
+  with a changed subject, scopes, resources or credential is refused by the
+  Broker with a 400 `kernel connection binding changed` (zeoconnect #59). This
+  now raises `HostedConnectionChangedError` instead of a generic refusal. It
+  comes before any provider call, and the fix is ZEOconnect's repair, never a
+  retry. From contract 1.2.2 the Broker also marks it `"code":
+  "connection_binding_changed"` for a client declaring `expected-binding`.
+  zeocore reads the code first and keeps the detail string as the fallback,
+  so a 1.2.1 Broker is still recognised.
+- **A changed request under a used key is its own error** (contract 1.2.1
+  §6a.5). The same idempotency key with different arguments or a different
+  `expect` is refused, nothing is recorded, and the key's original outcome
+  stands. An effect's marked 400 raises `HostedRequestChangedError`. A read
+  comes back `failed_safe`, which `request_changed_of(response)` recognises.
+  The fix is a new key for the changed request, never a retry. An unmarked
+  conflict, such as the 1.1 `approval is unavailable`, stays a plain refusal.
+
 ## [Unreleased: 0.14.0]
 
 Draft for the release that conforms to ZEOconnect Broker contract `1.0.0`

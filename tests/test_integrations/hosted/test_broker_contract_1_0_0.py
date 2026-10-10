@@ -123,7 +123,8 @@ def test_every_request_declares_the_stopped_code_capability() -> None:
     hosted, store = transport(httpx.MockTransport(handler))
     store.save(session(NOW))
     hosted.invoke(request(EFFECT))
-    assert seen == ["stopped-code"]
+    assert len(seen) == 1 and seen[0] is not None
+    assert "stopped-code" in {token.strip() for token in seen[0].split(",")}
 
 
 def test_a_stopped_code_answer_is_read_as_a_stop() -> None:
