@@ -3103,6 +3103,9 @@ ffmpeg = [
 github = [
     { name = "requests" },
 ]
+github-app = [
+    { name = "cryptography" },
+]
 gmail = [
     { name = "google-api-python-client" },
     { name = "google-auth-httplib2" },
@@ -3205,6 +3208,7 @@ requires-dist = [
     { name = "build", marker = "extra == 'dev'", specifier = ">=1.0.0" },
     { name = "coverage", marker = "extra == 'dev'", specifier = ">=7.10" },
     { name = "cryptography", marker = "extra == 'all'", specifier = ">=45" },
+    { name = "cryptography", marker = "extra == 'github-app'", specifier = ">=45" },
     { name = "cryptography", marker = "extra == 'revolut'", specifier = ">=45" },
     { name = "fastapi", marker = "extra == 'http'", specifier = ">=0.112" },
     { name = "fastapi", marker = "extra == 'http-dev'", specifier = ">=0.112" },
@@ -3301,7 +3305,7 @@ requires-dist = [
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'http'", specifier = ">=0.30" },
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'http-dev'", specifier = ">=0.30" },
 ]
-provides-extras = ["http", "http-dev", "mcp", "mcp-dev", "dev", "lint", "gmail", "notion", "supabase", "google", "docs", "sheets", "slides", "drive", "calendar", "youtube", "pandoc", "llms", "github", "bluesky", "ffmpeg", "revolut", "jupytext", "notebook", "all", "runtime-host"]
+provides-extras = ["http", "http-dev", "mcp", "mcp-dev", "dev", "lint", "gmail", "notion", "supabase", "google", "docs", "sheets", "slides", "drive", "calendar", "youtube", "pandoc", "llms", "github", "bluesky", "ffmpeg", "revolut", "github-app", "jupytext", "notebook", "all", "runtime-host"]
 
 [package.metadata.requires-dev]
 documentation = [

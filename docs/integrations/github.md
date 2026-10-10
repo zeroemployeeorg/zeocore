@@ -89,3 +89,21 @@ Repair the selected grant instead of trying the production key in a test run.
 Create a replacement token with the same intended scope, update its namespace,
 restart and rerun the repository read, then revoke the old token in Developer
 settings. For host-issued installation tokens, repair the host's refresh mechanism.
+
+## GitHub App installation tokens (for an isolated principal)
+
+`zeo_core.integrations.github.app_tokens` mints installation tokens for a
+principal that holds its own GitHub App key, such as the merger. Under the
+operator's ruling the merger is a zeocore app, and its key is kept outside
+ZEOconnect. Install the `github-app` extra.
+
+- `InstallationTokens(app_id=..., installation_id=..., key_source=...)` signs
+  the App's RS256 JWT and exchanges it for a token scoped to exactly one
+  repository and exactly the permissions asked for. GitHub's answer is checked
+  to be no broader (only its implicit `metadata: read` is allowed), and a
+  broader token is revoked at once.
+- The request is sent once and never retried. A dropped answer is
+  `ambiguous`: any token issued expires unused within the hour.
+- The key comes only from an `AppKeySource`. `KeychainAppKeySource` reads the
+  running user's own Keychain item, so run it as the merger's own OS user. It
+  never reads the key from the environment or a file in a repository.
