@@ -24,6 +24,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   missing, different or doubled header is a protocol failure. It is never
   retried, refreshed around or read as a stop. A Broker 503 *with* the header is
   still an outage and is retried (org #787, council ruling E5).
+  **What this means in practice:** a 502 or 503 from a CDN or edge proxy,
+  which carries no Broker header, is the most common real outage. It now ends
+  a relayed YouTube upload at once, holding the job as `upload_rejected`,
+  where before it was waited out. That is E5's choice. When the Broker is
+  reachable again, append a `released` event and the next run resumes the
+  upload.
 
 ### Changed
 
