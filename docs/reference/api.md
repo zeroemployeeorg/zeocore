@@ -22,6 +22,7 @@ back here when you need to look something up.
 | `zeo_core.integrations.kit` | [Marketing capabilities](../tutorials/kit-marketing.md): broadcasts, sequences, subscribers and tags. |
 | `zeo_core.integrations.environments.IntegrationEnvironment` | [Managed launch](../integrations/environments.md) with distinct test/production state. |
 | `zeo_core.integrations.hosted.ServiceResolver` | [Native profiles](../tutorials/zeoconnect-hosted-profile.md), explicit requirements and typed resolution results. |
+| `zeo_core.integrations.imaging` | [Images](../integrations/images.md): one API over Nano Banana and Recraft, local or through ZEOconnect (draft for Broker contract 1.3.0). |
 | `zeo_core.integrations.gemini.ImageGenerationService` | [Reference image generation](../integrations/gemini-images.md) through admitted connections and durable effects. |
 | `zeo_core.integrations.notebook.execute_notebook` | [Fresh-kernel execution](../integrations/notebook-execution.md) with bounded output and cleanup. |
 

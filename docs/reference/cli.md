@@ -6,7 +6,7 @@ script. Each call reads JSON on stdin and writes one JSON object on stdout.
 
 ```console
 $ zeocore version
-{"cli_protocol": "1", "commands": ["digest", "schema", "validate", "version"], "ok": true, "zeoconnect_protocol": "1", "zeocore": "…"}
+{"cli_protocol": "1", "commands": ["digest", "image", "schema", "validate", "version"], "ok": true, "zeoconnect_protocol": "1", "zeocore": "…"}
 $ zeocore schema list
 $ zeocore schema hosted.operation-request
 $ echo '{"code": "RATE_LIMITED", "message": "slow down"}' | zeocore validate connections.normalized-error
@@ -23,6 +23,7 @@ $ echo '{"b": 1, "a": [1, 2]}' | zeocore digest
 | `schema <name>` | no | that contract as JSON Schema 2020-12 |
 | `validate <name>` | yes | `{"ok": true, "value": …}`, the normalized value, or `{"ok": false, "errors": [{"loc": […], "type": …}]}` |
 | `digest` | yes | the sha256 of the value's RFC 8785 canonical bytes |
+| `image` | yes | one Nano Banana or Recraft call ([Images](../integrations/images.md)) |
 
 ## Rules every command keeps (`cli_protocol` 1)
 

@@ -108,6 +108,7 @@ nav:
       - Supabase: integrations/supabase.md
       - Bluesky: integrations/bluesky.md
       - Language models: integrations/llms.md
+      - Images (Nano Banana, Recraft): integrations/images.md
       - Gemini images: integrations/gemini-images.md
       - Revolut Business: integrations/revolut-business.md
       - ZEOconnect: integrations/zeoconnect.md

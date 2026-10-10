@@ -159,6 +159,19 @@ These change what a caller sees. The session store API and the
     Its errors carry location and type only, never input values.
   - `zeocore digest` is the sha256 of a value's RFC 8785 canonical bytes.
   - `zeocore version` names the release and the protocols.
+- **Images: Nano Banana and Recraft** (`zeo_core.integrations.imaging`, `zeocore
+  image`), one API over both, local (your own keys) or hosted (ZEOconnect holds
+  them). Draft: the hosted profile follows the proposed Broker contract 1.3.0
+  (ZEOCORE-SOW-12) and ships only once that is pinned.
+  - Requests: Gemini generate or edit, and Recraft generate, image-to-image,
+    remove background and vectorize. Each makes one image, returned as one
+    `GeneratedImage` with its sha256, cost, provider id and `request_key`.
+  - The same request is an exact replay, so it never bills twice. Every failure
+    says what a retry needs (`same_request`, `new_occurrence` or `none`).
+  - SVG output must be a genuine, inert vector.
+  - The hosted transport gains `upload_artifact`, the `billed-computation`
+    capability, the `BUDGET_EXHAUSTED` and `INPUT_ARTIFACT_UNAVAILABLE` codes,
+    a 180 s timeout for billed calls, and `HostedUnreachableError.may_have_arrived`.
 
 ### Fixed
 
