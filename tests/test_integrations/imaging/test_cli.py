@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
 import pytest
@@ -44,10 +43,7 @@ class _Recraft:
 
 
 def _call(command: object, backend: _Recraft) -> tuple[int, dict[str, object]]:
-    return run(
-        json.dumps(command).encode(),
-        service_factory=lambda: ImagingService(recraft=backend),
-    )
+    return run(command, service_factory=lambda: ImagingService(recraft=backend))
 
 
 def test_a_vectorize_call_writes_the_file_and_answers_its_facts(tmp_path: Path) -> None:
@@ -150,6 +146,6 @@ def test_zeocore_image_is_the_imaging_command(monkeypatch: pytest.MonkeyPatch) -
     assert zeocore(["image", "extra"], lambda: b"{}")[0] == 2
 
 
-def test_duplicate_keys_are_refused_as_everywhere_else() -> None:
-    status, answer = run(b'{"credits": true, "credits": true}')
+def test_zeocore_image_parses_stdin_strictly_first() -> None:
+    status, answer = zeocore(["image"], lambda: b'{"credits": true, "credits": true}')
     assert (status, answer["outcome"]) == (2, "invalid_request")

@@ -26,8 +26,6 @@ from typing import Any
 
 from pydantic import TypeAdapter, ValidationError
 
-from zeo_core.adapters.runtime_host.canonical import ProtocolError, parse_json
-
 from .models import GeneratedImage, ImageInput, ImageRequest, ImagingError
 from .service import ImagingService, build_imaging
 
@@ -76,10 +74,10 @@ def _summary(image: GeneratedImage, path: Path) -> dict[str, Any]:
 
 
 def run(
-    stdin: bytes, *, service_factory: Callable[[], ImagingService] | None = None
+    command: object, *, service_factory: Callable[[], ImagingService] | None = None
 ) -> tuple[int, dict[str, Any]]:
+    """Run one parsed command; ``zeocore image`` parses stdin strictly first."""
     try:
-        command = parse_json(stdin)
         if not isinstance(command, dict):
             raise ValueError("the command is a JSON object")
         if command.get("credits") is True and set(command) == {"credits"}:
@@ -91,7 +89,7 @@ def run(
             output = Path(str(command["output"]))
             if not output.parent.is_dir():
                 raise ValueError("the output directory does not exist")
-    except (ProtocolError, ValueError, ValidationError, OSError) as error:
+    except (ValueError, ValidationError, OSError) as error:
         message = (
             "the request does not match the image contract"
             if isinstance(error, ValidationError)

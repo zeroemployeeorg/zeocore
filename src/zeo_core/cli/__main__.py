@@ -112,9 +112,13 @@ def _digest(args: Sequence[str], stdin: bytes) -> Answer:
 def _image(args: Sequence[str], stdin: bytes) -> Answer:
     if args:
         return _invalid("image takes its request on stdin")
+    try:
+        command = parse_json(stdin)
+    except ProtocolError as error:
+        return _invalid(str(error))
     from zeo_core.integrations.imaging.command import run as image
 
-    return image(stdin)
+    return image(command)
 
 
 #: Every command, named explicitly. Nothing is discovered or loaded by name.
