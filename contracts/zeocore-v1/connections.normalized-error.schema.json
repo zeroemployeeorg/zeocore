@@ -13,7 +13,10 @@
         "REQUEST_REFUSED",
         "FAILED_SAFE",
         "RESULT_AMBIGUOUS",
-        "CONNECTOR_REVISION_UNAVAILABLE"
+        "CONNECTOR_REVISION_UNAVAILABLE",
+        "STOPPED",
+        "BUDGET_EXHAUSTED",
+        "INPUT_ARTIFACT_UNAVAILABLE"
       ],
       "title": "NormalizedErrorCode",
       "type": "string"

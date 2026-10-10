@@ -1,4 +1,4 @@
-"""``zeo-image``: one JSON call in, one JSON answer out."""
+"""``zeocore image``: one JSON call in, one JSON answer out."""
 
 from __future__ import annotations
 
@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 
 from tests.test_integrations.imaging.images import SVG, png
+from zeo_core.cli.__main__ import run as zeocore
 from zeo_core.integrations.imaging import (
     BaseImageRequest,
     CreditBalance,
@@ -15,7 +16,7 @@ from zeo_core.integrations.imaging import (
     ImagingError,
     ImagingService,
 )
-from zeo_core.integrations.imaging.__main__ import run
+from zeo_core.integrations.imaging.command import run
 from zeo_core.integrations.imaging.models import sha256_hex
 
 
@@ -44,7 +45,8 @@ class _Recraft:
 
 def _call(command: object, backend: _Recraft) -> tuple[int, dict[str, object]]:
     return run(
-        json.dumps(command), service_factory=lambda: ImagingService(recraft=backend)
+        json.dumps(command).encode(),
+        service_factory=lambda: ImagingService(recraft=backend),
     )
 
 
@@ -132,3 +134,22 @@ def test_an_unconfigured_provider_is_refused(tmp_path: Path) -> None:
         _Recraft(),
     )
     assert (status, answer["outcome"]) == (3, "refused")
+
+
+def test_zeocore_image_is_the_imaging_command(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    monkeypatch.setenv("ZEOCORE_CONNECTION_PROFILE", "local")
+    status, answer = zeocore(
+        ["image"],
+        lambda: (
+            b'{"request": {"kind": "gemini.generate", "prompt": "x"}, "output": "."}'
+        ),
+    )
+    # No key on this machine: refused before anything is sent.
+    assert (status, answer["outcome"]) == (3, "refused")
+    assert zeocore(["image", "extra"], lambda: b"{}")[0] == 2
+
+
+def test_duplicate_keys_are_refused_as_everywhere_else() -> None:
+    status, answer = run(b'{"credits": true, "credits": true}')
+    assert (status, answer["outcome"]) == (2, "invalid_request")

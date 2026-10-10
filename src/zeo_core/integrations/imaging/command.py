@@ -1,6 +1,8 @@
-"""``zeo-image``: one image call as JSON, for callers outside Python.
+"""``zeocore image``: one image call as JSON, for callers outside Python.
 
-Reads one JSON object on stdin and writes one JSON object on stdout.
+Reads one JSON object on stdin and writes one JSON object on stdout, under
+the ``zeocore`` command's rules (``zeo_core.cli``). Image bytes never go to
+stdout: the image is written to ``output`` and the answer names it.
 
     {"request": {"kind": "recraft.vectorize", "input": {"path": "duck.png"}},
      "output": "duck.svg"}
@@ -11,19 +13,20 @@ here. The profile is ``ZEOCORE_CONNECTION_PROFILE`` (``local`` or ``hosted``);
 hosted uses this device's ZEOconnect pairing and the connection ids in
 ``ZEOCORE_IMAGING_GEMINI_CONNECTION`` / ``ZEOCORE_IMAGING_RECRAFT_CONNECTION``.
 
-Exit status: 0 done, 2 the request is invalid, 3 no image (see ``outcome``).
+Exit status: 0 done, 2 the request is invalid, 3 no image (see ``outcome``
+and ``retry``).
 """
 
 from __future__ import annotations
 
-import json
 import os
-import sys
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
 from pydantic import TypeAdapter, ValidationError
+
+from zeo_core.adapters.runtime_host.canonical import ProtocolError, parse_json
 
 from .models import GeneratedImage, ImageInput, ImageRequest, ImagingError
 from .service import ImagingService, build_imaging
@@ -73,10 +76,10 @@ def _summary(image: GeneratedImage, path: Path) -> dict[str, Any]:
 
 
 def run(
-    stdin: str, *, service_factory: Callable[[], ImagingService] | None = None
+    stdin: bytes, *, service_factory: Callable[[], ImagingService] | None = None
 ) -> tuple[int, dict[str, Any]]:
     try:
-        command = json.loads(stdin)
+        command = parse_json(stdin)
         if not isinstance(command, dict):
             raise ValueError("the command is a JSON object")
         if command.get("credits") is True and set(command) == {"credits"}:
@@ -88,7 +91,7 @@ def run(
             output = Path(str(command["output"]))
             if not output.parent.is_dir():
                 raise ValueError("the output directory does not exist")
-    except (ValueError, ValidationError, OSError) as error:
+    except (ProtocolError, ValueError, ValidationError, OSError) as error:
         message = (
             "the request does not match the image contract"
             if isinstance(error, ValidationError)
@@ -115,13 +118,3 @@ def run(
             "request_key": error.request_key,
             "approval_url": error.approval_url,
         }
-
-
-def main() -> None:
-    status, answer = run(sys.stdin.read())
-    sys.stdout.write(json.dumps(answer) + "\n")
-    raise SystemExit(status)
-
-
-if __name__ == "__main__":
-    main()

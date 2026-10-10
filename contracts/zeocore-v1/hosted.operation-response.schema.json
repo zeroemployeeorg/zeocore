@@ -100,7 +100,10 @@
         "REQUEST_REFUSED",
         "FAILED_SAFE",
         "RESULT_AMBIGUOUS",
-        "CONNECTOR_REVISION_UNAVAILABLE"
+        "CONNECTOR_REVISION_UNAVAILABLE",
+        "STOPPED",
+        "BUDGET_EXHAUSTED",
+        "INPUT_ARTIFACT_UNAVAILABLE"
       ],
       "title": "NormalizedErrorCode",
       "type": "string"
@@ -108,8 +111,7 @@
   },
   "$id": "https://zeocore.zeo.ac/contracts/zeocore-v1/hosted.operation-response.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "additionalProperties": false,
-  "description": "Bounded broker response with mutually exclusive result shapes.",
+  "description": "Bounded broker response with mutually exclusive result shapes.\n\nUnknown top-level fields are dropped, never passed through: a 1.y Broker\nmay add response fields that a 1.0 client must ignore (contract §10).",
   "properties": {
     "approval_url": {
       "anyOf": [

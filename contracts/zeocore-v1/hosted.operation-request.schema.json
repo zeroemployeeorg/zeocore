@@ -1,5 +1,28 @@
 {
   "$defs": {
+    "HostedExpectedBinding": {
+      "additionalProperties": false,
+      "description": "The enrolment a fenced invocation expects (contract 1.2.0 §6a).\n\nThe Broker compares both values with the connection as it is enrolled,\nbefore custody and again before each provider call, and refuses a\nmismatch. Take them from a fresh ``list_connections`` through\n``HostedConnectionSummary.expected_binding()``.",
+      "properties": {
+        "connection_revision": {
+          "pattern": "^[1-9][0-9]{0,18}$",
+          "title": "Connection Revision",
+          "type": "string"
+        },
+        "external_identity": {
+          "maxLength": 500,
+          "minLength": 1,
+          "title": "External Identity",
+          "type": "string"
+        }
+      },
+      "required": [
+        "external_identity",
+        "connection_revision"
+      ],
+      "title": "HostedExpectedBinding",
+      "type": "object"
+    },
     "JsonValue": {}
   },
   "$id": "https://zeocore.zeo.ac/contracts/zeocore-v1/hosted.operation-request.schema.json",
@@ -33,6 +56,17 @@
       ],
       "default": null,
       "title": "Connector Revision"
+    },
+    "expect": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/HostedExpectedBinding"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
     },
     "idempotency_key": {
       "maxLength": 200,

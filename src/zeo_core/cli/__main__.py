@@ -11,6 +11,8 @@ Commands:
   ``{"ok": false, "errors": [{"loc": [...], "type": ...}]}``. Errors never
   echo input values.
 - ``zeocore digest``: the sha256 of stdin's RFC 8785 canonical bytes.
+- ``zeocore image``: one Nano Banana or Recraft call
+  (``zeo_core.integrations.imaging.command``).
 
 Rules every command keeps: stdout carries exactly one JSON object and
 nothing else; diagnostics go to stderr. Input JSON is strict (no duplicate
@@ -107,14 +109,23 @@ def _digest(args: Sequence[str], stdin: bytes) -> Answer:
         return _invalid(str(error))
 
 
+def _image(args: Sequence[str], stdin: bytes) -> Answer:
+    if args:
+        return _invalid("image takes its request on stdin")
+    from zeo_core.integrations.imaging.command import run as image
+
+    return image(stdin)
+
+
 #: Every command, named explicitly. Nothing is discovered or loaded by name.
 COMMANDS: Final[dict[str, Command]] = {
     "digest": _digest,
+    "image": _image,
     "schema": _schema,
     "validate": _validate,
     "version": _version,
 }
-_READS_STDIN: Final = frozenset({"digest", "validate"})
+_READS_STDIN: Final = frozenset({"digest", "image", "validate"})
 
 
 def run(argv: Sequence[str], stdin: Callable[[], bytes]) -> Answer:
