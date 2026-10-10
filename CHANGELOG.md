@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased: held-job close, after the E10 ruling]
+
+Draft. ZBS asked for it, and it waits for the elders' E10 ruling (org #787).
+
+### Added
+
+- **`publish close JOB_DIR --expect-held-seq N --step STEP`** closes a YouTube job held on an
+  outcome ZEOconnect recorded. It sends nothing to ZEOconnect, and it takes the
+  same lock as a run, so a close never lands inside a run.
+  - Holds on a recorded outcome (`refused_in_zeoconnect`, `provider_refused`)
+    now record their own `step` and `attempt`.
+  - Close compares the hold the person was shown (`N`, `STEP`) with the
+    journal under the lock. It refuses `not_held`, `hold_changed` (a stale
+    decision), `hold_not_closeable` (any hold other than those two and
+    `youtube_rejected`, which also records its step now),
+    `hold_step_unknown` (a hold without a recorded step) and `step_mismatch`.
+  - A repeat replays only the exact original close; any other hold or step
+    is `already_closed`.
+  - The studio's `cancelled` event names the hold, its step and its attempt.
+    The receipt is unchanged, with reason `cancelled`.
+  - A kill between the event and the receipt is finished the same way by
+    either the next run or a repeated close.
+  - Python callers can use `close_held_job()` and `job_lock()`.
+
 ## [Unreleased: 0.14.0]
 
 Draft for the release that conforms to ZEOconnect Broker contract `1.0.0`

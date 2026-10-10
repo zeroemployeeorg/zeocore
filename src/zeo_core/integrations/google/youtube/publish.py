@@ -51,6 +51,7 @@ from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 from zeo_core.integrations.google.youtube.job import (
     PROVIDER_RECORD,
     CaptionFile,
+    Event,
     Job,
     JobDirectory,
     JobError,
@@ -58,6 +59,7 @@ from zeo_core.integrations.google.youtube.job import (
     MediaFile,
     ProviderRecord,
     Receipt,
+    job_steps,
     rfc3339_nano,
 )
 from zeo_core.integrations.google.youtube.links import (
@@ -171,6 +173,172 @@ def video_url(video_id: str) -> str:
     return f"https://youtu.be/{video_id}"
 
 
+class JobBusyError(Exception):
+    """Another process holds the job directory's lock."""
+
+
+@contextmanager
+def job_lock(job_dir: Path) -> Iterator[None]:
+    """The job directory's exclusive lock, taken without waiting.
+
+    A run holds it from start to finish. ``close`` takes the same lock, so a
+    close can never land inside a run.
+    """
+    descriptor = os.open(job_dir / ".lock", os.O_CREAT | os.O_RDWR, 0o644)
+    try:
+        try:
+            fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            raise JobBusyError() from None
+        yield
+    finally:
+        os.close(descriptor)
+
+
+# The only holds close may end: an outcome ZEOconnect recorded, or YouTube's
+# final rejection of an uploaded video. Nothing more can be sent for any of them.
+CLOSEABLE_HOLDS: frozenset[str] = frozenset(
+    {"refused_in_zeoconnect", "provider_refused", "youtube_rejected"}
+)
+
+
+def _close_refusal(
+    job: Job, state: JobState, expect_held_seq: int, step: str
+) -> str | None:
+    if state.held is None:
+        return "not_held"
+    if state.held_seq != expect_held_seq:
+        return "hold_changed"
+    if state.held not in CLOSEABLE_HOLDS:
+        return "hold_not_closeable"
+    if state.held_step is None or state.held_attempt is None:
+        return "hold_step_unknown"
+    if state.held_step != step:
+        return "step_mismatch"
+    if state.held_step not in job_steps(job):
+        return "unknown_step"
+    return None
+
+
+def _closing_event(directory: JobDirectory) -> Event | None:
+    """The studio's close of a hold, if the job has one (the last ``cancelled``)."""
+    closes = [e for e in directory.events() if e.type == "cancelled"]
+    return closes[-1] if closes else None
+
+
+def close_held_job(
+    job_dir: Path,
+    expect_held_seq: int,
+    step: str,
+    *,
+    clock: Callable[[], datetime] | None = None,
+) -> RunResult:
+    """Close hold ``expect_held_seq`` at ``step``, on a person's decision.
+
+    It is the studio's Close for a job held on an outcome ZEOconnect
+    recorded. It sends nothing to ZEOconnect: no new key, no new attempt.
+    ``expect_held_seq`` and ``step`` are what the person was shown. They
+    are compared with the journal under the job's lock, and never taken
+    as authority:
+    - ``not_held``: the job isn't held, or it was released;
+    - ``hold_changed``: another hold is in force (a stale decision);
+    - ``hold_not_closeable``: the hold is not on a final outcome (one
+      ZEOconnect recorded, or ``youtube_rejected``), such as
+      ``ambiguous_upload`` or a changed file, even if it names a step;
+    - ``hold_step_unknown``: the hold recorded no typed step or attempt, as
+      with holds from older journals;
+    - ``step_mismatch``: the hold is on another step.
+    It then appends the studio's ``cancelled`` event, naming the hold and
+    its recorded step and attempt, and writes the REFUSED receipt with
+    reason ``cancelled``. The receipt itself is unchanged.
+
+    A repeat is compared with the original close: the same hold and step
+    replays unchanged, with nothing appended, and anything else is
+    ``already_closed``. That also holds after an interruption between the
+    event and the receipt. While a run holds the lock, it answers ``busy``
+    (exit 11).
+    """
+    now = clock or (lambda: datetime.now(UTC))
+    directory = JobDirectory(job_dir)
+    try:
+        job = directory.authorized_job()
+    except JobError as error:
+        return RunResult(EXIT_INVALID, {"state": "invalid", "reason": str(error)})
+
+    def refused(reason: str, **fields: Any) -> RunResult:  # noqa: ANN401 - JSON
+        return RunResult(
+            EXIT_INVALID,
+            {"job_id": job.job_id, "state": "invalid", "reason": reason, **fields},
+        )
+
+    def cancelled(closing: Event) -> RunResult:
+        extra = closing.model_extra or {}
+        return RunResult(
+            EXIT_DONE,
+            {
+                "job_id": job.job_id,
+                "state": "cancelled",
+                "reason": "cancelled",
+                "held_seq": extra.get("held_seq"),
+                "step": extra.get("step"),
+            },
+        )
+
+    try:
+        with job_lock(directory.path):
+            receipt = directory.receipt()
+            if receipt is not None and not (
+                receipt.outcome == "REFUSED" and receipt.reason == "cancelled"
+            ):
+                return refused("finished")
+            state = directory.state()
+            if state.cancelled:
+                closing = _closing_event(directory)
+                extra = (closing.model_extra if closing else None) or {}
+                if closing is None or (extra.get("held_seq"), extra.get("step")) != (
+                    expect_held_seq,
+                    step,
+                ):
+                    return refused(
+                        "already_closed",
+                        closed_held_seq=extra.get("held_seq"),
+                        closed_step=extra.get("step"),
+                    )
+            else:
+                if (
+                    refusal := _close_refusal(job, state, expect_held_seq, step)
+                ) is not None:
+                    return refused(refusal)
+                closing = directory.append(
+                    actor="studio",
+                    type="cancelled",
+                    closed_on=state.held,
+                    held_seq=state.held_seq,
+                    step=state.held_step,
+                    attempt=state.held_attempt,
+                )
+            if receipt is None:
+                directory.write_receipt(
+                    Receipt.model_validate(
+                        {
+                            "schema_version": 1,
+                            "job_id": job.job_id,
+                            "outcome": "REFUSED",
+                            "provider_record": (
+                                PROVIDER_RECORD
+                                if directory.provider_record() is not None
+                                else None
+                            ),
+                            "observed_at": now(),
+                            "reason": "cancelled",
+                        }
+                    )
+                )
+            return cancelled(closing)
+    except JobBusyError:
+        return RunResult(EXIT_WAIT, {"job_id": job.job_id, "state": "busy"})
+
+
 class PublishExecutor:
     """Advance one authorized job; safe to run again at any point."""
 
@@ -228,15 +396,11 @@ class PublishExecutor:
 
     @contextmanager
     def _lock(self) -> Iterator[None]:
-        descriptor = os.open(self.dir.path / ".lock", os.O_CREAT | os.O_RDWR, 0o644)
         try:
-            try:
-                fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            except BlockingIOError:
-                raise _EndRunError(self._result(EXIT_WAIT, "busy")) from None
-            yield
-        finally:
-            os.close(descriptor)
+            with job_lock(self.dir.path):
+                yield
+        except JobBusyError:
+            raise _EndRunError(self._result(EXIT_WAIT, "busy")) from None
 
     def _advance(self) -> RunResult:
         receipt = self.dir.receipt()
@@ -285,8 +449,21 @@ class PublishExecutor:
             status["video_url"] = video_url(video_id)
         return RunResult(code, status)
 
-    def _hold(self, reason: str, detail: str = "") -> _EndRunError:
-        self.dir.append(actor="executor", type="held", reason=reason, detail=detail)
+    def _hold(
+        self,
+        reason: str,
+        detail: str = "",
+        *,
+        step: str | None = None,
+        attempt: int | None = None,
+    ) -> _EndRunError:
+        # A hold on a final outcome names its step and attempt as
+        # typed fields, so a close is bound to the hold, not to a caller's
+        # word (ZEO-RT SOW-99).
+        bound = {"step": step, "attempt": attempt} if step is not None else {}
+        self.dir.append(
+            actor="executor", type="held", reason=reason, detail=detail, **bound
+        )
         return _EndRunError(
             self._result(EXIT_HELD, "held", reason=reason, detail=detail)
         )
@@ -396,7 +573,12 @@ class PublishExecutor:
                 self._sleep(self._approval_poll)
                 continue
             if status is HostedOperationStatus.REFUSED:
-                raise self._hold("refused_in_zeoconnect", f"{step}: {operation}")
+                raise self._hold(
+                    "refused_in_zeoconnect",
+                    f"{step}: {operation}",
+                    step=step,
+                    attempt=state.attempt,
+                )
             if status is HostedOperationStatus.AMBIGUOUS:
                 # The broker may or may not have done it; the step's own
                 # reconciliation decides on the next run.
@@ -409,7 +591,12 @@ class PublishExecutor:
             message = (
                 response.normalized_error.message if response.normalized_error else ""
             )
-            raise self._hold("provider_refused", f"{step}: {message}".strip())
+            raise self._hold(
+                "provider_refused",
+                f"{step}: {message}".strip(),
+                step=step,
+                attempt=state.attempt,
+            )
 
     def _new_attempt(
         self, step: str, attempt: int, *, final_chunk_sent: bool = False
@@ -794,7 +981,14 @@ class PublishExecutor:
             reason = (
                 video.get("rejection_reason") or video.get("failure_reason") or upload
             )
-            raise self._hold("youtube_rejected", str(reason))
+            # The upload happened and YouTube's verdict is final, so the hold
+            # names the video step for a close (ZBS, after studio #120).
+            raise self._hold(
+                "youtube_rejected",
+                str(reason),
+                step="video",
+                attempt=self._state().step("video").attempt,
+            )
         self._refresh_record(video)
         if processing not in {"succeeded", None} or upload == "uploaded":
             return self._result(EXIT_WAIT, "waiting", reason="youtube_processing")
@@ -1031,6 +1225,12 @@ def _youtube(
     ]
 
 
+def _close_command(args: argparse.Namespace) -> int:
+    return _print(
+        close_held_job(Path(args.job_dir).resolve(), args.expect_held_seq, args.step)
+    )
+
+
 def _connections(_args: argparse.Namespace) -> int:
     from zeo_core.integrations.hosted.pairing import HostedConnectionManager
 
@@ -1071,6 +1271,23 @@ def main(argv: list[str] | None = None) -> int:
     pair = commands.add_parser("pair", help="pair this device with ZEOconnect")
     pair.add_argument("--device-name", default="ZEO Broadcasting Studio")
     pair.set_defaults(handler=_pair)
+    close = commands.add_parser(
+        "close", help="close a job held on a recorded outcome (sends nothing)"
+    )
+    close.add_argument("job_dir")
+    close.add_argument(
+        "--expect-held-seq",
+        type=int,
+        required=True,
+        help="the seq of the held event the person was shown",
+    )
+    close.add_argument(
+        "--step", required=True, help="the hold's step, as the person was shown it"
+    )
+    close.add_argument(
+        "--json", action="store_true", help="one JSON status line (default)"
+    )
+    close.set_defaults(handler=_close_command)
     listing = commands.add_parser("connections", help="list YouTube connections")
     listing.set_defaults(handler=_connections)
     args = parser.parse_args(argv)
@@ -1093,9 +1310,12 @@ __all__ = [
     "EXIT_WAIT",
     "OPERATIONS",
     "HostedYouTubeBroker",
+    "JobBusyError",
     "PublishExecutor",
     "RunResult",
     "YouTubeBroker",
+    "close_held_job",
+    "job_lock",
     "main",
     "sha256_file",
     "video_url",

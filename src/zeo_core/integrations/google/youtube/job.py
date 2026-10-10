@@ -305,6 +305,12 @@ class JobState:
     provider_dropped: str | None = None
     held: str | None = None
     held_detail: str = ""
+    #: The ``held`` event in force, and the step and attempt it recorded (only
+    #: holds on a recorded Broker outcome record them), so a close is bound
+    #: to exactly one hold.
+    held_seq: int | None = None
+    held_step: str | None = None
+    held_attempt: int | None = None
     cancelled: bool = False
     done: bool = False
     #: YouTube refused a link without a token: chunks go through custody.
@@ -352,6 +358,12 @@ def _job_event(state: JobState, event: Event, extra: dict[str, Any]) -> None:
             state.provider_dropped = str(extra.get("reason", "dropped"))
         case "held":
             state.held = str(extra.get("reason", "held"))
+            state.held_seq = event.seq
+            step, attempt = extra.get("step"), extra.get("attempt")
+            state.held_step = step if isinstance(step, str) else None
+            state.held_attempt = (
+                attempt if type(attempt) is int and attempt >= 1 else None
+            )
             state.held_detail = str(extra.get("detail", ""))
         case "released":
             if state.held == "ambiguous_upload":
@@ -359,6 +371,9 @@ def _job_event(state: JobState, event: Event, extra: dict[str, Any]) -> None:
                 state.step("video").final_chunk_sent = False
             state.held = None
             state.held_detail = ""
+            state.held_seq = None
+            state.held_step = None
+            state.held_attempt = None
         case "relay_engaged":
             state.relay = True
         case "cancelled":
@@ -450,6 +465,17 @@ def _sync_directory(directory: Path) -> None:
         pass
     finally:
         os.close(descriptor)
+
+
+def job_steps(job: Job) -> frozenset[str]:
+    """The step names a job's executor can hold on."""
+    steps = {"video"}
+    if job.thumbnail is not None:
+        steps.add("thumbnail")
+    steps.update(f"caption:{c.language}:{c.name}" for c in job.captions)
+    if job.playlist_id is not None:
+        steps.add("playlist")
+    return frozenset(steps)
 
 
 class JobDirectory:
@@ -597,6 +623,7 @@ __all__ = [
     "ThumbnailFile",
     "VideoFile",
     "fold",
+    "job_steps",
     "loop_id_for",
     "rfc3339_nano",
     "runtime_identity",
