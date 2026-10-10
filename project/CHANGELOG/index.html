@@ -536,6 +536,8 @@
       
         
       
+        
+      
     
     
     
@@ -652,6 +654,34 @@
     
   
     Runtime host
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/release-signing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sign and verify a release
   
 
     
@@ -3973,9 +4003,35 @@ this section becomes "Unreleased".</p>
 <h2 id="unreleased"><a href="https://github.com/zeroemployeeorg/zeocore/compare/v0.12.0...HEAD">Unreleased</a><a class="headerlink" href="#unreleased" title="Permanent link">&para;</a></h2>
 <h3 id="added_2">Added<a class="headerlink" href="#added_2" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>Revolut Business reads for expenses, receipts and labels</strong>
+<li><strong>One sign-and-verify step for every org executable</strong> (<code>zeo_core.release.signing</code>,
+  <code>zeocore release sign | verify</code>), on ZEOCORE-SOW-19 to SOW-22. It is built
+  first, before the PyPI adapter, because the Go seats and Pomar wait on it.</li>
+<li>Internal Darwin releases sign with ZEO Runtime Code Signing, pinned by its
+    leaf SHA-1. Distributed releases hold as <code>notarisation_unbuilt</code>; Linux is
+    refused as signed until a Linux contract is adopted.</li>
+<li>Inputs come from the reviewed <code>release.yaml</code>, never from flags. The
+    signing host is configuration (<code>ZEOCORE_SIGNING_HOST</code>).</li>
+<li>A separate candidate is signed under a durable intent, and a lost answer
+    is reconciled by readback, never by signing again.</li>
+<li><code>verify</code> is read-only. It refuses an ad-hoc signature even when its
+    requirement names the pin, a bare cdhash, another certificate (including
+    the other audience's), and entitlements that differ from the manifest's.</li>
+<li>A locked keychain is reported only when its settings establish it.</li>
+<li>Request and response packs (<code>zeocore release pack | receive</code>) for signing
+    on matormini from another host.</li>
+<li>
+<p>The signing service on matormini (<code>zeocore release serve</code>) and its client
+    (<code>zeocore release send</code>). It is tailnet-only and identifies callers by
+    <code>tailscale whois</code>. It admits a request only under ZEOCORE-SOW-24 §1: a
+    node, product and identifier allowlist; the manifest read from GitHub at
+    a merged commit; internal audience only; size, count and rate bounds; and
+    a durable journal of every request.</p>
+</li>
+<li>
+<p><strong>Revolut Business reads for expenses, receipts and labels</strong>
   (<code>zeo_core.integrations.revolut</code>), approved by the zeocore elders as an
-  independent 0.13.0 expansion (org issue #787, Q2):</li>
+  independent 0.13.0 expansion (org issue #787, Q2):</p>
+</li>
 <li><code>list_expenses</code> (one bounded page, with <code>next_to</code> and stall detection);</li>
 <li><code>get_expense</code>;</li>
 <li><code>download_receipt</code>, bounded to 10 MiB while it is read, never parsed or
