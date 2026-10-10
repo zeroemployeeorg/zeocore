@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **A GitHub effect is sent once, never retried.** `make_request` retried every
+  method on a 5xx, a rate limit, a timeout or a dropped connection. So one
+  ambiguous reply could open a second pull request, post a second comment or
+  issue, write a file twice, or merge twice. Only GET and HEAD are retried now.
+  POST, PUT, PATCH and DELETE are sent exactly once, and an unknown outcome is
+  raised for the caller to reconcile by reading back.
+
+### Added
+
+- **GitHub App installation tokens for an isolated principal**
+  (`zeo_core.integrations.github.app_tokens`, `github-app` extra). These are
+  for the merger, which by the operator's ruling is a zeocore app whose key is
+  kept outside ZEOconnect.
+  - It signs an RS256 App JWT and mints a token for exactly one repository and
+    exactly the requested permissions. A broader grant is revoked and refused.
+  - It sends one attempt and never retries.
+  - The key is read only from the running user's own Keychain item.
+
+### Changed
+
+- **Breaking: `merge_pull_request` needs the head `sha` and merges only by
+  `merge`.** `sha` is a required keyword, the full 40-hex commit the merge was
+  approved for, and GitHub refuses the merge if the head has moved. `squash`
+  and `rebase` are refused. Nothing in zeocore called it. In ZEO, merging is
+  zeomerger's alone (operator decision, 2026-10-10).
+
 ## [0.12.0] - 2026-10-08
 
 ### Added

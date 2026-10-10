@@ -1,5 +1,6 @@
 """GitHub pull request _ops."""
 
+import re
 from datetime import datetime
 from typing import Any, Literal
 
@@ -15,6 +16,8 @@ from zeo_core.integrations.github.models import (
 from zeo_core.integrations.github.utils.api import make_request
 
 logger = get_logger(__name__)
+
+_FULL_SHA = re.compile(r"[0-9a-f]{40}")
 
 
 def create_pull_request(
@@ -277,31 +280,46 @@ def merge_pull_request(
     repo: str,
     pull_number: int,
     api_url: str,
+    *,
+    sha: str,
     commit_title: str | None = None,
     commit_message: str | None = None,
-    merge_method: Literal["merge", "squash", "rebase"] = "merge",
+    merge_method: Literal["merge"] = "merge",
     **request_kwargs: Any,  # noqa: ANN401 -- passthrough to requests.Session.request via make_request; kwargs are genuinely heterogeneous
 ) -> bool:
-    """Merge a pull request.
+    """Merge a pull request at exactly the head it was approved at.
+
+    ``sha`` is required: GitHub refuses the merge if the head has moved, so an
+    approval can never land a different commit. Only the ``merge`` method is
+    offered, never squash or rebase. The request is sent once and never
+    retried; after an unknown outcome, read the pull request back instead of
+    merging again.
 
     Args:
         session: Requests session with authentication headers.
         repo: Full repository name (owner/repo).
         pull_number: Pull request number.
         api_url: Base API URL.
-        commit_title: Title for the automatic commit.
-        commit_message: Extra detail to append to commit message.
-        merge_method: Merge method to use (merge, squash, rebase).
+        sha: The full 40-hex head commit the merge was approved for.
+        commit_title: Title for the merge commit.
+        commit_message: Extra detail to append to the commit message.
+        merge_method: Always ``merge``.
         **request_kwargs: Additional request parameters.
 
     Returns:
         True if the pull request was merged.
 
     Raises:
+        ValueError: If ``sha`` is not a full commit id or the method is not
+            ``merge``.
         ZeoApiError: If the API request fails.
     """
+    if not _FULL_SHA.fullmatch(sha):
+        raise ValueError("merge needs the full 40-hex head sha it was approved at")
+    if merge_method != "merge":
+        raise ValueError("only the merge method is allowed")
     endpoint = f"/repos/{repo}/pulls/{pull_number}/merge"
-    data: dict[str, Any] = {"merge_method": merge_method}
+    data: dict[str, Any] = {"merge_method": "merge", "sha": sha}
     if commit_title:
         data["commit_title"] = commit_title
     if commit_message:

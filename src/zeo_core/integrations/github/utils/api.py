@@ -184,6 +184,9 @@ def _retry_or_raise_transient_error(
     ) from e
 
 
+_RETRYABLE_METHODS = frozenset({"GET", "HEAD"})
+
+
 def make_request(
     session: requests.Session,
     method: str,
@@ -196,7 +199,7 @@ def make_request(
     json: dict[str, Any] | None = None,
     **kwargs: Any,  # noqa: ANN401 -- passthrough to requests.Session.request; kwargs are genuinely heterogeneous (headers, verify, cert, ...)
 ) -> requests.Response:
-    """Make an HTTP request to the GitHub API with retries.
+    """Make an HTTP request to the GitHub API; only reads are retried.
 
     Args:
         session: Requests session with authentication headers
@@ -204,7 +207,8 @@ def make_request(
         url: API endpoint (without base URL)
         api_url: Base API URL
         timeout: Request timeout in seconds
-        max_retries: Maximum number of retries for requests
+        max_retries: Maximum attempts for a GET or HEAD. Any other method is
+            sent exactly once, whatever this says.
         retry_delay: Delay between retries in seconds
         params: URL parameters
         json: JSON body data
@@ -227,9 +231,14 @@ def make_request(
         )
 
     full_url = f"{api_url}{url}"
+    # Only a read is retried. An effect (POST, PUT, PATCH, DELETE) is sent
+    # once: after a 5xx, a timeout or a dropped connection its outcome is
+    # unknown, and sending it again could open a second PR, post a second
+    # comment or merge twice.
+    attempts = max_retries if method.upper() in _RETRYABLE_METHODS else 1
     kwargs.setdefault("timeout", timeout)
 
-    for attempt in range(1, max_retries + 1):
+    for attempt in range(1, attempts + 1):
         try:
             response = session.request(
                 method, full_url, params=params, json=json, **kwargs
@@ -238,7 +247,7 @@ def make_request(
             # Check for rate limiting - Need to check before raise_for_status
             remaining = int(response.headers.get("X-RateLimit-Remaining", "1"))
             if remaining == 0 or response.status_code == 429:
-                _handle_rate_limit(response.headers, url, attempt, max_retries)
+                _handle_rate_limit(response.headers, url, attempt, attempts)
                 continue
 
             # Check for successful response
@@ -251,18 +260,18 @@ def make_request(
             raise
 
         except requests.exceptions.HTTPError as e:
-            _handle_http_error(e, url, attempt, max_retries, retry_delay)
+            _handle_http_error(e, url, attempt, attempts, retry_delay)
             continue
 
         except requests.exceptions.ConnectionError as e:
             _retry_or_raise_transient_error(
-                e, "connection error", url, attempt, max_retries, retry_delay
+                e, "connection error", url, attempt, attempts, retry_delay
             )
             continue
 
         except requests.exceptions.Timeout as e:
             _retry_or_raise_transient_error(
-                e, "timeout", url, attempt, max_retries, retry_delay
+                e, "timeout", url, attempt, attempts, retry_delay
             )
             continue
 

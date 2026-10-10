@@ -1027,9 +1027,9 @@ class TestPullRequestOperations:
                 repo="test_owner/test-repo",
                 pull_number=123,
                 api_url="https://api.github.com",
+                sha="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
                 commit_title="Merge it",
                 commit_message="extra detail",
-                merge_method="squash",
             )
 
             assert result is True
@@ -1039,7 +1039,8 @@ class TestPullRequestOperations:
                 url="/repos/test_owner/test-repo/pulls/123/merge",
                 api_url="https://api.github.com",
                 json={
-                    "merge_method": "squash",
+                    "merge_method": "merge",
+                    "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
                     "commit_title": "Merge it",
                     "commit_message": "extra detail",
                 },
@@ -1067,6 +1068,7 @@ class TestPullRequestOperations:
                 repo="test_owner/test-repo",
                 pull_number=456,
                 api_url="https://api.github.com",
+                sha="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
             )
 
             assert result is False
@@ -1075,7 +1077,10 @@ class TestPullRequestOperations:
                 method="PUT",
                 url="/repos/test_owner/test-repo/pulls/456/merge",
                 api_url="https://api.github.com",
-                json={"merge_method": "merge"},
+                json={
+                    "merge_method": "merge",
+                    "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                },
             )
 
     def test_add_pull_request_review(
