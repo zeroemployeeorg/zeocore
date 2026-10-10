@@ -33,6 +33,7 @@ from zeo_core.integrations.hosted.client import (
     HostedOperationRequest,
     HostedOperationResponse,
     HostedOperationStatus,
+    HostedSessionError,
     HostedStoppedError,
     HostedUnavailableError,
     HostedUnreachableError,
@@ -100,7 +101,7 @@ def _not_paired(error: Exception) -> Answer | None:
     text = str(error)
     if isinstance(error, _NotPairedError):
         return EXIT_NOT_PAIRED, {"ok": False, "outcome": error.outcome, "message": text}
-    if "paired device session" in text or "pair this device" in text:
+    if isinstance(error, HostedSessionError):
         return EXIT_NOT_PAIRED, {
             "ok": False,
             "outcome": "not_paired",

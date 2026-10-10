@@ -213,6 +213,14 @@ class HostedClientError(RuntimeError):
     """
 
 
+class HostedSessionError(HostedClientError):
+    """This device has no usable ZEOconnect session: pair it again.
+
+    Raised when there is no stored session, it has expired, or the Broker
+    refused it twice. A caller keys on the type, never on the message.
+    """
+
+
 class HostedUnavailableError(HostedClientError):
     """An outage: the Broker, or the path to it, could not serve the request.
 
@@ -426,6 +434,7 @@ __all__ = [
     "HostedArtifactDescriptor",
     "HostedAuthorizedTransport",
     "HostedClientError",
+    "HostedSessionError",
     "HostedConnectionChangedError",
     "HostedConnectionClient",
     "HostedExpectedBinding",

@@ -16,6 +16,7 @@ from zeo_core.connections.adapters.subprocess_runner import (
     RealSubprocessRunner,
     SubprocessRunner,
 )
+from zeo_core.integrations.hosted.client import HostedSessionError
 from zeo_core.integrations.hosted.profile import (
     HostedConnectionSummary,
     ServiceRequirement,
@@ -29,6 +30,10 @@ _PROFILE = re.compile(r"[a-z][a-z0-9-]{0,31}")
 
 class SecureStoreError(RuntimeError):
     """Sanitized failure at the reusable-device-authority boundary."""
+
+
+class SessionUnavailableError(SecureStoreError, HostedSessionError):
+    """No paired session is stored: a store failure and a session error both."""
 
 
 class PairingPendingError(RuntimeError):
@@ -263,7 +268,7 @@ class HostedConnectionManager:
     def _required_session(self) -> DeviceSession:
         session = self._session_store.load()
         if session is None:
-            raise SecureStoreError("paired device session is unavailable")
+            raise SessionUnavailableError("paired device session is unavailable")
         return session
 
     def _publish_catalog(self) -> None:
@@ -281,4 +286,5 @@ __all__ = [
     "PairingTransport",
     "SecureSessionStore",
     "SecureStoreError",
+    "SessionUnavailableError",
 ]

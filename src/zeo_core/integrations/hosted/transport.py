@@ -22,6 +22,7 @@ from zeo_core.integrations.hosted.client import (
     HostedOperationRequest,
     HostedOperationResponse,
     HostedRequestChangedError,
+    HostedSessionError,
     HostedStoppedError,
     HostedUnavailableError,
     HostedUnreachableError,
@@ -229,7 +230,7 @@ class ZEOconnectHTTPTransport:
         try:
             return self._refresh(session)
         except _BearerRefusedError:
-            raise HostedClientError(_REPAIR) from None
+            raise HostedSessionError(_REPAIR) from None
 
     def _refresh(self, session: DeviceSession) -> DeviceSession:
         payload = self._request_json(
@@ -454,7 +455,7 @@ class ZEOconnectHTTPTransport:
         try:
             return call(current)
         except _BearerRefusedError:
-            raise HostedClientError(_REPAIR) from None
+            raise HostedSessionError(_REPAIR) from None
 
     def _unreachable(self, error: httpx.TransportError) -> HostedUnreachableError:
         if self._base_url == ZEOCONNECT_PRODUCTION_ORIGIN and isinstance(
@@ -466,9 +467,9 @@ class ZEOconnectHTTPTransport:
     def _active_session(self) -> DeviceSession:
         session = self._session_store.load()
         if session is None:
-            raise HostedClientError("paired device session is unavailable")
+            raise HostedSessionError("paired device session is unavailable")
         if self._clock() >= session.refresh_expires_at:
-            raise HostedClientError("paired device session is expired")
+            raise HostedSessionError("paired device session is expired")
         if self._clock() >= session.access_expires_at:
             session = self._refreshed(session)
         return session
@@ -492,7 +493,7 @@ class ZEOconnectHTTPTransport:
         except _BearerRefusedError:
             if (stored := self._rotated_elsewhere(used)) is not None:
                 return stored
-            raise HostedClientError(_REPAIR) from None
+            raise HostedSessionError(_REPAIR) from None
         self._session_store.save(session)
         return session
 

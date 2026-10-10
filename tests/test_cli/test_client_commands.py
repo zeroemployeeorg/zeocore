@@ -31,6 +31,7 @@ from zeo_core.integrations.hosted import (
 )
 from zeo_core.integrations.hosted.client import (
     HostedClientError,
+    HostedSessionError,
     HostedStoppedError,
     HostedUnavailableError,
     HostedUnreachableError,
@@ -313,7 +314,10 @@ def test_each_broker_answer_has_its_exit_and_retry(
         (HostedUnreachableError(), 13, "ambiguous"),
         (HostedUnavailableError(), 11, "unavailable"),
         (HostedStoppedError(control="dispatch", scope="global"), 20, "stopped"),
-        (HostedClientError("paired device session is expired"), 12, "not_paired"),
+        (HostedSessionError("paired device session is expired"), 12, "not_paired"),
+        # A reworded session message can't change the exit: the type decides.
+        (HostedSessionError("reworded"), 12, "not_paired"),
+        (HostedClientError("paired device session is expired"), 20, "refused"),
         (HostedClientError("hosted request was refused"), 20, "refused"),
     ],
 )

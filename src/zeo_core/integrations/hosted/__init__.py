@@ -12,6 +12,7 @@ from zeo_core.integrations.hosted.client import (
     HostedOperationResponse,
     HostedOperationStatus,
     HostedRequestChangedError,
+    HostedSessionError,
     HostedStoppedError,
     HostedUnavailableError,
     HostedUnreachableError,
@@ -30,6 +31,7 @@ from zeo_core.integrations.hosted.pairing import (
     PairingTransport,
     SecureSessionStore,
     SecureStoreError,
+    SessionUnavailableError,
 )
 from zeo_core.integrations.hosted.profile import (
     ConnectionRequired,
@@ -98,6 +100,7 @@ __all__ = [
     "HostedAuthorizedTransport",
     "HostedBlueskyService",
     "HostedClientError",
+    "HostedSessionError",
     "HostedConnectionChangedError",
     "HostedConnectionClient",
     "HostedConnectionManager",
@@ -136,6 +139,7 @@ __all__ = [
     "Revoked",
     "SecureSessionStore",
     "SecureStoreError",
+    "SessionUnavailableError",
     "ServiceRequirement",
     "ServiceResolutionStatus",
     "ServiceResolver",
