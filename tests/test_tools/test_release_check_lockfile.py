@@ -84,3 +84,38 @@ def test_a_check_that_could_not_run_is_never_called_a_stale_lock(
     assert output.split(":")[0] in out
     assert "out of date" not in out
     assert "not a verdict on uv.lock" in out
+
+
+@pytest.mark.skipif(shutil.which("uv") is None, reason="needs the real uv")
+def test_the_installed_uv_still_says_what_the_check_greps_for(tmp_path: Path) -> None:
+    """Pin the phrase against real uv, offline, on a project with no dependencies.
+
+    If uv rewords its stale-lock message, a stale lock would be reported as
+    "could not run". That still fails closed, but this test says so first.
+    """
+    phrase = re.search(r'grep -q "([^"]+)"', _lock_section())
+    assert phrase, "the stale-lock phrase was not found in release-check.sh"
+    project = tmp_path / "project"
+    project.mkdir()
+    pyproject = project / "pyproject.toml"
+    pyproject.write_text(
+        '[project]\nname = "mini"\nversion = "0.1.0"\n'
+        'requires-python = ">=3.14"\ndependencies = []\n'
+    )
+    uv = shutil.which("uv")
+    assert uv is not None
+    env = {"PATH": "/usr/bin:/bin", "UV_CACHE_DIR": str(tmp_path / "cache")}
+    subprocess.run(  # noqa: S603 -- fixed argv, test-only
+        [uv, "lock", "--offline", "-q"], cwd=project, env=env, check=True
+    )
+    pyproject.write_text(pyproject.read_text().replace("0.1.0", "0.2.0"))
+    stale = subprocess.run(  # noqa: S603 -- fixed argv, test-only
+        [uv, "lock", "--check", "--offline"],
+        cwd=project,
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert stale.returncode == 1
+    assert phrase.group(1) in stale.stdout + stale.stderr
