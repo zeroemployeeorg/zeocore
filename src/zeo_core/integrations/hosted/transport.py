@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+import re
 from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import cast
@@ -15,6 +17,10 @@ from zeo_core.integrations.hosted.client import (
     HostedClientError,
     HostedOperationRequest,
     HostedOperationResponse,
+    HostedStoppedError,
+    HostedUnavailableError,
+    HostedUnreachableError,
+    HostedUpgradeRequiredError,
 )
 from zeo_core.integrations.hosted.pairing import (
     DeviceSession,
@@ -29,9 +35,24 @@ from zeo_core.integrations.hosted.profile import (
     OpaqueConnectionHandle,
 )
 
-ZEOCONNECT_PRODUCTION_ORIGIN = "https://connect.zeroemployee.org"
+#: The production BROKER: tailnet-only, a device client's only peer (contract
+#: 1.0.0 §2). WEB, ``https://connect.zeo.ac``, serves browsers and is never
+#: called by this transport; pairing's ``verification_url`` points there.
+ZEOCONNECT_PRODUCTION_ORIGIN = "https://broker.connect.zeo.ac"
 ZEOCONNECT_PROTOCOL_VERSION = "1"
 ZEOCONNECT_PROTOCOL_HEADER = "ZEOconnect-Protocol-Version"
+#: Declared on every request so the Broker may send the STOPPED error code
+#: (contract §9, §10); a Broker that does not know it ignores it.
+ZEOCONNECT_CAPABILITIES_HEADER = "ZEOconnect-Capabilities"
+_CAPABILITIES = "stopped-code"
+_STOP_TOKEN = re.compile(r"^[a-z][a-z0-9_.:-]{0,63}$")
+_REPAIR = "paired device session was refused; pair this device again"
+_OFF_NETWORK = (
+    "ZEOconnect Broker {origin} cannot be reached from this device. This hosted"
+    " profile is available only on its organisation's private network. zeocore"
+    " will not use local credentials in its place. To use your own Revolut"
+    " account directly, select the local profile explicitly."
+)
 _MAX_JSON_BYTES = 1024 * 1024
 _MAX_REQUEST_BYTES = 64 * 1024
 _MAX_ARTIFACT_BYTES = 10 * 1024 * 1024
@@ -56,8 +77,31 @@ def _require_protocol(response: httpx.Response) -> None:
         raise HostedClientError("hosted protocol version is incompatible")
 
 
+class _BearerRefusedError(HostedClientError):
+    """A Broker 401: the access token was refused before anything ran."""
+
+    def __init__(self) -> None:
+        super().__init__("hosted request was refused")
+
+
+def _stop(response: httpx.Response) -> HostedStoppedError | None:
+    try:
+        body = response.json()
+    except ValueError:
+        return None
+    if not isinstance(body, dict) or body.get("code") != "stopped":
+        return None
+    control, scope = body.get("control"), body.get("scope")
+    if not (isinstance(control, str) and isinstance(scope, str)):
+        return None
+    if not (_STOP_TOKEN.match(control) and _STOP_TOKEN.match(scope)):
+        return None
+    return HostedStoppedError(control=control, scope=scope)
+
+
+# A 1.y Broker may add response fields; a 1.0 client ignores them (§10).
 class _PairingWire(BaseModel):
-    model_config = ConfigDict(frozen=True, extra="forbid")
+    model_config = ConfigDict(frozen=True, extra="ignore")
 
     pairing_id: str
     device_code: SecretStr = Field(..., repr=False)
@@ -68,7 +112,7 @@ class _PairingWire(BaseModel):
 
 
 class _SessionWire(BaseModel):
-    model_config = ConfigDict(frozen=True, extra="forbid")
+    model_config = ConfigDict(frozen=True, extra="ignore")
 
     device_id: str
     access_token: SecretStr = Field(..., repr=False)
@@ -78,7 +122,7 @@ class _SessionWire(BaseModel):
 
 
 class _ResourceWire(BaseModel):
-    model_config = ConfigDict(frozen=True, extra="forbid")
+    model_config = ConfigDict(frozen=True, extra="ignore")
 
     external_id: str
     display_name: str
@@ -87,7 +131,7 @@ class _ResourceWire(BaseModel):
 
 
 class _ConnectionWire(BaseModel):
-    model_config = ConfigDict(frozen=True, extra="forbid")
+    model_config = ConfigDict(frozen=True, extra="ignore")
 
     connection_id: str
     provider: str
@@ -163,6 +207,12 @@ class ZEOconnectHTTPTransport:
             raise HostedClientError("hosted session response is invalid") from None
 
     def refresh_session(self, session: DeviceSession) -> DeviceSession:
+        try:
+            return self._refresh(session)
+        except _BearerRefusedError:
+            raise HostedClientError(_REPAIR) from None
+
+    def _refresh(self, session: DeviceSession) -> DeviceSession:
         payload = self._request_json(
             "POST",
             "/v1/device/token/refresh",
@@ -177,8 +227,11 @@ class ZEOconnectHTTPTransport:
     def list_connections(
         self, session: DeviceSession
     ) -> tuple[HostedConnectionSummary, ...]:
-        payload = self._request_json(
-            "GET", "/v1/connections", session=session, authenticated=True
+        payload = self._authorized(
+            lambda current: self._request_json(
+                "GET", "/v1/connections", session=current, authenticated=True
+            ),
+            session,
         )
         if not isinstance(payload, list):
             raise HostedClientError("hosted response shape is invalid")
@@ -212,28 +265,33 @@ class ZEOconnectHTTPTransport:
                 "managed execution requires the Runtime effect service"
             )
         body = request.model_dump(mode="json", exclude_none=True)
+        # Only a safe read gets a second attempt, and only when no Broker
+        # response arrived. A Broker 503 is an outage, never retried by status
+        # (contract §9), and an effectful operation is sent at most once per
+        # session (a 401 is refused before anything runs).
         attempts = 2 if request.operation_id in _SAFE_RETRY_OPERATIONS else 1
-        last_error: HostedClientError | None = None
-        for _attempt in range(attempts):
+        for attempt in range(attempts):
             try:
-                payload = self._request_json(
-                    "POST",
-                    f"/v1/operations/{request.operation_id}:invoke",
-                    json_body=body,
-                    session=self._active_session(),
-                    authenticated=True,
+                payload = self._authorized(
+                    lambda current: self._request_json(
+                        "POST",
+                        f"/v1/operations/{request.operation_id}:invoke",
+                        json_body=body,
+                        session=current,
+                        authenticated=True,
+                    )
                 )
-                try:
-                    return HostedOperationResponse.model_validate(payload)
-                except ValidationError:
-                    raise HostedClientError(
-                        "hosted operation response is invalid"
-                    ) from None
-            except HostedClientError as error:
-                last_error = error
-                if str(error) != "hosted transport is unavailable":
+            except HostedUnreachableError:
+                if attempt + 1 == attempts:
                     raise
-        raise last_error or HostedClientError("hosted transport is unavailable")
+                continue
+            try:
+                return HostedOperationResponse.model_validate(payload)
+            except ValidationError:
+                raise HostedClientError(
+                    "hosted operation response is invalid"
+                ) from None
+        raise HostedUnreachableError()  # pragma: no cover - the loop returns or raises
 
     def fetch_artifact(self, *, artifact_id: str, max_bytes: int) -> bytes:
         if max_bytes < 0 or max_bytes > _MAX_ARTIFACT_BYTES:
@@ -242,11 +300,14 @@ class ZEOconnectHTTPTransport:
             raise HostedClientError(
                 "managed artifact retrieval requires Runtime authority"
             )
-        session = self._active_session()
-        headers = self._headers(session)
+        return self._authorized(
+            lambda current: self._fetch(artifact_id, max_bytes, current)
+        )
+
+    def _fetch(self, artifact_id: str, max_bytes: int, session: DeviceSession) -> bytes:
         try:
             with self._client.stream(
-                "GET", f"/v1/artifacts/{artifact_id}", headers=headers
+                "GET", f"/v1/artifacts/{artifact_id}", headers=self._headers(session)
             ) as response:
                 self._validate_response(response)
                 content = bytearray()
@@ -259,8 +320,10 @@ class ZEOconnectHTTPTransport:
                 return bytes(content)
         except HostedClientError:
             raise
+        except httpx.TransportError as error:
+            raise self._unreachable(error) from None
         except Exception:
-            raise HostedClientError("hosted transport is unavailable") from None
+            raise HostedUnreachableError() from None
 
     def relay_youtube_chunk(
         self,
@@ -282,8 +345,31 @@ class ZEOconnectHTTPTransport:
             raise HostedClientError("relay chunk exceeds the client limit")
         if is_managed_execution():
             raise HostedClientError("managed execution forbids member API fallback")
+        return self._authorized(
+            lambda current: self._relay(
+                current,
+                connection_id=connection_id,
+                link=link,
+                seal=seal,
+                content_range=content_range,
+                content_type=content_type,
+                body=body,
+            )
+        )
+
+    def _relay(
+        self,
+        session: DeviceSession,
+        *,
+        connection_id: str,
+        link: str,
+        seal: str,
+        content_range: str,
+        content_type: str,
+        body: bytes,
+    ) -> dict[str, JsonValue]:
         headers = {
-            **self._headers(self._active_session()),
+            **self._headers(session),
             "Content-Type": "application/octet-stream",
             "X-Zeo-Connection": connection_id,
             "X-Zeo-Upload-Link": link,
@@ -298,15 +384,15 @@ class ZEOconnectHTTPTransport:
                 headers=headers,
                 timeout=httpx.Timeout(300.0, connect=15.0),
             )
-        except httpx.TransportError:
-            raise HostedClientError("hosted transport is unavailable") from None
+        except httpx.TransportError as error:
+            raise self._unreachable(error) from None
         # Only a Broker-produced 5xx is an outage. A headerless one came from
         # something in front of the Broker and is a terminal protocol failure.
         _require_protocol(response)
         if response.status_code in {502, 503, 504}:
             # ZEOconnect could not reach YouTube (or Google's token endpoint):
             # transient, so the transfer probes again and resumes.
-            raise HostedClientError("hosted transport is unavailable")
+            raise HostedUnavailableError()
         self._validate_response(response)
         if len(response.content) > _MAX_JSON_BYTES:
             raise HostedClientError("hosted response exceeds the client limit")
@@ -327,6 +413,35 @@ class ZEOconnectHTTPTransport:
             expect_empty=True,
         )
 
+    def _authorized[T](
+        self,
+        call: Callable[[DeviceSession], T],
+        session: DeviceSession | None = None,
+    ) -> T:
+        """Run ``call``; after a Broker 401, refresh once and run it once more.
+
+        A 401 is answered before anything runs, so the second call is the
+        same request, never a second effect. A second 401 means the device
+        must be paired again (contract 1.0.0 §9).
+        """
+        current = session or self._active_session()
+        try:
+            return call(current)
+        except _BearerRefusedError:
+            pass
+        current = self._refreshed(current)
+        try:
+            return call(current)
+        except _BearerRefusedError:
+            raise HostedClientError(_REPAIR) from None
+
+    def _unreachable(self, error: httpx.TransportError) -> HostedUnreachableError:
+        if self._base_url == ZEOCONNECT_PRODUCTION_ORIGIN and isinstance(
+            error, (httpx.ConnectError, httpx.ConnectTimeout)
+        ):
+            return HostedUnreachableError(_OFF_NETWORK.format(origin=self._base_url))
+        return HostedUnreachableError()
+
     def _active_session(self) -> DeviceSession:
         session = self._session_store.load()
         if session is None:
@@ -334,9 +449,40 @@ class ZEOconnectHTTPTransport:
         if self._clock() >= session.refresh_expires_at:
             raise HostedClientError("paired device session is expired")
         if self._clock() >= session.access_expires_at:
-            session = self.refresh_session(session)
-            self._session_store.save(session)
+            session = self._refreshed(session)
         return session
+
+    def _refreshed(self, used: DeviceSession) -> DeviceSession:
+        """Refresh ``used`` and save the result, unless another process already did.
+
+        Refresh tokens are single use (contract 1.0.0 §4). A process sharing
+        this store, such as a YouTube run beside the retention sweep, may
+        rotate the pair first. So the store is read again before refreshing,
+        and again if the refresh is refused. A pair rotated by the other
+        process is used, never reported as "pair this device again".
+
+        A narrow window remains. If the refusal is read before the other
+        process has saved its rotated pair, the refusal stands.
+        """
+        if (stored := self._rotated_elsewhere(used)) is not None:
+            return stored
+        try:
+            session = self._refresh(used)
+        except _BearerRefusedError:
+            if (stored := self._rotated_elsewhere(used)) is not None:
+                return stored
+            raise HostedClientError(_REPAIR) from None
+        self._session_store.save(session)
+        return session
+
+    def _rotated_elsewhere(self, used: DeviceSession) -> DeviceSession | None:
+        stored = self._session_store.load()
+        if stored is None or (
+            stored.refresh_token.get_secret_value()
+            == used.refresh_token.get_secret_value()
+        ):
+            return None
+        return stored
 
     def _request_json(
         self,
@@ -352,17 +498,27 @@ class ZEOconnectHTTPTransport:
             raise HostedClientError("managed execution forbids member API fallback")
         headers = self._headers(session) if authenticated else self._headers(None)
         if json_body is not None:
-            encoded = httpx.Request(
-                method, "https://local.invalid", json=json_body
-            ).content
+            # NaN and +-Infinity are not JSON, and the Broker refuses them. httpx
+            # 0.27 would send them, so refuse here whatever httpx is installed.
+            try:
+                encoded = json.dumps(
+                    json_body,
+                    ensure_ascii=False,
+                    separators=(",", ":"),
+                    allow_nan=False,
+                ).encode()
+            except ValueError:
+                raise HostedClientError(
+                    "hosted request holds a number JSON cannot carry"
+                ) from None
             if len(encoded) > _MAX_REQUEST_BYTES:
                 raise HostedClientError("hosted request exceeds the client limit")
         try:
             response = self._client.request(
                 method, path, json=json_body, headers=headers
             )
-        except httpx.TransportError:
-            raise HostedClientError("hosted transport is unavailable") from None
+        except httpx.TransportError as error:
+            raise self._unreachable(error) from None
         self._validate_response(response)
         if expect_empty:
             if response.content:
@@ -379,18 +535,33 @@ class ZEOconnectHTTPTransport:
         if response.is_redirect:
             raise HostedClientError("hosted redirect is forbidden")
         _require_protocol(response)
-        if response.status_code in {409, 425, 428}:
+        status = response.status_code
+        if status == 401:
+            raise _BearerRefusedError()
+        if status == 403 and (stop := _stop(response)) is not None:
+            raise stop
+        if status == 426:
+            raise HostedUpgradeRequiredError()
+        if status in {409, 425, 428}:
             try:
                 if response.json().get("code") == "authorization_pending":
                     raise HostedClientError("hosted request is pending")
             except AttributeError, ValueError:
                 pass
-        if response.status_code >= 400:
+        if status == 503:
+            # An outage the Broker reported (council ruling E7): not a stop,
+            # not a refusal, and not proof the request was never accepted.
+            raise HostedUnavailableError()
+        if status >= 400:
+            # Not evidence of non-acceptance either: only a stop is positive.
             raise HostedClientError("hosted request was refused")
 
     @staticmethod
     def _headers(session: DeviceSession | None) -> dict[str, str]:
-        headers = {ZEOCONNECT_PROTOCOL_HEADER: ZEOCONNECT_PROTOCOL_VERSION}
+        headers = {
+            ZEOCONNECT_PROTOCOL_HEADER: ZEOCONNECT_PROTOCOL_VERSION,
+            ZEOCONNECT_CAPABILITIES_HEADER: _CAPABILITIES,
+        }
         if session is not None:
             headers["Authorization"] = (
                 "Bearer " + session.access_token.get_secret_value()
@@ -442,6 +613,7 @@ def _validated_origin(value: str, *, allow_development: bool) -> str:
 
 __all__ = [
     "YOUTUBE_RELAY_MAX_CHUNK_BYTES",
+    "ZEOCONNECT_CAPABILITIES_HEADER",
     "ZEOCONNECT_PRODUCTION_ORIGIN",
     "ZEOCONNECT_PROTOCOL_HEADER",
     "ZEOCONNECT_PROTOCOL_VERSION",

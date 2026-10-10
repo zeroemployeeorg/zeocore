@@ -7,9 +7,18 @@ from collections.abc import Mapping, Sequence
 from enum import StrEnum
 from typing import Protocol, runtime_checkable
 
-from pydantic import BaseModel, ConfigDict, Field, HttpUrl, JsonValue, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    HttpUrl,
+    JsonValue,
+    ValidationInfo,
+    field_validator,
+    model_validator,
+)
 
-from zeo_core.contracts.connections import NormalizedError
+from zeo_core.contracts.connections import NormalizedError, NormalizedErrorCode
 
 _SECRET_KEYS = frozenset(
     {
@@ -75,9 +84,13 @@ class HostedOperationRequest(BaseModel):
 
 
 class HostedOperationResponse(BaseModel):
-    """Bounded broker response with mutually exclusive result shapes."""
+    """Bounded broker response with mutually exclusive result shapes.
 
-    model_config = ConfigDict(frozen=True, extra="forbid")
+    Unknown top-level fields are dropped, never passed through: a 1.y Broker
+    may add response fields that a 1.0 client must ignore (contract §10).
+    """
+
+    model_config = ConfigDict(frozen=True, extra="ignore")
 
     status: HostedOperationStatus
     execution_id: str = Field(..., min_length=1, max_length=200)
@@ -86,6 +99,34 @@ class HostedOperationResponse(BaseModel):
     approval_url: HttpUrl | None = None
     normalized_error: NormalizedError | None = None
     receipt: dict[str, JsonValue] | None = None
+
+    @property
+    def replayed(self) -> bool:
+        """The Broker served this from its stored record (contract 1.1.0 §6).
+
+        A replay is a read of an earlier outcome, never a fresh act: it made no
+        provider call. A ``confirmed`` replay is not a new success.
+        """
+        return self.receipt is not None and self.receipt.get("replayed") is True
+
+    @field_validator("artifact", "normalized_error", mode="before")
+    @classmethod
+    def _ignore_unknown_nested_fields(
+        cls, value: object, info: ValidationInfo
+    ) -> object:
+        # Contract §10 covers every level of a response, not only the top.
+        # Both nested models refuse unknown fields when built directly, and
+        # NormalizedError is shared beyond hosted access, so drop them here.
+        model: type[BaseModel] = (
+            HostedArtifactDescriptor
+            if info.field_name == "artifact"
+            else NormalizedError
+        )
+        if isinstance(value, dict):
+            return {
+                key: item for key, item in value.items() if key in model.model_fields
+            }
+        return value
 
     @model_validator(mode="after")
     def _shape_matches_status(self) -> HostedOperationResponse:
@@ -141,7 +182,94 @@ class HostedConnectionClient:
 
 
 class HostedClientError(RuntimeError):
-    """Sanitized failure at the hosted-client trust boundary."""
+    """Sanitized failure at the hosted-client trust boundary.
+
+    Apart from ``HostedStoppedError``, a failure says nothing about whether an
+    effect happened. "Refused" and "unavailable" are never evidence that the
+    Broker did not accept an effectful request.
+    """
+
+
+class HostedUnavailableError(HostedClientError):
+    """An outage: the Broker, or the path to it, could not serve the request.
+
+    Not a stop, and not proof that an effectful request was never accepted
+    (council ruling E7). It grants no retry: only a read named as safe is
+    attempted again, and only after a failure that produced no response.
+    """
+
+    def __init__(self, message: str = "hosted transport is unavailable") -> None:
+        super().__init__(message)
+
+
+class HostedUnreachableError(HostedUnavailableError):
+    """No Broker response arrived: the connection failed or broke off."""
+
+
+class HostedStoppedError(HostedClientError):
+    """The Broker positively reported an operational stop (contract 1.0.0 §9).
+
+    A stop is deliberate and is never retried or redispatched. ``control`` is
+    the control that stopped the request and ``scope`` is where it applies.
+    """
+
+    def __init__(self, *, control: str, scope: str) -> None:
+        self.control = control
+        self.scope = scope
+        super().__init__(f"hosted request was stopped by {control} ({scope})")
+
+
+class HostedUpgradeRequiredError(HostedClientError):
+    """The Broker does not speak this client's protocol version (426)."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            "ZEOconnect Broker does not accept this zeocore's protocol;"
+            " upgrade zeocore to use hosted access"
+        )
+
+
+def is_outage(response: HostedOperationResponse) -> bool:
+    """An orchestrated outage: ``failed_safe`` with ``PROVIDER_UNAVAILABLE``.
+
+    For example ``controls_unavailable:<control>`` (contract 1.1.0 §9): the
+    Broker could not read a control, so no stop is established and the
+    provider was not called. Temporary, like a 503.
+
+    Unlike a 503, this outcome is recorded against the idempotency key.
+    Sending the same key again returns it as a replay (``replayed`` is
+    true). Another attempt needs a new key: a new occurrence, sent only under
+    the caller's own authority, never an automatic retry (contract 1.2 §4.5).
+    """
+    error = response.normalized_error
+    return (
+        response.status is HostedOperationStatus.FAILED_SAFE
+        and error is not None
+        and error.code is NormalizedErrorCode.PROVIDER_UNAVAILABLE
+    )
+
+
+def stop_of(response: HostedOperationResponse) -> HostedStoppedError | None:
+    """The stop an orchestrated answer reports, or ``None`` (contract §9).
+
+    The Broker reports a stopped invocation as ``failed_safe`` carrying either
+    the STOPPED code or, to clients without that capability, REQUEST_REFUSED
+    with the stable message ``stopped:<control>:<scope>``.
+    """
+    error = response.normalized_error
+    if response.status is not HostedOperationStatus.FAILED_SAFE or error is None:
+        return None
+    if error.code not in {
+        NormalizedErrorCode.STOPPED,
+        NormalizedErrorCode.REQUEST_REFUSED,
+    }:
+        return None
+    parts = error.message.split(":", 2)
+    if len(parts) == 3 and parts[0] == "stopped" and parts[1] and parts[2]:
+        return HostedStoppedError(control=parts[1], scope=parts[2])
+    if error.code is NormalizedErrorCode.STOPPED:
+        return HostedStoppedError(control="unknown", scope="unknown")
+    return None
 
 
 def _contains_secret_key(value: JsonValue | dict[str, JsonValue] | None) -> bool:
@@ -162,4 +290,10 @@ __all__ = [
     "HostedOperationRequest",
     "HostedOperationResponse",
     "HostedOperationStatus",
+    "HostedStoppedError",
+    "HostedUnavailableError",
+    "HostedUnreachableError",
+    "HostedUpgradeRequiredError",
+    "is_outage",
+    "stop_of",
 ]

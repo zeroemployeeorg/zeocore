@@ -5,6 +5,98 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased: 0.14.0]
+
+Draft for the release that conforms to ZEOconnect Broker contract `1.0.0`
+(zeoconnect #35 at `2475934682ca07d480aa16946b3f3d6647255f6f`, file sha256
+`39e97d170941c4fba95f018b3943715fc0b7aa916211e1c1b28582e52366b2c0`). It ships
+after 0.13.0, whose entries follow under "Unreleased". When 0.13.0 is cut,
+this section becomes "Unreleased".
+
+### Fixed
+
+- **Hosted access reaches ZEOconnect again.** `ZEOCONNECT_PRODUCTION_ORIGIN` is
+  now `https://broker.connect.zeo.ac`, the Broker, which is reachable only on
+  the organisation's private network (contract §2). The retired
+  `https://connect.zeroemployee.org` and the browser-facing
+  `https://connect.zeo.ac` are refused as transport origins (org #791).
+- **YouTube retention no longer deletes data during a stop or an outage.** A
+  Broker stop or a 503 used to read as "refused", which removed `youtube.json`
+  as if access had lapsed. Both now defer, as an unreachable Broker already
+  did, until the 30-day limit.
+- **A hosted request never carries NaN or ±Infinity.** They are not JSON, and
+  the Broker refuses them (zeoconnect #49). httpx 0.27, which zeocore allows,
+  would have sent them. The transport now refuses such a body before sending,
+  with `HostedClientError("hosted request holds a number JSON cannot carry")`.
+- **A YouTube job survives a kill mid-write.** The job directory's write-once
+  files (each event and `receipt.json`) were created under their final name
+  and then written. A process killed in between left an empty file, so the next
+  run could not read the job at all. Each file is now written and synced
+  under a temporary name, then hard-linked into place, which is still
+  write-once. A filesystem without hard links is refused with `JobError` rather
+  than written directly, because a direct write would bring back the partial
+  file. This protects against a killed process. Power-loss durability also
+  depends on the filesystem honouring fsync.
+- **Unknown fields nested in a Broker response are ignored too.** 0.14.0 drops
+  unknown top-level fields (contract §10), but an unknown field inside
+  `artifact` or `normalized_error` still refused the whole response. Both now
+  drop unknown fields, so a later Broker can add fields at any level. A
+  `provider_detail` is still refused.
+- **Two processes sharing a paired session no longer ask to re-pair.** Refresh
+  tokens are single use (contract §4). When a YouTube run and the retention
+  sweep both hit a 401, both refreshed with the same token, and the loser
+  reported "pair this device again" when nothing was wrong. zeocore now reads
+  the session store again before refreshing, and again if the refresh is
+  refused. A pair the other process rotated is used instead. One narrow window
+  remains: if the refusal is read before the other process has saved its
+  pair, the refusal stands.
+
+### Added
+
+- `HostedRevolutBusinessClient`: Revolut Business account and transaction
+  reads through ZEOconnect, read-only (contract §6). On the wire the query's
+  start field is `from`; a result carrying any JSON number is refused, so
+  amounts are only ever exact decimal strings.
+- `HostedStoppedError` (with `control` and `scope`), `HostedUnavailableError`,
+  `HostedUnreachableError` and `HostedUpgradeRequiredError`, all subclasses of
+  `HostedClientError`, and `stop_of(response)` for an orchestrated stop.
+- `NormalizedErrorCode.STOPPED`. zeocore declares
+  `ZEOconnect-Capabilities: stopped-code` on every request, so the Broker may
+  send it; without that capability it sends `REQUEST_REFUSED` with
+  `stopped:<control>:<scope>`, which `stop_of` reads the same way.
+- `TransactionQuery` accepts `from` as well as `from_`.
+- Contract `1.1.0` additions (zeoconnect #40), which are additive, so no
+  re-pin is needed: `HostedOperationResponse.replayed` is true when the Broker
+  served its stored outcome, which is never a fresh success. `is_outage(response)`
+  recognizes `failed_safe` with `PROVIDER_UNAVAILABLE`, such as
+  `controls_unavailable:<control>`, as an outage, never a stop. The Broker
+  stores that outcome, so retrying with the same idempotency key replays it;
+  another attempt needs a new key and is a new occurrence, never an automatic
+  retry. YouTube retention defers on it.
+
+### Changed
+
+These change what a caller sees. The session store API and the
+`ZEOconnectHTTPTransport` constructor (`session_store`, `base_url`,
+`allow_development_origin`, `http_client`, `clock`) are unchanged.
+
+| Broker answer | 0.13.0 | 0.14.0 |
+|---|---|---|
+| 403 `{"code": "stopped", "control", "scope"}` | "hosted request was refused" | `HostedStoppedError`: "hosted request was stopped by `<control>` (`<scope>`)" |
+| 503 with the protocol header | "hosted request was refused" | `HostedUnavailableError`: "hosted transport is unavailable" |
+| 401 | "hosted request was refused" | one refresh, then the same request once more; a second 401 gives "paired device session was refused; pair this device again" |
+| 426 | "hosted request was refused" | `HostedUpgradeRequiredError`, which says to upgrade zeocore |
+| no connection to the production Broker | "hosted transport is unavailable" | `HostedUnreachableError` with the contract's off-network wording; a development origin keeps the old message |
+| a response field zeocore doesn't know | the response is invalid | the field is ignored (contract §10) |
+
+- **A Broker 503 is an outage, never a refusal and never a stop** (council
+  ruling E7). It is not evidence that an effectful request was not accepted,
+  and it grants no retry: an effect is sent once. The one safe read,
+  `google.drive.file.download`, is attempted a second time only when no
+  response arrived, never because of a 503 (contract §9).
+- **"Refused" is not evidence of non-acceptance.** Only a stop is a positive
+  statement about what the Broker did.
+
 ## [Unreleased]
 
 ### Fixed

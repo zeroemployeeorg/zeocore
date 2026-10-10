@@ -999,7 +999,7 @@ installation; others require the extra shown below. The parent package
 | `zeo_core.integrations.kit` | base install | `KitIntegration`, `KitClient`; [marketing guide](../tutorials/kit-marketing.md) |
 | `zeo_core.integrations.environments` | base install | `IntegrationEnvironment`; [test and production](../integrations/environments.md) |
 | `zeo_core.integrations.notebook` | `notebook` | `execute_notebook`; [execution guide](../integrations/notebook-execution.md) |
-| `zeo_core.integrations.hosted` | base install | `ServiceRequirement`, `ServiceResolver`, `HostedServiceRegistry`, `ExecutionProfile`, resolution states, `build_hosted_runtime`, `ZEOconnectHTTPTransport`, `KeychainSecureSessionStore`, hosted service proxies |
+| `zeo_core.integrations.hosted` | base install | `ServiceRequirement`, `ServiceResolver`, `HostedServiceRegistry`, `ExecutionProfile`, resolution states, `build_hosted_runtime`, `ZEOconnectHTTPTransport`, `KeychainSecureSessionStore`, hosted service proxies; from 0.14.0 `HostedStoppedError`, `HostedUnavailableError`, `HostedUnreachableError`, `HostedUpgradeRequiredError`, `ZEOCONNECT_CAPABILITIES_HEADER` |
 | `zeo_core.integrations.notion` | `notion` | `NotionIntegration`, `NotionClient`, `NotionOperation`, `NotionAPIError`, `NotionPageResult`, typed page/database/data-source/block/user models |
 | `zeo_core.integrations.llms` | `llms` | `LLMClient`, `OpenAIClient`, `AnthropicClient`, `OllamaClient`, `MockLLMClient`, `FallbackLLMClient`, `LLMConfig`, `ChatMessage`, `FunctionCall` |
 | `zeo_core.integrations.pandoc` | `pandoc` | `PandocIntegration`, `DocumentConverter`, `PandocConfig`, `ConversionMetrics`, `ConversionTask`, `FileInfo`, `create_integration` |

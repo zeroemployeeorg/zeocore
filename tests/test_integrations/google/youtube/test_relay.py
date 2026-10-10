@@ -17,7 +17,12 @@ from zeo_core.integrations.google.youtube.transfer import (
     ResumableTransfer,
     TransferState,
 )
-from zeo_core.integrations.hosted.client import HostedClientError
+from zeo_core.integrations.hosted.client import (
+    HostedClientError,
+    HostedStoppedError,
+    HostedUnavailableError,
+    HostedUnreachableError,
+)
 from zeo_core.integrations.hosted.pairing import (
     DeviceSession,
     InMemorySecureSessionStore,
@@ -100,9 +105,15 @@ def test_relay_translates_youtube_answers() -> None:
 def test_relay_refusal_is_terminal_and_outage_is_transient() -> None:
     refused = _put(_Transport(HostedClientError("hosted request was refused")))
     assert refused.status_code == 403
-    for transient in ("hosted transport is unavailable", "hosted request is pending"):
+    for transient in (
+        HostedUnavailableError(),
+        HostedUnreachableError("off the private network"),
+        HostedClientError("hosted request is pending"),
+    ):
         with pytest.raises(httpx.TransportError):
-            _put(_Transport(HostedClientError(transient)))
+            _put(_Transport(transient))
+    stopped = _put(_Transport(HostedStoppedError(control="dispatch", scope="global")))
+    assert stopped.status_code == 403 and "relay_stopped" in stopped.text
     missing_status = _put(_Transport({"range": None}))
     assert missing_status.status_code == 400 and "relay_failed" in missing_status.text
     with pytest.raises(ValueError, match="4 MiB"):
@@ -288,7 +299,7 @@ def test_transport_refusals_and_limits() -> None:
     def down(request: httpx.Request) -> httpx.Response:
         raise httpx.ConnectError("down")
 
-    with pytest.raises(HostedClientError, match="unavailable"):
+    with pytest.raises(HostedUnreachableError):
         _device(httpx.MockTransport(down)).relay_youtube_chunk(
             connection_id="c",
             link=LINK,

@@ -8,6 +8,10 @@ from zeo_core.integrations.hosted.client import (
     HostedOperationRequest,
     HostedOperationResponse,
     HostedOperationStatus,
+    HostedStoppedError,
+    HostedUnavailableError,
+    HostedUnreachableError,
+    HostedUpgradeRequiredError,
 )
 from zeo_core.integrations.hosted.fake import FakeGoogleDriveService
 from zeo_core.integrations.hosted.pairing import (
@@ -64,6 +68,7 @@ from zeo_core.integrations.hosted.services import (
     build_services,
 )
 from zeo_core.integrations.hosted.transport import (
+    ZEOCONNECT_CAPABILITIES_HEADER,
     ZEOCONNECT_PRODUCTION_ORIGIN,
     ZEOCONNECT_PROTOCOL_HEADER,
     ZEOCONNECT_PROTOCOL_VERSION,
@@ -99,6 +104,10 @@ __all__ = [
     "HostedRuntime",
     "HostedServiceBinding",
     "HostedServiceBindings",
+    "HostedStoppedError",
+    "HostedUnavailableError",
+    "HostedUnreachableError",
+    "HostedUpgradeRequiredError",
     "InMemorySecureSessionStore",
     "KeychainSecureSessionStore",
     "ManagedHostedTransport",
@@ -118,6 +127,7 @@ __all__ = [
     "ServiceResolver",
     "Unavailable",
     "UnavailableCode",
+    "ZEOCONNECT_CAPABILITIES_HEADER",
     "ZEOCONNECT_PRODUCTION_ORIGIN",
     "ZEOCONNECT_PROTOCOL_HEADER",
     "ZEOCONNECT_PROTOCOL_VERSION",

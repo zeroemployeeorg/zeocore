@@ -108,11 +108,15 @@ class Transaction(_Normalized):
 
 
 class TransactionQuery(BaseModel):
-    """One bounded page. ``to`` is the cursor returned by the previous page."""
+    """One bounded page. ``to`` is the cursor returned by the previous page.
 
-    model_config = ConfigDict(frozen=True, extra="forbid")
+    On the wire (ZEOconnect, contract 1.0.0 §6) the start field is ``from``:
+    dump with ``by_alias=True``. Python callers keep writing ``from_``.
+    """
 
-    from_: AwareDatetime | None = None
+    model_config = ConfigDict(frozen=True, extra="forbid", validate_by_name=True)
+
+    from_: AwareDatetime | None = Field(default=None, alias="from")
     to: AwareDatetime | None = None
     account_id: UUID | None = None
     type: ProviderToken | None = None
