@@ -944,6 +944,42 @@ class TestKeychainProofGateContract:
             assert "exit 36" in refusal and "User interaction is not allowed" in refusal
 
 
+def _writes_the_real_keychain(source: str) -> bool:
+    return "FakeSubprocessRunner" not in source and (
+        '"add-generic-password"' in source or "RealSubprocessRunner()" in source
+    )
+
+
+def test_every_test_that_writes_the_real_keychain_is_gated() -> None:
+    """A test that writes the real keychain must use ``usable_keychain``.
+
+    The ordinary gate skips such a proof on a locked keychain and the
+    required gate fails it. A writing test without the fixture would fail or
+    prompt there instead (Architect review of #82).
+    """
+    import inspect
+
+    module = sys.modules[__name__]
+    writers: list[str] = []
+    ungated: list[str] = []
+    for owner in [module, *(v for v in vars(module).values() if inspect.isclass(v))]:
+        for name, test in vars(owner).items():
+            if not (name.startswith("test_") and callable(test)):
+                continue
+            if test is test_every_test_that_writes_the_real_keychain_is_gated:
+                continue
+            if not _writes_the_real_keychain(inspect.getsource(test)):
+                continue
+            writers.append(name)
+            marks = getattr(test, "pytestmark", [])
+            if not any(
+                m.name == "usefixtures" and "usable_keychain" in m.args for m in marks
+            ):
+                ungated.append(name)
+    assert len(writers) == 5, writers
+    assert ungated == []
+
+
 class TestStdinTransportProvenOnRealExecutable:
     """
     Principal decision msg_e79f76af, carried into this revision by
@@ -1145,7 +1181,9 @@ class TestStdinTransportProvenOnRealExecutable:
                     ]
                 )
 
-    @_needs_real_security
+    # It writes an item, so it is gated like the other writing proofs: on a
+    # locked, non-interactive keychain it skips, never fails or prompts.
+    @pytest.mark.usefixtures("usable_keychain")
     def test_stdin_transport_diagnostics_never_carry_material_on_the_real_binary(
         self,
     ) -> None:
@@ -1208,6 +1246,8 @@ class TestBackgroundEvidenceArgvAndEnvVarExposure:
     test_dash_a_broad_access_is_never_passed_by_the_store's argv sweep).
     """
 
+    # It runs add-generic-password, so it is gated like the writing proofs.
+    @pytest.mark.usefixtures("usable_keychain")
     def test_raw_argv_w_is_visible_via_ps_this_is_why_the_store_no_longer_uses_it(
         self,
     ) -> None:
