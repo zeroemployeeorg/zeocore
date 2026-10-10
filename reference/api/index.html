@@ -16,7 +16,7 @@
         <link rel="prev" href="../../project/examples/">
       
       
-        <link rel="next" href="../generated/">
+        <link rel="next" href="../cli/">
       
       
         
@@ -1665,6 +1665,8 @@
         
       
         
+      
+        
           
         
       
@@ -2278,6 +2280,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The zeocore command
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -4124,6 +4154,45 @@ composition uses <code>zeo_core.adapters.runtime_host.host.ManagedHost</code> an
 Wire models live in <code>zeo_core.contracts.runtime</code>: <code>ProviderBinding</code>,
 <code>AttemptBinding</code>, <code>LaunchContext</code>, <code>InvocationRequest</code>, <code>EffectRequest</code>,
 <code>RuntimeReply</code> and <code>HostResult</code>.</p>
+<p>Public from 0.15.0, each in its module's <code>__all__</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Public names</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>zeo_core.adapters.runtime_host.canonical</code></td>
+<td><code>canonical_bytes</code> (RFC 8785 bytes), <code>digest</code> (<code>sha256:</code> of those bytes), <code>parse_json</code> (bounded strict decode), <code>manifest_inventory</code>, <code>MAX_BYTES</code>, <code>ProtocolError</code>, <code>InvalidRequestError</code></td>
+</tr>
+<tr>
+<td><code>zeo_core.adapters.runtime_host.catalogue</code></td>
+<td><code>CandidateCatalogue</code>, <code>validate_inventory</code></td>
+</tr>
+<tr>
+<td><code>zeo_core.adapters.runtime_host.channel</code></td>
+<td><code>RuntimeChannel</code></td>
+</tr>
+<tr>
+<td><code>zeo_core.adapters.runtime_host.host</code></td>
+<td><code>ManagedHost</code>, <code>EffectPort</code>, <code>parse_result</code>, <code>prepare_request</code></td>
+</tr>
+<tr>
+<td><code>zeo_core.contracts.runtime</code></td>
+<td><code>RUNTIME_HOST_PROTOCOL_VERSION</code> (1), with the wire models above</td>
+</tr>
+</tbody>
+</table>
+<p>Bound compatibility on both the zeocore release and
+<code>RUNTIME_HOST_PROTOCOL_VERSION</code>. The schemas and vectors are not in the wheel:
+pin them by sha256 from the source tree at the release tag.</p>
+<p>From 0.15.0, while zeocore is 0.x, a removal or an incompatible change to
+these names lands only in a minor release, never a patch, and is listed
+under "Breaking" in <a href="../../project/CHANGELOG/">CHANGELOG.md</a>. From 1.0.0 it needs a
+major version. A wire-incompatible change to a runtime-host-v1 model also
+raises <code>RUNTIME_HOST_PROTOCOL_VERSION</code>.</p>
 <p>The executable <a href="https://github.com/zeroemployeeorg/zeocore/tree/main/contracts/runtime-host-v1">schemas and canonical vectors</a>
 and <a href="../../how-to/runtime-host/">protocol guide</a> define this candidate surface.
 It ships in 0.11.0; joint Runtime/ZEOconnect interoperability acceptance is still required.
@@ -4210,7 +4279,7 @@ installation; others require the extra shown below. The parent package
 <tr>
 <td><code>zeo_core.integrations.hosted</code></td>
 <td>base install</td>
-<td><code>ServiceRequirement</code>, <code>ServiceResolver</code>, <code>HostedServiceRegistry</code>, <code>ExecutionProfile</code>, resolution states, <code>build_hosted_runtime</code>, <code>ZEOconnectHTTPTransport</code>, <code>KeychainSecureSessionStore</code>, hosted service proxies</td>
+<td><code>ServiceRequirement</code>, <code>ServiceResolver</code>, <code>HostedServiceRegistry</code>, <code>ExecutionProfile</code>, resolution states, <code>build_hosted_runtime</code>, <code>ZEOconnectHTTPTransport</code>, <code>KeychainSecureSessionStore</code>, hosted service proxies; from 0.14.0 <code>HostedStoppedError</code>, <code>HostedUnavailableError</code>, <code>HostedUnreachableError</code>, <code>HostedUpgradeRequiredError</code>, <code>ZEOCONNECT_CAPABILITIES_HEADER</code>; with contract 1.2.0, <code>HostedExpectedBinding</code>, <code>HostedFenceUnsupportedError</code>, <code>HostedConnectionChangedError</code>, <code>binding_mismatch_of</code>; with contract 1.2.1, <code>HostedRequestChangedError</code>, <code>request_changed_of</code></td>
 </tr>
 <tr>
 <td><code>zeo_core.integrations.notion</code></td>
@@ -4469,13 +4538,13 @@ declared stable yet.</p>
         
         
           
-          <a href="../generated/" class="md-footer__link md-footer__link--next" aria-label="Next: Generated API">
+          <a href="../cli/" class="md-footer__link md-footer__link--next" aria-label="Next: The zeocore command">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                Generated API
+                The zeocore command
               </div>
             </div>
             <div class="md-footer__button md-icon">

@@ -1811,6 +1811,8 @@
         
       
         
+      
+        
           
         
       
@@ -1883,6 +1885,34 @@
     
   
     Public API map
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The zeocore command
   
 
     
@@ -2590,8 +2620,9 @@ own database. The hosted client never connects to ZEOconnect's Supabase project:
 <p>Every request and response uses <code>ZEOconnect-Protocol-Version: 1</code>. Redirects are
 refused. JSON requests are limited to 64 KiB, JSON responses to 1 MiB, and
 artifacts to 10 MiB. The production origin is compiled as
-<code>https://connect.zeroemployee.org</code>; only an explicit constructor flag permits a
-localhost development origin. Ambient proxy variables are ignored by the
+<code>https://broker.connect.zeo.ac</code>, the tailnet-only Broker (until 0.13.0 it was
+the retired <code>https://connect.zeroemployee.org</code>); only an explicit constructor
+flag permits a localhost development origin. Ambient proxy variables are ignored by the
 production client.</p>
 <p>The current private ZEOconnect server must add this version header and stop
 requiring caller-supplied <code>connector_revision</code> before live compatibility is

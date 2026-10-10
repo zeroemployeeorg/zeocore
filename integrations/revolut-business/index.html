@@ -1549,6 +1549,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#expenses-receipts-and-labels-from-0130" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Expenses, receipts and labels (from 0.13.0)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#paging-contract" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1850,6 +1861,8 @@
         
       
         
+      
+        
           
         
       
@@ -1922,6 +1935,34 @@
     
   
     Public API map
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The zeocore command
   
 
     
@@ -2402,6 +2443,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#expenses-receipts-and-labels-from-0130" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Expenses, receipts and labels (from 0.13.0)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#paging-contract" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2654,31 +2706,87 @@ constructs it with a current access token:</p>
 </tr>
 </tbody>
 </table>
-<p>Hosted enrollment is not yet admitted; the setup catalogue reports its state.
+<p>Hosted enrollment is not yet admitted; the setup catalogue reports its state.</p>
+<p>From 0.14.0, <code>HostedRevolutBusinessClient</code> makes the same two reads through
+ZEOconnect, with the credential held by the Broker (Broker contract <code>1.0.0</code>
+§6). It is read-only and never makes a payment. Pass it a
+<code>HostedConnectionClient</code> and the connection's id:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">zeo_core.integrations.revolut</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="n">HostedRevolutBusinessClient</span><span class="p">,</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="n">TransactionQuery</span><span class="p">,</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="p">)</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="n">revolut</span> <span class="o">=</span> <span class="n">HostedRevolutBusinessClient</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">connection_id</span><span class="o">=</span><span class="n">connection_id</span><span class="p">)</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="n">accounts</span> <span class="o">=</span> <span class="n">revolut</span><span class="o">.</span><span class="n">list_accounts</span><span class="p">()</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="n">page</span> <span class="o">=</span> <span class="n">revolut</span><span class="o">.</span><span class="n">list_transactions</span><span class="p">(</span><span class="n">TransactionQuery</span><span class="p">(</span><span class="n">from_</span><span class="o">=</span><span class="n">since</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="mi">200</span><span class="p">))</span>
+</code></pre></div>
+<p>Paging works as with the direct client. Two wire rules apply: the query's
+start field is sent as <code>from</code>, and every amount must arrive as an exact
+decimal string. A result that carries a JSON number is refused, not rounded. A
+Broker stop raises <code>HostedStoppedError</code>.
 Error codes from the client are sanitized categories, not diagnoses:
 <code>AUTHENTICATION</code> (401) does not establish that a token expired, and <code>ACCESS</code>
 (403) does not establish that a connection was revoked.</p>
 <h2 id="using-the-client-directly">Using the client directly<a class="headerlink" href="#using-the-client-directly" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">SecretStr</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">zeo_core.integrations.revolut</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="n">RevolutBusinessClient</span><span class="p">,</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="n">RevolutEnvironment</span><span class="p">,</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>    <span class="n">TransactionQuery</span><span class="p">,</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="p">)</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="n">client</span> <span class="o">=</span> <span class="n">RevolutBusinessClient</span><span class="p">(</span><span class="n">token</span><span class="p">,</span> <span class="n">environment</span><span class="o">=</span><span class="n">RevolutEnvironment</span><span class="o">.</span><span class="n">SANDBOX</span><span class="p">)</span>
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="k">try</span><span class="p">:</span>
-<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>    <span class="n">accounts</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">list_accounts</span><span class="p">()</span>
-<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>    <span class="n">page</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">list_transactions</span><span class="p">(</span><span class="n">TransactionQuery</span><span class="p">(</span><span class="n">from_</span><span class="o">=</span><span class="n">since</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="mi">200</span><span class="p">))</span>
-<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>    <span class="k">while</span> <span class="n">page</span><span class="o">.</span><span class="n">next_to</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>        <span class="n">page</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">list_transactions</span><span class="p">(</span>
-<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>            <span class="n">TransactionQuery</span><span class="p">(</span><span class="n">from_</span><span class="o">=</span><span class="n">since</span><span class="p">,</span> <span class="n">to</span><span class="o">=</span><span class="n">page</span><span class="o">.</span><span class="n">next_to</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="mi">200</span><span class="p">)</span>
-<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>        <span class="p">)</span>
-<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a><span class="k">finally</span><span class="p">:</span>
-<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>    <span class="n">client</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">SecretStr</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">zeo_core.integrations.revolut</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    <span class="n">RevolutBusinessClient</span><span class="p">,</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    <span class="n">RevolutEnvironment</span><span class="p">,</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>    <span class="n">TransactionQuery</span><span class="p">,</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="p">)</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="n">client</span> <span class="o">=</span> <span class="n">RevolutBusinessClient</span><span class="p">(</span><span class="n">token</span><span class="p">,</span> <span class="n">environment</span><span class="o">=</span><span class="n">RevolutEnvironment</span><span class="o">.</span><span class="n">SANDBOX</span><span class="p">)</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>    <span class="n">accounts</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">list_accounts</span><span class="p">()</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>    <span class="n">page</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">list_transactions</span><span class="p">(</span><span class="n">TransactionQuery</span><span class="p">(</span><span class="n">from_</span><span class="o">=</span><span class="n">since</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="mi">200</span><span class="p">))</span>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>    <span class="k">while</span> <span class="n">page</span><span class="o">.</span><span class="n">next_to</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>        <span class="n">page</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">list_transactions</span><span class="p">(</span>
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>            <span class="n">TransactionQuery</span><span class="p">(</span><span class="n">from_</span><span class="o">=</span><span class="n">since</span><span class="p">,</span> <span class="n">to</span><span class="o">=</span><span class="n">page</span><span class="o">.</span><span class="n">next_to</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="mi">200</span><span class="p">)</span>
+<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>        <span class="p">)</span>
+<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a><span class="k">finally</span><span class="p">:</span>
+<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a>    <span class="n">client</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 </code></pre></div>
 <p><code>token</code> is a <code>SecretStr</code> supplied by the credential owner. <code>environment</code>
 selects one of two fixed origins; a caller can never supply a provider URL.</p>
+<h2 id="expenses-receipts-and-labels-from-0130">Expenses, receipts and labels (from 0.13.0)<a class="headerlink" href="#expenses-receipts-and-labels-from-0130" title="Permanent link">&para;</a></h2>
+<p>Read-only, like the rest of the client. <strong>Offline contract only:</strong> the shapes
+come from Revolut's published OpenAPI contract, and none of these reads has
+been made against a real account.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">zeo_core.integrations.revolut</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExpenseQuery</span><span class="p">,</span> <span class="n">LabelQuery</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="n">page</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">list_expenses</span><span class="p">(</span><span class="n">ExpenseQuery</span><span class="p">(</span><span class="n">from_</span><span class="o">=</span><span class="n">since</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="mi">200</span><span class="p">))</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="n">expense</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">get_expense</span><span class="p">(</span><span class="n">page</span><span class="o">.</span><span class="n">expenses</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="n">receipt</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">download_receipt</span><span class="p">(</span><span class="n">expense</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">expense</span><span class="o">.</span><span class="n">receipt_ids</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="n">groups</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">list_label_groups</span><span class="p">(</span><span class="n">LabelQuery</span><span class="p">(</span><span class="n">limit</span><span class="o">=</span><span class="mi">100</span><span class="p">))</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="n">labels</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">list_labels</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">groups</span><span class="o">.</span><span class="n">label_groups</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">id</span><span class="p">))</span>
+</code></pre></div>
+<ul>
+<li><strong>Expenses</strong> page like transactions: one page per call, with <code>next_to</code> as the
+  next <code>to</code>, <code>PAGINATION_STALLED</code> when a full page does not advance, and <code>count</code>
+  up to 500. Replace stored expenses by <code>id</code>.</li>
+<li><strong>Which date the window filters on is not stated</strong> in Revolut's published
+  contract. <code>next_to</code> is derived from the oldest <code>expense_date</code>, and that
+  choice is <strong>unverified until a live sandbox run</strong>. If it is wrong, a page can
+  start past expenses that were never returned. Replacing by <code>id</code> removes
+  duplicates, but it cannot recover a skipped expense.</li>
+<li><strong>So an expense read is never reported complete.</strong> Every <code>ExpensePage</code>
+  carries <code>completeness="unverified"</code>. Reaching <code>next_to=None</code> means Revolut
+  returned a short page, not that every expense in the window was read. Record
+  an expense sync as potentially incomplete, and do not use it to conclude that
+  an expense does not exist.</li>
+<li><strong>Labels and label groups</strong> page by an opaque <code>next_page_token</code>. Pass it back
+  unchanged as <code>LabelQuery(page_token=...)</code>. <code>limit</code> goes up to 500, and a token
+  that does not change raises <code>PAGINATION_STALLED</code>.</li>
+<li><strong>A receipt</strong> is read whole and bounded <strong>while it is read</strong>, to
+  <code>MAX_RECEIPT_BYTES</code> (10 MiB, equal to the hosted artifact limit). It is
+  returned as <code>Receipt(content, media_type, sha256, observed_at)</code>. Its bytes are
+  never parsed, logged or shown in <code>repr</code>.</li>
+<li><strong>Redirects are never followed.</strong> A 3xx is refused (<code>HTTP</code>, with its status
+  code), so the access token goes only to Revolut's fixed origin, never to a
+  host a response names.</li>
+<li>An identifier that is not a single safe path segment (<code>[A-Za-z0-9_-]</code>, at most
+  100 characters) is refused <strong>before any request is sent</strong>.</li>
+</ul>
 <h2 id="paging-contract">Paging contract<a class="headerlink" href="#paging-contract" title="Permanent link">&para;</a></h2>
 <p>Revolut's published description pages transactions by a <code>from</code>/<code>to</code> window on
 <code>created_at</code> with a <code>count</code>, and has no cursor token. <code>list_transactions</code>
@@ -2722,6 +2830,8 @@ Lower <code>count</code> or narrow the window and read again.</p>
   card <code>id</code> is kept: card number, holder name and phone are discarded.</li>
 <li>Provider enumerations (<code>type</code>, <code>state</code>, <code>account_type</code>) are kept as bounded
   lowercase tokens, so a new provider value does not fail a whole page.</li>
+<li>From an expense, <code>payer</code> (a person's name) is dropped, as a card holder's
+  name is.</li>
 </ul>
 <p>This output is normalized application data. It is not raw provider evidence
 and must not be stored or labelled as raw.</p>

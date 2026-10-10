@@ -1374,6 +1374,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#github-app-installation-tokens-for-an-isolated-principal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GitHub App installation tokens (for an isolated principal)
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1767,6 +1778,8 @@
         
       
         
+      
+        
           
         
       
@@ -1839,6 +1852,34 @@
     
   
     Public API map
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The zeocore command
   
 
     
@@ -2312,6 +2353,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#github-app-installation-tokens-for-an-isolated-principal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GitHub App installation tokens (for an isolated principal)
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -2408,6 +2460,23 @@ Repair the selected grant instead of trying the production key in a test run.</p
 <p>Create a replacement token with the same intended scope, update its namespace,
 restart and rerun the repository read, then revoke the old token in Developer
 settings. For host-issued installation tokens, repair the host's refresh mechanism.</p>
+<h2 id="github-app-installation-tokens-for-an-isolated-principal">GitHub App installation tokens (for an isolated principal)<a class="headerlink" href="#github-app-installation-tokens-for-an-isolated-principal" title="Permanent link">&para;</a></h2>
+<p><code>zeo_core.integrations.github.app_tokens</code> mints installation tokens for a
+principal that holds its own GitHub App key, such as the merger. Under the
+operator's ruling the merger is a zeocore app, and its key is kept outside
+ZEOconnect. Install the <code>github-app</code> extra.</p>
+<ul>
+<li><code>InstallationTokens(app_id=..., installation_id=..., key_source=...)</code> signs
+  the App's RS256 JWT and exchanges it for a token scoped to exactly one
+  repository and exactly the permissions asked for. GitHub's answer is checked
+  to be no broader (only its implicit <code>metadata: read</code> is allowed), and a
+  broader token is revoked at once.</li>
+<li>The request is sent once and never retried. A dropped answer is
+  <code>ambiguous</code>: any token issued expires unused within the hour.</li>
+<li>The key comes only from an <code>AppKeySource</code>. <code>KeychainAppKeySource</code> reads the
+  running user's own Keychain item, so run it as the merger's own OS user. It
+  never reads the key from the environment or a file in a repository.</li>
+</ul>
 
 
 
