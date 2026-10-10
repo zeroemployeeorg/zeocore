@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **The runtime-host names are a supported tier** (planned for 0.15.0, after
+  0.14.0). `zeo_core.adapters.runtime_host.canonical`, `.catalogue`, `.channel`
+  and `.host` now declare `__all__`: `canonical_bytes`, `digest`, `parse_json`,
+  `manifest_inventory`, `MAX_BYTES`, `ProtocolError`, `InvalidRequestError`,
+  `CandidateCatalogue`, `validate_inventory`, `RuntimeChannel`, `EffectPort`,
+  `ManagedHost`, `parse_result` and `prepare_request`. Until this release they
+  were internal, with no stability promise. Nothing about them changes.
+  `zeo_core.contracts.runtime.RUNTIME_HOST_PROTOCOL_VERSION` (1) names the
+  version every versioned runtime-host-v1 model carries, so a consumer can bound
+  compatibility on it. The `contracts/runtime-host-v1` schemas and vectors are
+  still not in the wheel; pin them by sha256 from the source tag.
+  **The promise, from 0.15.0:** while zeocore is 0.x, removing one of these
+  names or changing it incompatibly happens only in a minor release (0.y.0),
+  never in a patch, and is listed under "Breaking" in that release's entry.
+  From 1.0.0 it needs a major version. A wire-incompatible change to a
+  runtime-host-v1 model also raises `RUNTIME_HOST_PROTOCOL_VERSION`.
+
 ## [0.12.0] - 2026-10-08
 
 ### Added

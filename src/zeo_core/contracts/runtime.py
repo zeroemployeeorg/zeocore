@@ -6,7 +6,7 @@ themselves. The trusted launcher and live Runtime channel enforce admission.
 
 from __future__ import annotations
 
-from typing import Annotated, Literal
+from typing import Annotated, Final, Literal
 
 from pydantic import (
     BaseModel,
@@ -18,6 +18,10 @@ from pydantic import (
 )
 
 from zeo_core.contracts.capabilities.manifest import CapabilityManifest
+
+# The version every runtime-host-v1 wire model carries. Bound compatibility on
+# this value as well as on the zeocore release.
+RUNTIME_HOST_PROTOCOL_VERSION: Final = 1
 
 Identifier = Annotated[str, Field(min_length=1, max_length=256)]
 Digest = Annotated[str, Field(pattern=r"^sha256:[0-9a-f]{64}$")]
@@ -46,9 +50,9 @@ class WireModel(BaseModel):
     @classmethod
     def explicit_version(cls, value: object) -> int:
         # Literal[1] alone accepts True and 1.0 even in strict mode.
-        if type(value) is not int or value != 1:
+        if type(value) is not int or value != RUNTIME_HOST_PROTOCOL_VERSION:
             raise ValueError("protocol_version must be integer 1")
-        return 1
+        return RUNTIME_HOST_PROTOCOL_VERSION
 
 
 class ProviderBinding(WireModel):
@@ -189,6 +193,7 @@ class RuntimeReply(WireModel):
 
 __all__ = [
     "EXIT_CODES",
+    "RUNTIME_HOST_PROTOCOL_VERSION",
     "AttemptBinding",
     "EffectRequest",
     "HostResult",

@@ -121,3 +121,8 @@ class RuntimeChannel:
     def close(self) -> None:
         self._broken = True
         self._socket.close()
+
+
+__all__ = [
+    "RuntimeChannel",
+]

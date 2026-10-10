@@ -136,3 +136,9 @@ def installed_factory(binding: ProviderBinding) -> Callable[[], CapabilityRegist
     if not callable(factory):
         raise ProtocolError("provider factory is not callable")
     return cast(Callable[[], CapabilityRegistry], factory)
+
+
+__all__ = [
+    "CandidateCatalogue",
+    "validate_inventory",
+]
