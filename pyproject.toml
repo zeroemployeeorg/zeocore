@@ -48,6 +48,7 @@ dependencies = [
 
 [project.scripts]
 zeo-capability = "zeo_core.adapters.runtime_host.__main__:main"
+zeocore = "zeo_core.cli.__main__:main"
 
 [project.optional-dependencies]
 # HTTP Adapter dependencies

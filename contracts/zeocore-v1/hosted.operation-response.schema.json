@@ -1,0 +1,193 @@
+{
+  "$defs": {
+    "HostedArtifactDescriptor": {
+      "additionalProperties": false,
+      "description": "Bounded metadata for bytes fetched through the authenticated transport.",
+      "properties": {
+        "artifact_id": {
+          "pattern": "^art_[A-Za-z0-9_-]{8,200}$",
+          "title": "Artifact Id",
+          "type": "string"
+        },
+        "content_sha256": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Content Sha256",
+          "type": "string"
+        },
+        "filename": {
+          "maxLength": 255,
+          "minLength": 1,
+          "title": "Filename",
+          "type": "string"
+        },
+        "media_type": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Media Type",
+          "type": "string"
+        },
+        "size_bytes": {
+          "minimum": 0,
+          "title": "Size Bytes",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "artifact_id",
+        "content_sha256",
+        "size_bytes",
+        "media_type",
+        "filename"
+      ],
+      "title": "HostedArtifactDescriptor",
+      "type": "object"
+    },
+    "HostedOperationStatus": {
+      "description": "Closed dispositions returned by the hosted connection broker.",
+      "enum": [
+        "confirmed",
+        "refused",
+        "failed_safe",
+        "ambiguous",
+        "approval_required"
+      ],
+      "title": "HostedOperationStatus",
+      "type": "string"
+    },
+    "JsonValue": {},
+    "NormalizedError": {
+      "additionalProperties": false,
+      "description": "A provider failure normalized into the closed taxonomy of\nNormalizedErrorCode, per packet section 5.6.\n\n`code` is required and always drawn from the closed enum; `message` is a\nshort, human-readable, product-level explanation; `provider_detail` is\noptional raw diagnostic text, present for engineers but never load-\nbearing for product behavior (disposition 15: \"Provider errors map to a\nclosed taxonomy while redacted provider metadata remains available for\noperations\").",
+      "properties": {
+        "code": {
+          "$ref": "#/$defs/NormalizedErrorCode"
+        },
+        "message": {
+          "minLength": 1,
+          "title": "Message",
+          "type": "string"
+        },
+        "provider_detail": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Provider Detail"
+        }
+      },
+      "required": [
+        "code",
+        "message"
+      ],
+      "title": "NormalizedError",
+      "type": "object"
+    },
+    "NormalizedErrorCode": {
+      "description": "Closed taxonomy for provider-specific failures, per packet section 5.6.\n\nProvider detail remains available for diagnosis (see NormalizedError's\n`provider_detail` field) but must never become the only product\nexplanation, and must never carry raw credential or cross-tenant\nmaterial -- that constraint is enforced at the NormalizedError model,\nnot here.",
+      "enum": [
+        "CONNECTION_REVOKED",
+        "CONNECTION_REPAIR_REQUIRED",
+        "PROVIDER_SCOPE_MISSING",
+        "EXTERNAL_IDENTITY_CHANGED",
+        "BUSINESS_RESOURCE_UNAVAILABLE",
+        "RATE_LIMITED",
+        "PROVIDER_UNAVAILABLE",
+        "REQUEST_REFUSED",
+        "FAILED_SAFE",
+        "RESULT_AMBIGUOUS",
+        "CONNECTOR_REVISION_UNAVAILABLE"
+      ],
+      "title": "NormalizedErrorCode",
+      "type": "string"
+    }
+  },
+  "$id": "https://zeocore.zeo.ac/contracts/zeocore-v1/hosted.operation-response.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Bounded broker response with mutually exclusive result shapes.",
+  "properties": {
+    "approval_url": {
+      "anyOf": [
+        {
+          "format": "uri",
+          "maxLength": 2083,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Approval Url"
+    },
+    "artifact": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/HostedArtifactDescriptor"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "execution_id": {
+      "maxLength": 200,
+      "minLength": 1,
+      "title": "Execution Id",
+      "type": "string"
+    },
+    "normalized_error": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/NormalizedError"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "receipt": {
+      "anyOf": [
+        {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Receipt"
+    },
+    "result": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/JsonValue"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "status": {
+      "$ref": "#/$defs/HostedOperationStatus"
+    }
+  },
+  "required": [
+    "status",
+    "execution_id"
+  ],
+  "title": "HostedOperationResponse",
+  "type": "object"
+}

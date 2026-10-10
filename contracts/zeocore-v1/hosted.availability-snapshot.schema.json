@@ -1,0 +1,192 @@
+{
+  "$defs": {
+    "AvailabilityDimension": {
+      "enum": [
+        "implementation",
+        "entitlement",
+        "provider_consent",
+        "account_health",
+        "resource_binding",
+        "runtime_authority",
+        "reachability"
+      ],
+      "title": "AvailabilityDimension",
+      "type": "string"
+    },
+    "AvailabilityFact": {
+      "additionalProperties": false,
+      "properties": {
+        "blockers": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/BlockerCode"
+          },
+          "title": "Blockers",
+          "type": "array"
+        },
+        "dimension": {
+          "$ref": "#/$defs/AvailabilityDimension"
+        },
+        "fresh_until": {
+          "format": "date-time",
+          "title": "Fresh Until",
+          "type": "string"
+        },
+        "observed_at": {
+          "format": "date-time",
+          "title": "Observed At",
+          "type": "string"
+        },
+        "revision": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Revision",
+          "type": "string"
+        },
+        "state": {
+          "enum": [
+            "satisfied",
+            "blocked",
+            "unknown"
+          ],
+          "title": "State",
+          "type": "string"
+        }
+      },
+      "required": [
+        "dimension",
+        "state",
+        "revision",
+        "observed_at",
+        "fresh_until"
+      ],
+      "title": "AvailabilityFact",
+      "type": "object"
+    },
+    "BlockerCode": {
+      "enum": [
+        "identity_conflict",
+        "organization_conflict",
+        "revoked",
+        "unsupported",
+        "entitlement_required",
+        "installation_offline",
+        "consent_required",
+        "repair_required",
+        "resource_required",
+        "feature_unavailable",
+        "provider_outage",
+        "rate_limited",
+        "runtime_decision_required",
+        "unknown",
+        "stale"
+      ],
+      "title": "BlockerCode",
+      "type": "string"
+    },
+    "ExecutionProfile": {
+      "description": "Explicit execution placements; automatic choice is policy, not a profile.",
+      "enum": [
+        "fake",
+        "local",
+        "hosted",
+        "governed"
+      ],
+      "title": "ExecutionProfile",
+      "type": "string"
+    },
+    "OpaqueConnectionHandle": {
+      "additionalProperties": false,
+      "description": "Sanitized handle selected by a user; it carries no tenant or revision.",
+      "properties": {
+        "value": {
+          "pattern": "^con_[A-Za-z0-9_-]{8,200}$",
+          "title": "Value",
+          "type": "string"
+        }
+      },
+      "required": [
+        "value"
+      ],
+      "title": "OpaqueConnectionHandle",
+      "type": "object"
+    },
+    "ServiceRequirement": {
+      "additionalProperties": false,
+      "description": "One logical service and its existing public operation identities.",
+      "properties": {
+        "operations": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 20,
+          "minItems": 1,
+          "title": "Operations",
+          "type": "array"
+        },
+        "service": {
+          "pattern": "^[a-z][a-z0-9]*(?:\\.[a-z0-9]+)*$",
+          "title": "Service",
+          "type": "string"
+        }
+      },
+      "required": [
+        "service",
+        "operations"
+      ],
+      "title": "ServiceRequirement",
+      "type": "object"
+    }
+  },
+  "$id": "https://zeocore.zeo.ac/contracts/zeocore-v1/hosted.availability-snapshot.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "connection": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/OpaqueConnectionHandle"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "facts": {
+      "items": {
+        "$ref": "#/$defs/AvailabilityFact"
+      },
+      "maxItems": 7,
+      "minItems": 7,
+      "title": "Facts",
+      "type": "array"
+    },
+    "profile": {
+      "$ref": "#/$defs/ExecutionProfile"
+    },
+    "requirement": {
+      "$ref": "#/$defs/ServiceRequirement"
+    },
+    "revision": {
+      "maxLength": 200,
+      "minLength": 1,
+      "title": "Revision",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": 1,
+      "default": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "requirement",
+    "profile",
+    "revision",
+    "facts"
+  ],
+  "title": "AvailabilitySnapshot",
+  "type": "object"
+}
