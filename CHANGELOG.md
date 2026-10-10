@@ -5,7 +5,223 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased: binding fence, 0.15.0 or 0.16.0]
+
+For ZEOconnect Broker contract `1.2.0`, pinned at zeoconnect `31da8bda` (#56's merge commit), `docs/contract/broker-contract-v1.md`, sha256 `d2be4901…`.
+The changed-request marker follows `1.2.1`, pinned at zeoconnect `707bb91b`
+(#67's merge commit), `contract/broker-contract-v1.md`, sha256 `dc2e951f…`.
+The re-enrolment code follows `1.2.2`, pinned at zeoconnect `243409bc`
+(#70's merge commit), `contract/broker-contract-v1.md`, sha256 `358bcb0f…`. It lands after
+0.14.0. It ships in 0.15.0 if 1.2.0 is pinned before 0.15.0 ships, and
+otherwise in 0.16.0.
+
+### Added
+
+- **The expected-binding fence** (contract 1.2.0 §6a). A fenced invocation is
+  refused when its connection was re-enrolled or changed between the listing
+  and the call.
+  - `HostedConnectionSummary.connection_revision` is the enrolment's revision.
+  - `summary.expected_binding()` returns a `HostedExpectedBinding` for
+    `HostedOperationRequest.expect`.
+  - The Broker refuses a mismatch with no further provider call.
+    `binding_mismatch_of(response)` names the field that differed, and
+    `receipt["binding"]` holds the values the Broker found.
+  - When the fence can't be checked, because the listing has no revision or
+    the Broker answers a fenced call with 422, zeocore raises
+    `HostedFenceUnsupportedError`. Its `reason` says which:
+    `"no_revision"` or `"invalid_fenced_request"`. A 1.2 Broker answers
+    invalid arguments with the same 422, so the second message does not claim
+    the fence alone was the cause. zeocore never resends the request unfenced.
+  - Every request now declares `ZEOconnect-Capabilities: stopped-code,
+    expected-binding`.
+- **A re-enrolled connection is its own error.** A connection id re-enrolled
+  with a changed subject, scopes, resources or credential is refused by the
+  Broker with a 400 `kernel connection binding changed` (zeoconnect #59). This
+  now raises `HostedConnectionChangedError` instead of a generic refusal. It
+  comes before any provider call, and the fix is ZEOconnect's repair, never a
+  retry. From contract 1.2.2 the Broker also marks it `"code":
+  "connection_binding_changed"` for a client declaring `expected-binding`.
+  zeocore reads the code first and keeps the detail string as the fallback,
+  so a 1.2.1 Broker is still recognised.
+- **A changed request under a used key is its own error** (contract 1.2.1
+  §6a.5). The same idempotency key with different arguments or a different
+  `expect` is refused, nothing is recorded, and the key's original outcome
+  stands. An effect's marked 400 raises `HostedRequestChangedError`. A read
+  comes back `failed_safe`, which `request_changed_of(response)` recognises.
+  The fix is a new key for the changed request, never a retry. An unmarked
+  conflict, such as the 1.1 `approval is unavailable`, stays a plain refusal.
+
+## [Unreleased: 0.14.0]
+
+Draft for the release that conforms to ZEOconnect Broker contract `1.0.0`
+(zeoconnect #35 at `2475934682ca07d480aa16946b3f3d6647255f6f`, file sha256
+`39e97d170941c4fba95f018b3943715fc0b7aa916211e1c1b28582e52366b2c0`). It ships
+after 0.13.0, whose entries follow under "Unreleased". When 0.13.0 is cut,
+this section becomes "Unreleased".
+
+### Fixed
+
+- **Hosted access reaches ZEOconnect again.** `ZEOCONNECT_PRODUCTION_ORIGIN` is
+  now `https://broker.connect.zeo.ac`, the Broker, which is reachable only on
+  the organisation's private network (contract §2). The retired
+  `https://connect.zeroemployee.org` and the browser-facing
+  `https://connect.zeo.ac` are refused as transport origins (org #791).
+- **YouTube retention no longer deletes data during a stop or an outage.** A
+  Broker stop or a 503 used to read as "refused", which removed `youtube.json`
+  as if access had lapsed. Both now defer, as an unreachable Broker already
+  did, until the 30-day limit.
+- **A hosted request never carries NaN or ±Infinity.** They are not JSON, and
+  the Broker refuses them (zeoconnect #49). httpx 0.27, which zeocore allows,
+  would have sent them. The transport now refuses such a body before sending,
+  with `HostedClientError("hosted request holds a number JSON cannot carry")`.
+- **A YouTube job survives a kill mid-write.** The job directory's write-once
+  files (each event and `receipt.json`) were created under their final name
+  and then written. A process killed in between left an empty file, so the next
+  run could not read the job at all. Each file is now written and synced
+  under a temporary name, then hard-linked into place, which is still
+  write-once. A filesystem without hard links is refused with `JobError` rather
+  than written directly, because a direct write would bring back the partial
+  file. This protects against a killed process. Power-loss durability also
+  depends on the filesystem honouring fsync.
+- **Unknown fields nested in a Broker response are ignored too.** 0.14.0 drops
+  unknown top-level fields (contract §10), but an unknown field inside
+  `artifact` or `normalized_error` still refused the whole response. Both now
+  drop unknown fields, so a later Broker can add fields at any level. A
+  `provider_detail` is still refused.
+- **Two processes sharing a paired session no longer ask to re-pair.** Refresh
+  tokens are single use (contract §4). When a YouTube run and the retention
+  sweep both hit a 401, both refreshed with the same token, and the loser
+  reported "pair this device again" when nothing was wrong. zeocore now reads
+  the session store again before refreshing, and again if the refresh is
+  refused. A pair the other process rotated is used instead. One narrow window
+  remains: if the refusal is read before the other process has saved its
+  pair, the refusal stands.
+
+### Added
+
+- `HostedRevolutBusinessClient`: Revolut Business account and transaction
+  reads through ZEOconnect, read-only (contract §6). On the wire the query's
+  start field is `from`; a result carrying any JSON number is refused, so
+  amounts are only ever exact decimal strings.
+- `HostedStoppedError` (with `control` and `scope`), `HostedUnavailableError`,
+  `HostedUnreachableError` and `HostedUpgradeRequiredError`, all subclasses of
+  `HostedClientError`, and `stop_of(response)` for an orchestrated stop.
+- `NormalizedErrorCode.STOPPED`. zeocore declares
+  `ZEOconnect-Capabilities: stopped-code` on every request, so the Broker may
+  send it; without that capability it sends `REQUEST_REFUSED` with
+  `stopped:<control>:<scope>`, which `stop_of` reads the same way.
+- `TransactionQuery` accepts `from` as well as `from_`.
+- Contract `1.1.0` additions (zeoconnect #40), which are additive, so no
+  re-pin is needed: `HostedOperationResponse.replayed` is true when the Broker
+  served its stored outcome, which is never a fresh success. `is_outage(response)`
+  recognizes `failed_safe` with `PROVIDER_UNAVAILABLE`, such as
+  `controls_unavailable:<control>`, as an outage, never a stop. The Broker
+  stores that outcome, so retrying with the same idempotency key replays it;
+  another attempt needs a new key and is a new occurrence, never an automatic
+  retry. YouTube retention defers on it.
+
+### Changed
+
+These change what a caller sees. The session store API and the
+`ZEOconnectHTTPTransport` constructor (`session_store`, `base_url`,
+`allow_development_origin`, `http_client`, `clock`) are unchanged.
+
+| Broker answer | 0.13.0 | 0.14.0 |
+|---|---|---|
+| 403 `{"code": "stopped", "control", "scope"}` | "hosted request was refused" | `HostedStoppedError`: "hosted request was stopped by `<control>` (`<scope>`)" |
+| 503 with the protocol header | "hosted request was refused" | `HostedUnavailableError`: "hosted transport is unavailable" |
+| 401 | "hosted request was refused" | one refresh, then the same request once more; a second 401 gives "paired device session was refused; pair this device again" |
+| 426 | "hosted request was refused" | `HostedUpgradeRequiredError`, which says to upgrade zeocore |
+| no connection to the production Broker | "hosted transport is unavailable" | `HostedUnreachableError` with the contract's off-network wording; a development origin keeps the old message |
+| a response field zeocore doesn't know | the response is invalid | the field is ignored (contract §10) |
+
+- **A Broker 503 is an outage, never a refusal and never a stop** (council
+  ruling E7). It is not evidence that an effectful request was not accepted,
+  and it grants no retry: an effect is sent once. The one safe read,
+  `google.drive.file.download`, is attempted a second time only when no
+  response arrived, never because of a 503 (contract §9).
+- **"Refused" is not evidence of non-acceptance.** Only a stop is a positive
+  statement about what the Broker did.
+
 ## [Unreleased]
+
+### Added
+
+- **The `zeocore` command**, for callers that don't import Python: the ZEOconnect
+  Broker and WEB, TypeScript pipelines, scripts. JSON on stdin and JSON lines on
+  stdout with the result last. Exit codes are the YouTube publish command's
+  family: 0, 2, 10, 11, 20, plus 12 not paired and 13 ambiguous
+  (`docs/reference/cli.md`).
+  - `zeocore schema list` and `zeocore schema <name>` give the public contract
+    models as JSON Schema 2020-12 under stable names, among them
+    `hosted.operation-request`, `hosted.operation-response` and
+    `connections.normalized-error`. The same schemas are committed under
+    `contracts/zeocore-v1/`, and a test fails if a model drifts from its file.
+  - `zeocore validate <name>` checks a value and answers the normalized form.
+    Its errors carry location and type only, never input values.
+  - `zeocore digest` is the sha256 of a value's RFC 8785 canonical bytes.
+  - `zeocore version` names the release and the protocols.
+- **Images: Nano Banana and Recraft** (`zeo_core.integrations.imaging`, `zeocore
+  image`), one API over both, local (your own keys) or hosted (ZEOconnect holds
+  them). Draft: the hosted profile follows the proposed Broker contract 1.3.0
+  (ZEOCORE-SOW-12) and ships only once that is pinned.
+  - Requests: Gemini generate or edit, and Recraft generate, image-to-image,
+    remove background and vectorize. Each makes one image, returned as one
+    `GeneratedImage` with its sha256, cost, provider id and `request_key`.
+  - The same request is an exact replay, so it never bills twice. Every failure
+    says what a retry needs (`same_request`, `new_occurrence` or `none`).
+  - SVG output must be a genuine, inert vector.
+  - The hosted transport gains `upload_artifact`, the `billed-computation`
+    capability, the `BUDGET_EXHAUSTED` and `INPUT_ARTIFACT_UNAVAILABLE` codes,
+    a 180 s timeout for billed calls, and `HostedUnreachableError.may_have_arrived`.
+- **The ZEOconnect client as `zeocore` commands,** so apps in any language reach
+  the Broker through one client instead of writing their own: `login`, `logout`,
+  `whoami`, `connections`, `invoke` and `artifact get`.
+  - Each app has its own device grant in the Keychain, chosen with `--profile`
+    or `ZEOCORE_PROFILE`. With no Keychain the command fails closed with exit 12.
+  - `invoke` derives its idempotency key from the request, so running the same
+    invocation again replays and never acts twice. It answers `request_key` and
+    `retry`. `--wait-approval` emits the approval link and replays the same key
+    until the person decides.
+  - `KeychainSecureSessionStore(profile=...)` keeps one entry per profile. No
+    profile keeps today's entry.
+
+### Fixed
+
+- **The YouTube custody relay no longer retries a failure no retry can cure.**
+  Until now only a refusal ended a relayed upload: every other client error
+  backed off and probed again, up to 20 times. That covered an incompatible
+  protocol, an invalid answer, an expired or missing device session, and the
+  managed-execution refusal. Now only "unavailable" and "pending" are
+  transient. Anything else holds the job as `upload_rejected` after one
+  request. A refusal, a Broker stop included, still holds it as
+  `session_link_refused`.
+- **A Broker response without its protocol header is terminal everywhere.**
+  On the relay, a 502/503/504 was read as an outage *before* the header was
+  checked. A proxy's headerless 503 was therefore retried as if the Broker had
+  sent it. Now the header is checked first on every Broker response, so a
+  missing, different or doubled header is a protocol failure. It is never
+  retried, refreshed around or read as a stop. A Broker 503 *with* the header is
+  still an outage and is retried (org #787, council ruling E5).
+
+### Changed
+
+- **One hosted error message is new.** A Broker response with no
+  `ZEOconnect-Protocol-Version` header now raises `HostedClientError("hosted
+  response did not come from the Broker")`. Before, it raised "hosted protocol
+  version is incompatible", which now means only a different or doubled header.
+  No other `HostedClientError` message changes, and neither do the session
+  store API or the `ZEOconnectHTTPTransport` constructor. Callers that match
+  on the old message for a headerless response must match on the new one.
+
+### Known issues
+
+- **Hosted access stays unavailable in this release,** as in every release since
+  0.10.0. The hosted origin is still pinned to `connect.zeroemployee.org`, which
+  no longer names the ZEOconnect deployment; local integrations are unaffected. This release
+  changes relay failure handling. It does not claim conformance to Broker
+  contract `1.0.0` and does not repair the hosted origin; both are for 0.14.0
+  (org #791).
 
 ## [0.12.0] - 2026-10-08
 

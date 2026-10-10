@@ -141,6 +141,27 @@ constructs it with a current access token:
 | Paging loop, checkpoints, deduplication, evidence storage, matching | The consuming application |
 
 Hosted enrollment is not yet admitted; the setup catalogue reports its state.
+
+From 0.14.0, `HostedRevolutBusinessClient` makes the same two reads through
+ZEOconnect, with the credential held by the Broker (Broker contract `1.0.0`
+§6). It is read-only and never makes a payment. Pass it a
+`HostedConnectionClient` and the connection's id:
+
+```python
+from zeo_core.integrations.revolut import (
+    HostedRevolutBusinessClient,
+    TransactionQuery,
+)
+
+revolut = HostedRevolutBusinessClient(client, connection_id=connection_id)
+accounts = revolut.list_accounts()
+page = revolut.list_transactions(TransactionQuery(from_=since, count=200))
+```
+
+Paging works as with the direct client. Two wire rules apply: the query's
+start field is sent as `from`, and every amount must arrive as an exact
+decimal string. A result that carries a JSON number is refused, not rounded. A
+Broker stop raises `HostedStoppedError`.
 Error codes from the client are sanitized categories, not diagnoses:
 `AUTHENTICATION` (401) does not establish that a token expired, and `ACCESS`
 (403) does not establish that a connection was revoked.

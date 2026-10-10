@@ -22,6 +22,7 @@ back here when you need to look something up.
 | `zeo_core.integrations.kit` | [Marketing capabilities](../tutorials/kit-marketing.md): broadcasts, sequences, subscribers and tags. |
 | `zeo_core.integrations.environments.IntegrationEnvironment` | [Managed launch](../integrations/environments.md) with distinct test/production state. |
 | `zeo_core.integrations.hosted.ServiceResolver` | [Native profiles](../tutorials/zeoconnect-hosted-profile.md), explicit requirements and typed resolution results. |
+| `zeo_core.integrations.imaging` | [Images](../integrations/images.md): one API over Nano Banana and Recraft, local or through ZEOconnect (draft for Broker contract 1.3.0). |
 | `zeo_core.integrations.gemini.ImageGenerationService` | [Reference image generation](../integrations/gemini-images.md) through admitted connections and durable effects. |
 | `zeo_core.integrations.notebook.execute_notebook` | [Fresh-kernel execution](../integrations/notebook-execution.md) with bounded output and cleanup. |
 
@@ -1002,7 +1003,7 @@ installation; others require the extra shown below. The parent package
 | `zeo_core.integrations.revolut.local` | `revolut`, from 0.12.0 | `LocalRevolutEnrollment`, `LocalCredentialStore`, `EnrollmentState`, `LocalEnrollmentError`, `LocalStoreError`; local enrollment of your own account |
 | `zeo_core.integrations.google.youtube` | `youtube`, from 0.12.0 | `GoogleYouTubeService`, `VideoMetadata`, `VideoSessionRequest`, `ThumbnailSessionRequest`, `CaptionSessionRequest`, `Privacy`, `VideoStatus`; the `job`, `publish`, `transfer` and `retention` submodules; [YouTube](../integrations/youtube.md) |
 | `zeo_core.integrations.notebook` | `notebook` | `execute_notebook`; [execution guide](../integrations/notebook-execution.md) |
-| `zeo_core.integrations.hosted` | base install | `ServiceRequirement`, `ServiceResolver`, `HostedServiceRegistry`, `ExecutionProfile`, resolution states, `build_hosted_runtime`, `ZEOconnectHTTPTransport`, `KeychainSecureSessionStore`, hosted service proxies |
+| `zeo_core.integrations.hosted` | base install | `ServiceRequirement`, `ServiceResolver`, `HostedServiceRegistry`, `ExecutionProfile`, resolution states, `build_hosted_runtime`, `ZEOconnectHTTPTransport`, `KeychainSecureSessionStore`, hosted service proxies; from 0.14.0 `HostedStoppedError`, `HostedUnavailableError`, `HostedUnreachableError`, `HostedUpgradeRequiredError`, `ZEOCONNECT_CAPABILITIES_HEADER`; with contract 1.2.0, `HostedExpectedBinding`, `HostedFenceUnsupportedError`, `HostedConnectionChangedError`, `binding_mismatch_of`; with contract 1.2.1, `HostedRequestChangedError`, `request_changed_of` |
 | `zeo_core.integrations.notion` | `notion` | `NotionIntegration`, `NotionClient`, `NotionOperation`, `NotionAPIError`, `NotionPageResult`, typed page/database/data-source/block/user models |
 | `zeo_core.integrations.llms` | `llms` | `LLMClient`, `OpenAIClient`, `AnthropicClient`, `OllamaClient`, `MockLLMClient`, `FallbackLLMClient`, `LLMConfig`, `ChatMessage`, `FunctionCall` |
 | `zeo_core.integrations.pandoc` | `pandoc` | `PandocIntegration`, `DocumentConverter`, `PandocConfig`, `ConversionMetrics`, `ConversionTask`, `FileInfo`, `create_integration` |

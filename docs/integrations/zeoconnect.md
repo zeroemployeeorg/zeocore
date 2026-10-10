@@ -10,6 +10,91 @@ The current native slice supplies Drive, Docs and Bluesky bindings; it is not
 a claim that every local integration is available through the hosted service.
 Live operation also requires a compatible deployed ZEOconnect Member API.
 
+!!! warning "Hosted access is unavailable in zeocore 0.10.0 through 0.13.0"
+    Every release with the hosted HTTP transport, from 0.10.0 to 0.13.0, pins
+    the hosted origin `https://connect.zeroemployee.org`.
+    The ZEOconnect deployment has been renamed, so the hosted profile cannot
+    reach it, and pairing and hosted calls fail. **Local integrations are
+    unaffected.** At the time of writing the old name has no DNS record. That
+    is a present condition, not a security guarantee, so do not rely on it to
+    keep a token from being sent. The origin correction and conformance to
+    ZEOconnect Broker contract `1.0.0` ship together in zeocore 0.14.0.
+    Tracked in org issue 791.
+
+## The Broker origin
+
+From 0.14.0 the transport talks to `https://broker.connect.zeo.ac`, the
+ZEOconnect Broker. The Broker serves paired devices only and is reachable only
+on its organisation's private network (Broker contract `1.0.0` §2). The
+browser-facing site, `https://connect.zeo.ac`, is where a person approves a
+pairing; the transport never calls it. From a device that is not on that
+network, a hosted call fails with:
+
+> ZEOconnect Broker `https://broker.connect.zeo.ac` cannot be reached from this
+> device. This hosted profile is available only on its organisation's private
+> network. zeocore will not use local credentials in its place. To use your
+> own Revolut account directly, select the local profile explicitly.
+
+zeocore never falls back to a local credential when the Broker is unreachable.
+
+## Protocol failures and stops
+
+Every Broker response carries exactly one `ZEOconnect-Protocol-Version: 1`
+header (Broker contract `1.0.0` §3). A response without it did not come from
+the Broker; it came from a proxy, the edge or the network. One with another
+value, or with the header twice, is a version mismatch. Either is a **protocol
+failure**, whatever its HTTP status. A protocol failure ends that operation:
+zeocore does not retry it, refresh the session, poll pairing again or resume an
+upload around it. It is never reported as a stop. A stop, a refusal or an
+outage is recognized only on a response that carries the header. A relay 503
+*with* the header is an outage, and a YouTube upload backs off and resumes. A
+503 *without* it ends the upload.
+
+On a response that does carry the header, zeocore 0.14.0 reads the status as
+follows (Broker contract `1.0.0` §9).
+
+| Answer | What zeocore reports | What a caller may conclude |
+|---|---|---|
+| 403 `{"code": "stopped", "control", "scope"}`, or `failed_safe` with code `STOPPED` or message `stopped:<control>:<scope>` | `HostedStoppedError`, or `stop_of(response)` | A deliberate stop. Never retried or redispatched. |
+| 503 | `HostedUnavailableError` | An outage. Whether an effect happened is **unknown**. |
+| `failed_safe` with code `PROVIDER_UNAVAILABLE`, such as `controls_unavailable:<control>` | `is_outage(response)` | An outage inside the Broker: no provider call was made. The outcome is stored, so the same idempotency key returns it again. Another attempt needs a new key: it is a new occurrence, sent only under the caller's own authority, never an automatic retry. |
+| no response at all | `HostedUnreachableError` | The same: unknown. Only `google.drive.file.download` is tried once more. |
+| 401 | one session refresh, then the same request once more | A second 401 means the device must be paired again. |
+| 426 | `HostedUpgradeRequiredError` | This zeocore is too old for the Broker. |
+| any other status of 400 or more | "hosted request was refused" | The Broker said no. That alone is **not** proof that an effect did not happen. |
+
+zeocore never resends an effect after a 503 or a lost connection. Where an
+outcome is unknown, find it by an authorised read, such as the YouTube
+executor's lookup of a lost upload, never by sending the effect again.
+
+## The expected-binding fence
+
+Use this when an invocation must act on exactly the account and enrolment the
+caller saw (Broker contract `1.2.0` §6a). Read a fresh listing, then fence the
+request with the values from it:
+
+```python
+(summary,) = transport.list_connections(session)
+request = HostedOperationRequest(
+    connection_id=summary.handle.value,
+    operation_id="google.gmail.messages.read_page",
+    arguments={},
+    idempotency_key=key,
+    expect=summary.expected_binding(),
+)
+```
+
+| Answer | What zeocore reports | What a caller may conclude |
+|---|---|---|
+| `failed_safe`, message `binding_mismatch:<field>` | `binding_mismatch_of(response)` returns the field | The connection changed. No further provider call and no effect were made. `receipt["binding"]` holds the current values. |
+| `failed_safe`, `PROVIDER_UNAVAILABLE`, `binding_unavailable` | `is_outage(response)` | The binding couldn't be read. It is not a mismatch. The outcome is stored against the key. |
+| 503 `binding is unavailable` | `HostedUnavailableError` | An outage, as for any 503. |
+| no revision in the listing | `HostedFenceUnsupportedError`, `reason` `"no_revision"` | This Broker can't check the fence. Nothing was sent. |
+| 422 to a fenced call | `HostedFenceUnsupportedError`, `reason` `"invalid_fenced_request"` | Either the Broker can't check the fence (a 1.1 Broker) or the request is invalid. The contract gives both the same `request is invalid`. zeocore holds and never resends the request without `expect`. |
+| 400 `kernel connection binding changed`, or 400 with `code` `connection_binding_changed` (1.2.2 §9) | `HostedConnectionChangedError` | The connection was re-enrolled with a different subject, scopes, resources or credential. Nothing was sent to the provider. Repair the connection in ZEOconnect; don't retry. |
+| 400 with `code` `request_changed_under_key` (1.2.1 §6a.5) | `HostedRequestChangedError` | The key was already used for a different request: other arguments, or another `expect`. Nothing was recorded, and the key's first outcome stands. A changed request needs a new key. |
+| `failed_safe`, `REQUEST_REFUSED`, `request_changed_under_key` | `request_changed_of(response)` | The same, for a read. No provider call was made. |
+
 ## Setup metadata and availability
 
 The unreleased `zeo_core.integrations.hosted.setup_catalog` module exposes
@@ -88,7 +173,7 @@ not deployed membership, browser pairing or provider delivery.
 ## Live test account and pairing
 
 1. Provision a separate test identity/member in the deployed ZEOconnect
-   application at [connect.zeroemployee.org](https://connect.zeroemployee.org).
+   application at [connect.zeo.ac](https://connect.zeo.ac).
    If membership or the required connector is not available, that is a live
    prerequisite; no ZeoCore API key can bypass it.
 2. In that identity's connection setup, authorize a dedicated provider test

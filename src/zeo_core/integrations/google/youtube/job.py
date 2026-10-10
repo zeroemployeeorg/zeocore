@@ -26,6 +26,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import secrets
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
@@ -397,11 +398,56 @@ def _canonical(value: object) -> bytes:
     ).encode()
 
 
+def _write_all(descriptor: int, content: bytes) -> None:
+    view = memoryview(content)
+    while view:
+        view = view[os.write(descriptor, view) :]
+    os.fsync(descriptor)
+
+
 def _create_exclusive(path: Path, content: bytes) -> None:
-    descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)
+    """Create ``path`` holding ``content`` whole, or not at all.
+
+    The bytes are written and synced under a temporary name, then hard-linked
+    into place. A process killed at any point therefore leaves either no file
+    under the final name or the whole file, never a partial one. The link
+    fails if ``path`` exists, so files stay write-once.
+
+    A filesystem that can't hard-link is refused (``JobError``) rather than
+    written directly, because a direct write would bring back the partial
+    file. Power-loss durability also depends on the filesystem honouring the
+    file and directory fsyncs. The directory sync is best effort.
+    """
+    temporary = path.with_name(f".{path.name}.{secrets.token_hex(6)}.tmp")
+    descriptor = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)
     try:
-        os.write(descriptor, content)
+        try:
+            _write_all(descriptor, content)
+        finally:
+            os.close(descriptor)
+        try:
+            os.link(temporary, path)
+        except FileExistsError:
+            raise
+        except OSError as error:
+            raise JobError(
+                "this filesystem can't publish job files atomically"
+                f" (hard link failed: {error.strerror or error.errno})"
+            ) from None
+    finally:
+        temporary.unlink(missing_ok=True)
+    _sync_directory(path.parent)
+
+
+def _sync_directory(directory: Path) -> None:
+    try:
+        descriptor = os.open(directory, os.O_RDONLY)
+    except OSError:
+        return
+    try:
         os.fsync(descriptor)
+    except OSError:
+        pass
     finally:
         os.close(descriptor)
 
