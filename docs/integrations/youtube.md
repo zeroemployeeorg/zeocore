@@ -123,10 +123,10 @@ authority.
 - **It closes only that hold**, refusing with exit `2`:
   - `not_held`: the job isn't held, or it was released;
   - `hold_changed`: a different hold is in force now (a stale decision);
-  - `hold_not_closeable`: the hold isn't on a recorded outcome. Only
-    `refused_in_zeoconnect` and `provider_refused` can be closed. An
-    `ambiguous_upload` or a changed file is released after a person checks,
-    never closed;
+  - `hold_not_closeable`: the hold isn't on a final outcome. Only
+    `refused_in_zeoconnect`, `provider_refused` and `youtube_rejected` can be
+    closed. An `ambiguous_upload` or a changed file is released after a person
+    checks, never closed;
   - `hold_step_unknown`: the hold recorded no step of its own, as with holds
     from older journals. Close never guesses the step from free text or from
     the caller;

@@ -130,6 +130,36 @@ def test_a_later_step_close_takes_the_step_from_the_hold(
     assert "uploaded" in [e.type for e in JobDirectory(directory).events()]
 
 
+def test_a_video_youtube_rejected_is_closed_on_the_video_step_sending_nothing(
+    tmp_path: Path, world: World, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # Release only rereads the same rejected video and holds again (studio
+    # #120), so close is the way out. The upload happened; nothing is resent.
+    yt, broker, links = world
+    complete = yt._complete
+
+    def rejected(session: object) -> dict[str, object]:
+        resource = complete(session)  # type: ignore[arg-type]
+        for video in yt.videos.values():
+            video.upload = "rejected"
+        return resource
+
+    monkeypatch.setattr(yt, "_complete", rejected)
+    directory = make_job(tmp_path)
+    held = _executor(directory, yt, broker, links).run()
+    assert (held.exit_code, held.status["reason"]) == (EXIT_HELD, "youtube_rejected")
+    extra = _hold(directory).model_extra or {}
+    assert (extra["step"], extra["attempt"]) == ("video", 1)
+    sent = len(broker.calls)
+    closed = _close(directory)
+    assert closed.exit_code == EXIT_DONE
+    assert (_close_event(directory).model_extra or {})[
+        "closed_on"
+    ] == "youtube_rejected"
+    assert "uploaded" in [e.type for e in JobDirectory(directory).events()]
+    assert len(broker.calls) == sent
+
+
 def test_a_stale_close_after_release_and_a_new_hold_is_refused(
     tmp_path: Path, world: World
 ) -> None:

@@ -195,9 +195,10 @@ def job_lock(job_dir: Path) -> Iterator[None]:
         os.close(descriptor)
 
 
-# Holds on an outcome ZEOconnect recorded: the only holds close may end.
+# The only holds close may end: an outcome ZEOconnect recorded, or YouTube's
+# final rejection of an uploaded video. Nothing more can be sent for any of them.
 CLOSEABLE_HOLDS: frozenset[str] = frozenset(
-    {"refused_in_zeoconnect", "provider_refused"}
+    {"refused_in_zeoconnect", "provider_refused", "youtube_rejected"}
 )
 
 
@@ -241,8 +242,9 @@ def close_held_job(
     as authority:
     - ``not_held``: the job isn't held, or it was released;
     - ``hold_changed``: another hold is in force (a stale decision);
-    - ``hold_not_closeable``: the hold is not on a recorded outcome, such
-      as ``ambiguous_upload`` or a changed file, even if it names a step;
+    - ``hold_not_closeable``: the hold is not on a final outcome (one
+      ZEOconnect recorded, or ``youtube_rejected``), such as
+      ``ambiguous_upload`` or a changed file, even if it names a step;
     - ``hold_step_unknown``: the hold recorded no typed step or attempt, as
       with holds from older journals;
     - ``step_mismatch``: the hold is on another step.
@@ -455,7 +457,7 @@ class PublishExecutor:
         step: str | None = None,
         attempt: int | None = None,
     ) -> _EndRunError:
-        # A hold on a recorded Broker outcome names its step and attempt as
+        # A hold on a final outcome names its step and attempt as
         # typed fields, so a close is bound to the hold, not to a caller's
         # word (ZEO-RT SOW-99).
         bound = {"step": step, "attempt": attempt} if step is not None else {}
@@ -979,7 +981,14 @@ class PublishExecutor:
             reason = (
                 video.get("rejection_reason") or video.get("failure_reason") or upload
             )
-            raise self._hold("youtube_rejected", str(reason))
+            # The upload happened and YouTube's verdict is final, so the hold
+            # names the video step for a close (ZBS, after studio #120).
+            raise self._hold(
+                "youtube_rejected",
+                str(reason),
+                step="video",
+                attempt=self._state().step("video").attempt,
+            )
         self._refresh_record(video)
         if processing not in {"succeeded", None} or upload == "uploaded":
             return self._result(EXIT_WAIT, "waiting", reason="youtube_processing")
