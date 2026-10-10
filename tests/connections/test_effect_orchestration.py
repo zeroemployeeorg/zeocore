@@ -414,6 +414,52 @@ def test_proved_no_effect_is_failed_safe_and_never_reconciled(tmp_path: Path) ->
     assert reconciler.calls == []
 
 
+def test_stopped_effect_is_dispatched_once_and_a_replay_never_redispatches(
+    tmp_path: Path,
+) -> None:
+    """A Broker stop (ZEOconnect contract v1 §9) cannot become a retry loop.
+
+    The stop arrives as a returned failed-safe result, so it is recorded once,
+    never reconciled, and a replay of the same authorization returns the
+    recorded outcome without reaching the dispatcher again.
+    """
+
+    store, organization_id, authorization, request_body = _surface(tmp_path)
+    orchestrator = _orchestrator(store)
+    dispatcher = RecordingDispatcher(
+        EffectDispatchResult(
+            disposition=DispatchDisposition.FAILED_SAFE,
+            normalized_error=NormalizedError(
+                code=NormalizedErrorCode.REQUEST_REFUSED,
+                message="stopped:connections:org-course",
+            ),
+        )
+    )
+    reconciler = _never_reconcile()
+
+    def invoke(execution_id: str) -> EffectExecutionResult:
+        return orchestrator.execute(
+            organization_id=organization_id,
+            connection_id=authorization.connection_id,
+            connector_revision=authorization.connector_revision,
+            operation_id=authorization.operation_id,
+            authorization=authorization,
+            execution_id=ExecutionId(value=execution_id),
+            request_body=request_body,
+            dispatcher=dispatcher,
+            reconciler=reconciler,
+        )
+
+    first = invoke("exec-stopped")
+    replays = [invoke(f"exec-stopped-replay-{n}") for n in range(3)]
+
+    assert first.state is ExecutionState.FAILED_SAFE
+    assert all(replay.state is ExecutionState.FAILED_SAFE for replay in replays)
+    assert {replay.execution_id for replay in replays} == {first.execution_id}
+    assert len(dispatcher.calls) == 1
+    assert reconciler.calls == []
+
+
 def test_request_mismatch_refuses_before_provider_call_and_is_durable(
     tmp_path: Path,
 ) -> None:
