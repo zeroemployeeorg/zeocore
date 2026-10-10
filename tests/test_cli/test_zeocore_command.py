@@ -98,15 +98,15 @@ def test_validate_answers_the_normalized_value() -> None:
         ).encode(),
     )
     assert status == 0
-    assert answer == {
-        "ok": True,
-        "value": {
-            "connection_id": "con_google_12345678",
-            "connector_revision": None,
-            "operation_id": "google.drive.file.download",
-            "arguments": {"file_id": "f"},
-            "idempotency_key": "k",
-        },
+    assert answer["ok"] is True
+    value = answer["value"]
+    assert isinstance(value, dict)
+    # Optional fields added in later minor contracts come back as null.
+    assert {key: item for key, item in value.items() if item is not None} == {
+        "connection_id": "con_google_12345678",
+        "operation_id": "google.drive.file.download",
+        "arguments": {"file_id": "f"},
+        "idempotency_key": "k",
     }
 
 
