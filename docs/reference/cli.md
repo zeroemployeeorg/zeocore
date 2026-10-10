@@ -33,8 +33,9 @@ $ echo '{"b": 1, "a": [1, 2]}' | zeocore digest
   line. Diagnostics go to stderr.
 - **Input is strict JSON:** no duplicate keys, no `NaN` or infinities, at most
   1 MiB.
-- **Errors never echo input values.** A validation error is its location and type
-  only, so nothing secret or personal leaks through an error.
+- **Errors never echo input.** A validation error is its location and type only.
+  A location keeps declared field names and list positions; any other key (inside
+  a free-form object such as `arguments`, or an unknown extra) shows as `*`.
 - **Exit status** is one family, the same numbers as the YouTube publish
   command's:
 
@@ -47,6 +48,7 @@ $ echo '{"b": 1, "a": [1, 2]}' | zeocore digest
   | 12 | not paired: run `zeocore login` |
   | 13 | ambiguous; never retried by the command |
   | 20 | held or refused, including a value that doesn't match its schema |
+  | 1 | internal error in zeocore: `{"ok": false, "outcome": "internal"}`, no detail. For an operation, treat it like 13 |
 
 A change to these rules is a new `cli_protocol`, announced like a contract change.
 
