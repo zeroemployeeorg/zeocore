@@ -12,6 +12,7 @@ from datetime import timedelta
 
 import httpx
 import pytest
+from pydantic import SecretStr
 
 from tests.test_integrations.hosted.test_transport import (
     NOW,
@@ -36,6 +37,7 @@ from zeo_core.integrations.hosted import (
     ZEOconnectHTTPTransport,
 )
 from zeo_core.integrations.hosted.client import is_outage, stop_of
+from zeo_core.integrations.hosted.pairing import DeviceSession
 
 EFFECT = "bluesky.post.create"
 SAFE_READ = "google.drive.file.download"
@@ -361,6 +363,78 @@ def test_a_refused_refresh_asks_to_pair_again_without_resending() -> None:
     with pytest.raises(HostedClientError, match="pair this device again"):
         hosted.invoke(request(EFFECT))
     assert paths == [_invoke_path(EFFECT), "/v1/device/token/refresh"]
+
+
+def _rotated_by_another_process() -> DeviceSession:
+    return session(NOW).model_copy(
+        update={
+            "access_token": SecretStr("other-access"),
+            "refresh_token": SecretStr("other-refresh"),
+        }
+    )
+
+
+def test_a_pair_rotated_by_another_process_is_used_not_refreshed_again() -> None:
+    paths: list[str] = []
+    store = InMemorySecureSessionStore()
+
+    def handler(http_request: httpx.Request) -> httpx.Response:
+        paths.append(http_request.url.path)
+        if http_request.headers["Authorization"] == "Bearer other-access":
+            return response(200, CONFIRMED, request=http_request)
+        # The other process rotated the pair while this request was refused.
+        store.save(_rotated_by_another_process())
+        return response(401, {"detail": "no"}, request=http_request)
+
+    hosted, _ = transport(httpx.MockTransport(handler), store)
+    store.save(session(NOW))
+    assert hosted.invoke(request(EFFECT)).status is HostedOperationStatus.CONFIRMED
+    assert paths == [_invoke_path(EFFECT), _invoke_path(EFFECT)]
+
+
+def test_a_refresh_lost_to_another_process_uses_its_pair_not_a_re_pair() -> None:
+    paths: list[str] = []
+    store = InMemorySecureSessionStore()
+
+    def handler(http_request: httpx.Request) -> httpx.Response:
+        paths.append(http_request.url.path)
+        if http_request.url.path == "/v1/device/token/refresh":
+            # Both refreshed with the same single-use token; the other won.
+            store.save(_rotated_by_another_process())
+            return response(401, {"detail": "no"}, request=http_request)
+        if http_request.headers["Authorization"] == "Bearer other-access":
+            return response(200, CONFIRMED, request=http_request)
+        return response(401, {"detail": "no"}, request=http_request)
+
+    hosted, _ = transport(httpx.MockTransport(handler), store)
+    store.save(session(NOW))
+    assert hosted.invoke(request(EFFECT)).status is HostedOperationStatus.CONFIRMED
+    assert paths == [
+        _invoke_path(EFFECT),
+        "/v1/device/token/refresh",
+        _invoke_path(EFFECT),
+    ]
+    saved = store.load()
+    assert saved is not None and saved.access_token.get_secret_value() == "other-access"
+
+
+def test_an_expired_access_token_also_takes_a_pair_rotated_elsewhere() -> None:
+    paths: list[str] = []
+    store = InMemorySecureSessionStore()
+    expired = session(NOW - timedelta(minutes=20))
+
+    def handler(http_request: httpx.Request) -> httpx.Response:
+        paths.append(http_request.url.path)
+        if http_request.url.path == "/v1/device/token/refresh":
+            store.save(_rotated_by_another_process())
+            return response(401, {"detail": "no"}, request=http_request)
+        assert http_request.headers["Authorization"] == "Bearer other-access"
+        return response(200, CONFIRMED, request=http_request)
+
+    hosted, _ = transport(httpx.MockTransport(handler), store)
+    store.save(expired)
+    assert hosted.invoke(request(EFFECT)).status is HostedOperationStatus.CONFIRMED
+    assert paths == ["/v1/device/token/refresh", _invoke_path(EFFECT)]
 
 
 # -- §9 426 ----------------------------------------------------------------------------

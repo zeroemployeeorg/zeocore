@@ -220,14 +220,17 @@ class ZEOconnectHTTPTransport:
 
     def refresh_session(self, session: DeviceSession) -> DeviceSession:
         try:
-            payload = self._request_json(
-                "POST",
-                "/v1/device/token/refresh",
-                json_body={"refresh_token": session.refresh_token.get_secret_value()},
-                authenticated=False,
-            )
+            return self._refresh(session)
         except _BearerRefusedError:
             raise HostedClientError(_REPAIR) from None
+
+    def _refresh(self, session: DeviceSession) -> DeviceSession:
+        payload = self._request_json(
+            "POST",
+            "/v1/device/token/refresh",
+            json_body={"refresh_token": session.refresh_token.get_secret_value()},
+            authenticated=False,
+        )
         try:
             return _session(_SessionWire.model_validate(payload))
         except ValidationError:
@@ -440,8 +443,7 @@ class ZEOconnectHTTPTransport:
             return call(current)
         except _BearerRefusedError:
             pass
-        current = self.refresh_session(current)
-        self._session_store.save(current)
+        current = self._refreshed(current)
         try:
             return call(current)
         except _BearerRefusedError:
@@ -461,9 +463,40 @@ class ZEOconnectHTTPTransport:
         if self._clock() >= session.refresh_expires_at:
             raise HostedClientError("paired device session is expired")
         if self._clock() >= session.access_expires_at:
-            session = self.refresh_session(session)
-            self._session_store.save(session)
+            session = self._refreshed(session)
         return session
+
+    def _refreshed(self, used: DeviceSession) -> DeviceSession:
+        """Refresh ``used`` and save the result, unless another process already did.
+
+        Refresh tokens are single use (contract 1.0.0 §4). A process sharing
+        this store, such as a YouTube run beside the retention sweep, may
+        rotate the pair first. So the store is read again before refreshing,
+        and again if the refresh is refused. A pair rotated by the other
+        process is used, never reported as "pair this device again".
+
+        A narrow window remains. If the refusal is read before the other
+        process has saved its rotated pair, the refusal stands.
+        """
+        if (stored := self._rotated_elsewhere(used)) is not None:
+            return stored
+        try:
+            session = self._refresh(used)
+        except _BearerRefusedError:
+            if (stored := self._rotated_elsewhere(used)) is not None:
+                return stored
+            raise HostedClientError(_REPAIR) from None
+        self._session_store.save(session)
+        return session
+
+    def _rotated_elsewhere(self, used: DeviceSession) -> DeviceSession | None:
+        stored = self._session_store.load()
+        if stored is None or (
+            stored.refresh_token.get_secret_value()
+            == used.refresh_token.get_secret_value()
+        ):
+            return None
+        return stored
 
     def _request_json(
         self,

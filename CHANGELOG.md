@@ -80,6 +80,14 @@ this section becomes "Unreleased".
   `artifact` or `normalized_error` still refused the whole response. Both now
   drop unknown fields, so a later Broker can add fields at any level. A
   `provider_detail` is still refused.
+- **Two processes sharing a paired session no longer ask to re-pair.** Refresh
+  tokens are single use (contract §4). When a YouTube run and the retention
+  sweep both hit a 401, both refreshed with the same token, and the loser
+  reported "pair this device again" when nothing was wrong. zeocore now reads
+  the session store again before refreshing, and again if the refresh is
+  refused. A pair the other process rotated is used instead. One narrow window
+  remains: if the refusal is read before the other process has saved its
+  pair, the refusal stands.
 
 ### Added
 
