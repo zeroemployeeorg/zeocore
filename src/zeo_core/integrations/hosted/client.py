@@ -275,6 +275,22 @@ class HostedConnectionChangedError(HostedClientError):
         )
 
 
+class HostedRequestChangedError(HostedClientError):
+    """This idempotency key already carries a different request (contract 1.2.1 §6a.5).
+
+    The arguments or ``expect`` changed under a used key. The Broker records
+    nothing for the changed request, and the key's original outcome stands.
+    A changed request is a new occurrence and needs a new key, sent only
+    under the caller's own authority. It is never an automatic retry.
+    """
+
+    def __init__(self) -> None:
+        super().__init__(
+            "hosted request changed under an idempotency key already used;"
+            " a changed request needs a new key"
+        )
+
+
 class HostedUpgradeRequiredError(HostedClientError):
     """The Broker does not speak this client's protocol version (426)."""
 
@@ -355,6 +371,27 @@ def binding_mismatch_of(response: HostedOperationResponse) -> BindingField | Non
     return None
 
 
+REQUEST_CHANGED_UNDER_KEY: Final = "request_changed_under_key"
+
+
+def request_changed_of(response: HostedOperationResponse) -> bool:
+    """Whether a read was refused as a changed request under a used key.
+
+    Contract 1.2.1 §6a.5 marks it, to a client declaring
+    ``expected-binding``, as ``failed_safe`` with ``REQUEST_REFUSED`` and the
+    exact message ``request_changed_under_key``. Nothing was recorded under
+    the key and no provider call was made. A changed effect is the 400 that
+    ``HostedRequestChangedError`` reports.
+    """
+    error = response.normalized_error
+    return (
+        response.status is HostedOperationStatus.FAILED_SAFE
+        and error is not None
+        and error.code is NormalizedErrorCode.REQUEST_REFUSED
+        and error.message == REQUEST_CHANGED_UNDER_KEY
+    )
+
+
 def _contains_secret_key(value: JsonValue | dict[str, JsonValue] | None) -> bool:
     if isinstance(value, Mapping):
         if any(str(key).lower() in _SECRET_KEYS for key in value):
@@ -367,6 +404,7 @@ def _contains_secret_key(value: JsonValue | dict[str, JsonValue] | None) -> bool
 
 __all__ = [
     "CONNECTION_REVISION_PATTERN",
+    "REQUEST_CHANGED_UNDER_KEY",
     "BindingField",
     "HostedArtifactDescriptor",
     "HostedAuthorizedTransport",
@@ -378,11 +416,13 @@ __all__ = [
     "HostedOperationRequest",
     "HostedOperationResponse",
     "HostedOperationStatus",
+    "HostedRequestChangedError",
     "HostedStoppedError",
     "HostedUnavailableError",
     "HostedUnreachableError",
     "HostedUpgradeRequiredError",
     "binding_mismatch_of",
     "is_outage",
+    "request_changed_of",
     "stop_of",
 ]

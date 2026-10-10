@@ -7,7 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased: binding fence, 0.15.0 or 0.16.0]
 
-For ZEOconnect Broker contract `1.2.0`, pinned at zeoconnect `31da8bda` (#56's merge commit), `docs/contract/broker-contract-v1.md`, sha256 `d2be4901…`. It lands after
+For ZEOconnect Broker contract `1.2.0`, pinned at zeoconnect `31da8bda` (#56's merge commit), `docs/contract/broker-contract-v1.md`, sha256 `d2be4901…`.
+The changed-request marker follows `1.2.1`, pinned at zeoconnect `707bb91b`
+(#67's merge commit), `contract/broker-contract-v1.md`, sha256 `dc2e951f…`. It lands after
 0.14.0. It ships in 0.15.0 if 1.2.0 is pinned before 0.15.0 ships, and
 otherwise in 0.16.0.
 
@@ -33,6 +35,13 @@ otherwise in 0.16.0.
   now raises `HostedConnectionChangedError` instead of a generic refusal. It
   comes before any provider call, and the fix is ZEOconnect's repair, never a
   retry.
+- **A changed request under a used key is its own error** (contract 1.2.1
+  §6a.5). The same idempotency key with different arguments or a different
+  `expect` is refused, nothing is recorded, and the key's original outcome
+  stands. An effect's marked 400 raises `HostedRequestChangedError`. A read
+  comes back `failed_safe`, which `request_changed_of(response)` recognises.
+  The fix is a new key for the changed request, never a retry. An unmarked
+  conflict, such as the 1.1 `approval is unavailable`, stays a plain refusal.
 
 ## [Unreleased: 0.14.0]
 

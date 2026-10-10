@@ -15,11 +15,13 @@ from pydantic import BaseModel, ConfigDict, Field, JsonValue, SecretStr, Validat
 from zeo_core.core.managed_execution import is_managed_execution
 from zeo_core.integrations.hosted.client import (
     CONNECTION_REVISION_PATTERN,
+    REQUEST_CHANGED_UNDER_KEY,
     HostedClientError,
     HostedConnectionChangedError,
     HostedFenceUnsupportedError,
     HostedOperationRequest,
     HostedOperationResponse,
+    HostedRequestChangedError,
     HostedStoppedError,
     HostedUnavailableError,
     HostedUnreachableError,
@@ -534,8 +536,8 @@ class ZEOconnectHTTPTransport:
             # An outage the Broker reported (council ruling E7): not a stop,
             # not a refusal, and not proof the request was never accepted.
             raise HostedUnavailableError()
-        if status == 400 and _detail(response) == _CONNECTION_CHANGED:
-            raise HostedConnectionChangedError()
+        if status == 400:
+            _raise_marked_refusal(response)
         if status >= 400:
             # Not evidence of non-acceptance either: only a stop is positive.
             raise HostedClientError("hosted request was refused")
@@ -553,12 +555,30 @@ class ZEOconnectHTTPTransport:
         return headers
 
 
+def _raise_marked_refusal(response: httpx.Response) -> None:
+    """Raise the reason a 400 names, if it names one exactly."""
+    if _detail(response) == _CONNECTION_CHANGED:
+        raise HostedConnectionChangedError()
+    if _code(response) == REQUEST_CHANGED_UNDER_KEY:
+        # Contract 1.2.1 §6a.5, marked for a declared client. The key's
+        # original outcome stands; a changed request needs a new key.
+        raise HostedRequestChangedError()
+
+
 def _detail(response: httpx.Response) -> object:
     try:
         body = response.json()
     except ValueError:
         return None
     return body.get("detail") if isinstance(body, dict) else None
+
+
+def _code(response: httpx.Response) -> object:
+    try:
+        body = response.json()
+    except ValueError:
+        return None
+    return body.get("code") if isinstance(body, dict) else None
 
 
 def _is_pending(response: httpx.Response) -> bool:

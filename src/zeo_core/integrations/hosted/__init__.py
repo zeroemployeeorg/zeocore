@@ -11,11 +11,13 @@ from zeo_core.integrations.hosted.client import (
     HostedOperationRequest,
     HostedOperationResponse,
     HostedOperationStatus,
+    HostedRequestChangedError,
     HostedStoppedError,
     HostedUnavailableError,
     HostedUnreachableError,
     HostedUpgradeRequiredError,
     binding_mismatch_of,
+    request_changed_of,
 )
 from zeo_core.integrations.hosted.fake import FakeGoogleDriveService
 from zeo_core.integrations.hosted.pairing import (
@@ -115,6 +117,7 @@ __all__ = [
     "HostedServiceFactory",
     "HostedServiceRegistration",
     "HostedServiceRegistry",
+    "HostedRequestChangedError",
     "HostedStoppedError",
     "HostedUnavailableError",
     "HostedUnreachableError",
@@ -142,4 +145,5 @@ __all__ = [
     "binding_mismatch_of",
     "build_hosted_runtime",
     "build_services",
+    "request_changed_of",
 ]
