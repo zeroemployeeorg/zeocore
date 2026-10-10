@@ -28,9 +28,8 @@ MAX_GEMINI_INPUTS: Final = 6
 InputMediaType = Literal["image/png", "image/jpeg", "image/webp"]
 OutputMediaType = Literal["image/png", "image/jpeg", "image/webp", "image/svg+xml"]
 Provider = Literal["gemini", "recraft"]
-GeminiModel = Literal[
-    "gemini-3.1-flash-image", "gemini-3-pro-image", "gemini-3-pro-image-preview"
-]
+#: Broker contract 1.3.0 draft 6 §3: only models verified live.
+GeminiModel = Literal["gemini-3.1-flash-image", "gemini-3-pro-image"]
 RecraftModel = Literal["recraftv3"]
 AspectRatio = Literal["1:1", "2:3", "3:2", "3:4", "4:3", "9:16", "16:9", "21:9"]
 Occurrence = Annotated[

@@ -15,7 +15,7 @@ profile) or let ZEOconnect hold them (the hosted profile).
 
 | Request | Provider call | Output |
 |---|---|---|
-| `GeminiGenerate` | Nano Banana, text to image or edit from up to 6 ordered references (`gemini-3.1-flash-image`, `gemini-3-pro-image`, `gemini-3-pro-image-preview`), 1K | JPEG |
+| `GeminiGenerate` | Nano Banana, text to image or edit from up to 6 ordered references (`gemini-3.1-flash-image`, `gemini-3-pro-image`), 1K | JPEG |
 | `RecraftGenerate` | Recraft generation (`recraftv3`), with `style`, `negative_prompt`, `size`, `random_seed` | PNG, or SVG for vector styles |
 | `RecraftImageToImage` | Restyle one seed image, `strength` 0–1 | PNG |
 | `RecraftRemoveBackground` | Cut out, from png or webp up to 5,000,000 bytes | PNG |

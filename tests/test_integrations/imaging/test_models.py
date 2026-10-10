@@ -175,3 +175,11 @@ def test_an_output_must_be_what_its_media_type_says() -> None:
     for content, media_type in [(png(), "image/jpeg"), (b"", "image/png")]:
         with pytest.raises(ImagingError):
             check_output(content, media_type)
+
+
+def test_only_models_verified_live_are_allowed() -> None:
+    # Broker contract 1.3.0 draft 6 §3.
+    for model in ("gemini-3.1-flash-image", "gemini-3-pro-image"):
+        GeminiGenerate(prompt="x", model=model)
+    with pytest.raises(ValidationError):
+        GeminiGenerate(prompt="x", model="gemini-3-pro-image-preview")
