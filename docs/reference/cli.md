@@ -2,7 +2,8 @@
 
 `zeocore` lets another service or language use zeocore without importing
 Python: the ZEOconnect Broker and WEB, a TypeScript pipeline, a shell
-script. Each call reads JSON on stdin and writes one JSON object on stdout.
+script. Each call reads JSON on stdin and writes JSON lines on stdout, the
+result last.
 
 ```console
 $ zeocore version
@@ -27,18 +28,26 @@ $ echo '{"b": 1, "a": [1, 2]}' | zeocore digest
 
 ## Rules every command keeps (`cli_protocol` 1)
 
-- **stdout is exactly one JSON object**, followed by a newline. Diagnostics go to
-  stderr. Never parse anything else from stdout.
+- **stdout is JSON lines and nothing else.** Events (a pairing code, an approval
+  link, waiting) carry an `event` key. The result is always the last line: it
+  carries `ok` and never `event`. A command with no events prints exactly one
+  line. Diagnostics go to stderr.
 - **Input is strict JSON:** no duplicate keys, no `NaN` or infinities, at most
   1 MiB.
 - **Errors never echo input values.** A validation error is its location and type
   only, so nothing secret or personal leaks through an error.
-- **Exit status:**
-  - 0: done;
-  - 2: the command or its input can't be used (an unknown command or schema, or
-    input that isn't strict JSON);
-  - 3: the command ran and said no (a value that doesn't match its schema, or
-    an operation that was refused or failed).
+- **Exit status** is one family, the same numbers as the YouTube publish
+  command's:
+
+  | Code | Meaning |
+  |---|---|
+  | 0 | done |
+  | 2 | invalid input or command; nothing was sent |
+  | 10 | approval required |
+  | 11 | waiting: try the same request later |
+  | 12 | not paired: run `zeocore login` |
+  | 13 | ambiguous; never retried by the command |
+  | 20 | held or refused, including a value that doesn't match its schema |
 
 A change to these rules is a new `cli_protocol`, announced like a contract change.
 

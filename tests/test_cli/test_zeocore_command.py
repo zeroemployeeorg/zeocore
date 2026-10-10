@@ -110,14 +110,14 @@ def test_validate_answers_the_normalized_value() -> None:
     }
 
 
-def test_a_value_that_does_not_match_exits_3_and_never_echoes_input() -> None:
+def test_a_value_that_does_not_match_is_held_and_never_echoes_input() -> None:
     canary = "secret-value-canary-1234"
     status, answer = _call(
         "validate",
         "connections.normalized-error",
         stdin=json.dumps({"code": canary, "message": "m", canary: canary}).encode(),
     )
-    assert status == 3
+    assert status == 20
     assert answer["outcome"] == "invalid"
     assert {"loc": ["code"], "type": "enum"} in answer["errors"]  # type: ignore[operator]
     # The unknown field's name is its loc, which is the caller's own key; no
@@ -160,6 +160,22 @@ def test_digest_is_the_rfc_8785_canonical_sha256() -> None:
         assert _call("digest", stdin=raw) == (0, {"ok": True, "sha256": expected})
 
 
+def test_the_exit_family_is_the_youtube_publish_family() -> None:
+    from zeo_core.cli import __main__ as cli
+    from zeo_core.integrations.google.youtube import publish
+
+    assert (cli.EXIT_DONE, cli.EXIT_INVALID) == (
+        publish.EXIT_DONE,
+        publish.EXIT_INVALID,
+    )
+    assert (cli.EXIT_APPROVAL, cli.EXIT_WAIT, cli.EXIT_HELD) == (
+        publish.EXIT_APPROVAL,
+        publish.EXIT_WAIT,
+        publish.EXIT_HELD,
+    )
+    assert (cli.EXIT_NOT_PAIRED, cli.EXIT_AMBIGUOUS) == (12, 13)
+
+
 def test_main_writes_exactly_one_json_line_and_exits_with_the_status(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
@@ -168,7 +184,9 @@ def test_main_writes_exactly_one_json_line_and_exits_with_the_status(
     assert exited.value.code == 0
     out = capsys.readouterr().out
     assert out.count("\n") == 1
-    assert json.loads(out)["schemas"] == sorted(SCHEMAS)
+    result = json.loads(out)
+    assert result["schemas"] == sorted(SCHEMAS)
+    assert "event" not in result
     with pytest.raises(SystemExit) as exited:
         main(["nope"])
     assert exited.value.code == 2
