@@ -538,6 +538,8 @@
       
         
       
+        
+      
     
     
     
@@ -682,6 +684,34 @@
     
   
     Sign and verify a release
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/release-pypi/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Check a release on PyPI
   
 
     
@@ -4003,9 +4033,24 @@ this section becomes "Unreleased".</p>
 <h2 id="unreleased"><a href="https://github.com/zeroemployeeorg/zeocore/compare/v0.12.0...HEAD">Unreleased</a><a class="headerlink" href="#unreleased" title="Permanent link">&para;</a></h2>
 <h3 id="added_2">Added<a class="headerlink" href="#added_2" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>One sign-and-verify step for every org executable</strong> (<code>zeo_core.release.signing</code>,
+<li><strong>The PyPI adapter</strong> (<code>zeocore release pypi plan | admit | apply |
+  reconcile | verify</code>), on ZEOCORE-SOW-26.</li>
+<li><code>plan</code> checks the commit is reviewed and the version agrees everywhere.</li>
+<li><code>admit</code> checks that only the operator can approve the publish: the tag's
+    creator can't approve its own deployment or bypass it as an admin, and
+    only <code>v*</code> tags may deploy.</li>
+<li><code>apply</code> creates the release tag, its one effect, under a durable intent,
+    and never retries.</li>
+<li><code>reconcile</code> follows the tag to its publish run.</li>
+<li>
+<p><code>verify</code> checks PyPI's files, each attestation's recorded publisher, and
+    that each attestation names that file's digest.</p>
+</li>
+<li>
+<p><strong>One sign-and-verify step for every org executable</strong> (<code>zeo_core.release.signing</code>,
   <code>zeocore release sign | verify</code>), on ZEOCORE-SOW-19 to SOW-22. It is built
-  first, before the PyPI adapter, because the Go seats and Pomar wait on it.</li>
+  first, before the PyPI adapter, because the Go seats and Pomar wait on it.</p>
+</li>
 <li>Internal Darwin releases sign with ZEO Runtime Code Signing, pinned by its
     leaf SHA-1. Distributed releases hold as <code>notarisation_unbuilt</code>; Linux is
     refused as signed until a Linux contract is adopted.</li>
