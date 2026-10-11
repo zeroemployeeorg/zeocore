@@ -711,7 +711,7 @@
   <span class="md-ellipsis">
     
   
-    Check a release on PyPI
+    Release to PyPI
   
 
     
@@ -4033,8 +4033,24 @@ this section becomes "Unreleased".</p>
 <h2 id="unreleased"><a href="https://github.com/zeroemployeeorg/zeocore/compare/v0.12.0...HEAD">Unreleased</a><a class="headerlink" href="#unreleased" title="Permanent link">&para;</a></h2>
 <h3 id="added_2">Added<a class="headerlink" href="#added_2" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>The PyPI adapter</strong> (<code>zeocore release pypi plan | admit | apply |
-  reconcile | verify</code>), on ZEOCORE-SOW-26.</li>
+<li><strong>Delegated PyPI releases</strong> (<code>zeocore release pypi apply | approve</code>), on the
+  operator's delegation of 2026-10-11.</li>
+<li>The <code>zeo-release</code> GitHub App creates the release tag with a one-repository
+    token minted from its Keychain key.</li>
+<li>matorclawson approves the waiting <code>pypi</code> deployment, once, only for that
+    exact tag and commit.</li>
+<li><code>admit</code> refuses unless only the two identities, together, can release:
+    matorclawson is the only reviewer with self-review prevented and no admin
+    bypass, only <code>v*</code> tags deploy, and a tag ruleset lets only the App touch
+    <code>v*</code>.</li>
+<li>
+<p>The targets are a reviewed table: zeocore, zeocreator, zero-employee and
+    sovereign-agent.</p>
+</li>
+<li>
+<p><strong>The PyPI adapter</strong> (<code>zeocore release pypi plan | admit | apply |
+  reconcile | verify</code>), on ZEOCORE-SOW-26.</p>
+</li>
 <li><code>plan</code> checks the commit is reviewed and the version agrees everywhere.</li>
 <li><code>admit</code> checks that only the operator can approve the publish: the tag's
     creator can't approve its own deployment or bypass it as an admin, and

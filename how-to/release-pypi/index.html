@@ -27,7 +27,7 @@
     
     
       
-        <title>Check a release on PyPI - ZeoCore</title>
+        <title>Release to PyPI - ZeoCore</title>
       
     
     
@@ -82,7 +82,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#check-a-zeocore-release-on-pypi" class="md-skip">
+        <a href="#release-to-pypi" class="md-skip">
           Skip to content
         </a>
       
@@ -118,7 +118,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Check a release on PyPI
+              Release to PyPI
             
           </span>
         </div>
@@ -722,7 +722,7 @@
   <span class="md-ellipsis">
     
   
-    Check a release on PyPI
+    Release to PyPI
   
 
     
@@ -740,7 +740,7 @@
   <span class="md-ellipsis">
     
   
-    Check a release on PyPI
+    Release to PyPI
   
 
     
@@ -764,6 +764,28 @@
       Table of contents
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#two-identities-delegated-by-the-operator" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Two identities, delegated by the operator
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-targets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The targets
+      
+    </span>
+  </a>
+  
+</li>
       
         <li class="md-nav__item">
   <a href="#the-manifest" class="md-nav__link">
@@ -799,10 +821,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#apply" class="md-nav__link">
+  <a href="#apply-and-approve" class="md-nav__link">
     <span class="md-ellipsis">
       
-        apply
+        apply and approve
       
     </span>
   </a>
@@ -2337,6 +2359,28 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#two-identities-delegated-by-the-operator" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Two identities, delegated by the operator
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-targets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The targets
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#the-manifest" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2370,10 +2414,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#apply" class="md-nav__link">
+  <a href="#apply-and-approve" class="md-nav__link">
     <span class="md-ellipsis">
       
-        apply
+        apply and approve
       
     </span>
   </a>
@@ -2405,15 +2449,35 @@
   
 
 
-<h1 id="check-a-zeocore-release-on-pypi">Check a zeocore release on PyPI<a class="headerlink" href="#check-a-zeocore-release-on-pypi" title="Permanent link">&para;</a></h1>
-<p><code>zeocore release pypi</code> is the PyPI adapter for <code>pypi:zeocore</code>
-(ZEOCORE-SOW-26). It changes nothing about how zeocore publishes:
-<code>publish.yml</code> builds and publishes through trusted publishing when a <code>vX.Y.Z</code>
-tag is pushed, and the operator approves each run in GitHub's <code>pypi</code>
-environment. The adapter makes the steps around that approval explicit.</p>
+<h1 id="release-to-pypi">Release to PyPI<a class="headerlink" href="#release-to-pypi" title="Permanent link">&para;</a></h1>
+<p><code>zeocore release pypi</code> is the PyPI adapter (ZEOCORE-SOW-26). It changes
+nothing about how a package publishes: the repository's <code>publish.yml</code> builds
+and publishes through trusted publishing when a <code>vX.Y.Z</code> tag is pushed,
+behind its <code>pypi</code> environment's approval. The adapter makes every step around
+that approval explicit, receipted and reconcilable.</p>
+<h2 id="two-identities-delegated-by-the-operator">Two identities, delegated by the operator<a class="headerlink" href="#two-identities-delegated-by-the-operator" title="Permanent link">&para;</a></h2>
+<p>The operator delegated releases on 2026-10-11:</p>
+<ul>
+<li>the <strong><code>zeo-release</code> GitHub App</strong> creates the <code>v*</code> tag. Its private key is in
+  the signing host's Keychain as <code>zeo-release-app-key</code>, and it is read only to
+  sign the App's own short-lived JWT. Each tag is made with a fresh
+  installation token for that one repository, with <code>contents: write</code>, which is
+  revoked as soon as the call is answered;</li>
+<li><strong>matorclawson</strong> approves the <code>pypi</code> deployment, as its only required
+  reviewer.</li>
+</ul>
+<p>Neither identity can release alone. Configure the App's numeric id (not a
+secret) with <code>ZEOCORE_RELEASE_APP_ID</code>; set
+<code>ZEOCORE_RELEASE_APP_KEY_ACCOUNT</code> if the Keychain item's account isn't
+<code>private-key</code>.</p>
+<h2 id="the-targets">The targets<a class="headerlink" href="#the-targets" title="Permanent link">&para;</a></h2>
+<p>Each target is a row in zeocore's reviewed table
+(<code>zeo_core.release.pypi.targets.TARGETS</code>): <code>zeocore</code>, <code>zeocreator</code>,
+<code>zero-employee</code> and <code>sovereign-agent</code>. Each row gives the repository, the
+workflow and the environment. A manifest can name only a row in that table.</p>
 <h2 id="the-manifest">The manifest<a class="headerlink" href="#the-manifest" title="Permanent link">&para;</a></h2>
-<p>zeocore's <code>release.yaml</code> is changed in the release's own reviewed PR. A file
-can't name the commit it's part of, so the committed section has no
+<p>Each target's <code>release.yaml</code>, changed in the release's own reviewed PR. A
+file can't name the commit it's part of, so the committed section has no
 <code>commit</code>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nt">pypi</span><span class="p">:</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="nt">project</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">zeocore</span>
@@ -2422,12 +2486,10 @@ can't name the commit it's part of, so the committed section has no
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span><span class="nt">workflow</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">publish.yml</span>
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">  </span><span class="nt">environment</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pypi</span>
 </code></pre></div>
-<p>The stages read a local copy of the same section, with <code>commit</code> added: the
+<p>The stages read a local copy of that section, with <code>commit</code> added: the
 40-hex commit on the default branch that the release is cut from. <code>plan</code>
 refuses unless every other field equals <code>release.yaml</code> at that commit
-(<code>manifest_unreviewed</code>). The project, repository, workflow and environment
-are also pinned in zeocore's source, so a manifest can't point the adapter at
-another target.</p>
+(<code>manifest_unreviewed</code>).</p>
 <h2 id="the-stages">The stages<a class="headerlink" href="#the-stages" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="gp">$ </span><span class="nb">echo</span><span class="w"> </span><span class="s1">'{"manifest": "release.yaml"}'</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>zeocore<span class="w"> </span>release<span class="w"> </span>pypi<span class="w"> </span>plan
 </code></pre></div>
@@ -2448,61 +2510,65 @@ another target.</p>
 <tr>
 <td><code>admit</code></td>
 <td>none</td>
-<td><code>admitted</code> only when the operator's approval is a control, not a convention (below)</td>
+<td><code>admitted</code> only when the two identities, together, are the only way to release (below)</td>
 </tr>
 <tr>
 <td><code>apply</code></td>
-<td><strong>one: creates the tag <code>vX.Y.Z</code> at the commit</strong></td>
-<td><code>tag_created</code>, or <code>already_applied</code>. It runs <code>plan</code> and <code>admit</code> again first, writes its intent, and never retries</td>
+<td><strong>one: creates the tag <code>vX.Y.Z</code>, as the App</strong></td>
+<td><code>tag_created</code>, or <code>already_applied</code></td>
+</tr>
+<tr>
+<td><code>approve</code></td>
+<td><strong>one: approves the waiting <code>pypi</code> deployment, as matorclawson, once</strong></td>
+<td><code>approved</code>, or <code>already_approved</code></td>
 </tr>
 <tr>
 <td><code>reconcile</code></td>
 <td>none</td>
-<td>the tag, then its <code>publish.yml</code> run: <code>awaiting_operator_approval</code> (exit 11) until the operator approves, <code>publish_failed</code>, or <code>published</code></td>
+<td>the tag, then its run: <code>awaiting_approval</code> (exit 11), <code>publish_failed</code>, or <code>published</code></td>
 </tr>
 <tr>
 <td><code>verify</code></td>
 <td>none</td>
-<td><code>publisher_recorded</code> when PyPI lists a wheel and an sdist, neither yanked, and each file's provenance names GitHub, the repository, <code>publish.yml</code> and <code>pypi</code></td>
+<td><code>publisher_recorded</code> when PyPI lists a wheel and an sdist, neither yanked, and each file's attestation names the target's publisher and exactly that file and digest</td>
 </tr>
 </tbody>
 </table>
-<p><code>verify</code> checks the publisher PyPI recorded for each attestation. It does
-not verify the attestation's Sigstore signature yet, and says so in its
-answer.</p>
-<p><code>verify</code> also checks that each attestation names exactly that file and its
-sha256, so a correct publisher on other bytes is refused.</p>
+<p><code>verify</code> checks the publisher PyPI recorded for each attestation, not its
+Sigstore signature, and says so in its answer.</p>
 <h2 id="what-admit-requires">What admit requires<a class="headerlink" href="#what-admit-requires" title="Permanent link">&para;</a></h2>
-<p>The identity that creates the tag must not be able to approve or bypass the
-publish. Otherwise "never approves" would be a convention, not a control.
-<code>admit</code> refuses unless all of these hold, read through GitHub's own API:</p>
+<p>Read through GitHub's own API; anything else is refused:</p>
 <ul>
-<li>the operator is the <code>pypi</code> environment's only required reviewer, because
-  any one listed reviewer can approve (<code>promotion_unbound</code>);</li>
-<li>the identity creating the tag is not the operator's, so it can't approve
-  its own deployment (<code>creator_is_operator</code>);</li>
-<li>it can't bypass the protection as an admin: either the environment doesn't
-  let admins bypass, or the identity isn't an admin (<code>admin_bypass_possible</code>);</li>
-<li>the environment deploys only from <code>v*</code> tags (<code>deployment_policy_unrestricted</code>).
-  Every page of the policy list is read, and a list read short of GitHub's
-  count is unreadable, never assumed complete.</li>
+<li>matorclawson is the <code>pypi</code> environment's only required reviewer
+  (<code>promotion_unbound</code>), with self-review prevented (<code>self_review_allowed</code>)
+  and no admin bypass (<code>admin_bypass_possible</code>);</li>
+<li>the environment deploys only from <code>v*</code> tags
+  (<code>deployment_policy_unrestricted</code>). Every page of the policy list is read,
+  and a list read short of GitHub's count is unreadable;</li>
+<li>an active ruleset on <code>refs/tags/v*</code>, with no exclusions, restricts creation,
+  update and deletion, and only the release App bypasses it
+  (<code>tag_ruleset_missing</code>);</li>
+<li><code>gh</code> acts as matorclawson, the approver (<code>approver_mismatch</code>);</li>
+<li>the release App's id is configured (<code>release_app_unconfigured</code>).</li>
 </ul>
-<h2 id="apply">apply<a class="headerlink" href="#apply" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="gp">$ </span><span class="nb">echo</span><span class="w"> </span><span class="s1">'{"manifest": "release.yaml"}'</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>zeocore<span class="w"> </span>release<span class="w"> </span>pypi<span class="w"> </span>apply
-</code></pre></div>
-<p><code>apply</code> is the adapter's only effect. It creates a lightweight tag through
-GitHub's API, after <code>plan</code> and <code>admit</code> pass again at that moment. Its intent
-is journaled before the call, in this user's
-<code>$XDG_STATE_HOME/zeocore/release/pypi-journal.jsonl</code> (by default under
-<code>~/.local/state</code>), keyed by repository and version. So one release is never
-attempted twice, whatever the commit or directory. An open intent from an
-earlier attempt is settled first, by reading the tag back, before <code>plan</code> or
-<code>admit</code> could refuse and hide it. A lost answer is <code>apply_unreconciled</code>
-(exit 13), and is never retried. The adapter never
-approves the workflow, never dispatches it, and never holds a PyPI
-credential.</p>
-<p>GitHub is read through <code>gh</code>, so no token passes through zeocore. PyPI is
-read anonymously from <code>https://pypi.org</code>.</p>
+<h2 id="apply-and-approve">apply and approve<a class="headerlink" href="#apply-and-approve" title="Permanent link">&para;</a></h2>
+<p>Both journal in this user's <code>$XDG_STATE_HOME/zeocore/release/pypi-journal.jsonl</code>
+(by default under <code>~/.local/state</code>), keyed by repository and version. So one
+release is tagged once and approved once, whatever the commit or directory.</p>
+<ul>
+<li><code>apply</code> settles an earlier attempt first, by reading the tag back, before
+  <code>plan</code> or <code>admit</code> could hide it. It then runs both again, checks that the
+  Keychain key signs for <code>zeo-release</code> itself (<code>creator_not_release_app</code>),
+  writes its intent, and makes one <code>POST /git/refs</code>. A lost answer is
+  <code>apply_unreconciled</code> (exit 13), and is never retried.</li>
+<li><code>approve</code> approves only the one run of that exact tag and commit, waiting
+  on <code>pypi</code> alone, after <code>plan</code> and <code>admit</code> pass again. Anything else is
+  <code>approval_unexpected</code>. A lost answer is <code>approve_unreconciled</code>, and is never
+  sent again.</li>
+</ul>
+<p>The adapter never holds a PyPI credential and never dispatches a workflow.
+GitHub reads go through <code>gh</code>, and PyPI is read anonymously from
+<code>https://pypi.org</code>.</p>
 
 
 
