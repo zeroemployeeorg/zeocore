@@ -2466,14 +2466,20 @@
 Python: the ZEOconnect Broker and WEB, a TypeScript pipeline, a shell
 script. Each call reads JSON on stdin and writes JSON lines on stdout, the
 result last.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>zeocore<span class="w"> </span>version
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="go">{"cli_protocol": "1", "commands": ["artifact", "connections", "digest", "invoke", "login", "logout", "schema", "validate", "version", "whoami"], "ok": true, "zeoconnect_protocol": "1", "zeocore": "…"}</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="gp">$ </span>zeocore<span class="w"> </span>schema<span class="w"> </span>list
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="gp">$ </span>zeocore<span class="w"> </span>schema<span class="w"> </span>hosted.operation-request
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="gp">$ </span><span class="nb">echo</span><span class="w"> </span><span class="s1">'{"code": "RATE_LIMITED", "message": "slow down"}'</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>zeocore<span class="w"> </span>validate<span class="w"> </span>connections.normalized-error
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="gp">$ </span><span class="nb">echo</span><span class="w"> </span><span class="s1">'{"b": 1, "a": [1, 2]}'</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>zeocore<span class="w"> </span>digest
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="go">{"ok": true, "sha256": "sha256:…"}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>zeocore<span class="w"> </span><span class="nb">help</span><span class="w"> </span>--json
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="gp">$ </span>zeocore<span class="w"> </span>version
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="go">{"cli_protocol": "1", "commands": ["artifact", "connections", "digest", "help", "invoke", "login", "logout", "release", "schema", "validate", "version", "whoami"], "ok": true, "schema": "zeocore.version/v1", "zeoconnect_protocol": "1", "zeocore": "…"}</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="gp">$ </span>zeocore<span class="w"> </span>schema<span class="w"> </span>list
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="gp">$ </span>zeocore<span class="w"> </span>schema<span class="w"> </span>hosted.operation-request
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="gp">$ </span><span class="nb">echo</span><span class="w"> </span><span class="s1">'{"code": "RATE_LIMITED", "message": "slow down"}'</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>zeocore<span class="w"> </span>validate<span class="w"> </span>connections.normalized-error
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="gp">$ </span><span class="nb">echo</span><span class="w"> </span><span class="s1">'{"b": 1, "a": [1, 2]}'</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>zeocore<span class="w"> </span>digest
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="go">{"ok": true, "schema": "zeocore.digest/v1", "sha256": "sha256:…"}</span>
 </code></pre></div>
+<p>An agent starts with <code>zeocore help --json</code>, the machine catalogue
+(<code>zeocore.help/v1</code>): every command, its arguments, what it reads on stdin,
+the exit family and the schema its result names. A test holds the catalogue
+to each command's parser, so it can't drift from the code. Every answer is
+JSON already, so <code>zeocore help</code> without <code>--json</code> answers the same.</p>
 <h2 id="commands">Commands<a class="headerlink" href="#commands" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -2484,6 +2490,11 @@ result last.</p>
 </tr>
 </thead>
 <tbody>
+<tr>
+<td><code>help [--json]</code></td>
+<td>no</td>
+<td>the machine catalogue</td>
+</tr>
 <tr>
 <td><code>version</code></td>
 <td>no</td>
@@ -2669,8 +2680,11 @@ Development origins also need <code>ZEOCONNECT_DEVELOPMENT=1</code>.</p>
 <ul>
 <li><strong>stdout is JSON lines and nothing else.</strong> Events (a pairing code, an approval
   link, waiting) carry an <code>event</code> key. The result is always the last line: it
-  carries <code>ok</code> and never <code>event</code>. A command with no events prints exactly one
-  line. Diagnostics go to stderr.</li>
+  carries <code>ok</code> and <code>schema</code> (<code>zeocore.&lt;command&gt;/v1</code>; <code>zeocore.usage/v1</code> for
+  an unknown command; <code>zeocore.internal/v1</code> for an internal error) and never
+  <code>event</code>. <code>zeocore schema &lt;name&gt;</code> is the one exception: its answer is the
+  contract itself, named by its own <code>$schema</code> and <code>$id</code>. A command with no
+  events prints exactly one line. Diagnostics go to stderr.</li>
 <li><strong>Input is strict JSON:</strong> no duplicate keys, no <code>NaN</code> or infinities, at most
   1 MiB.</li>
 <li><strong>Errors never echo input.</strong> A validation error is its location and type only.
