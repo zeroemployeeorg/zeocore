@@ -2586,6 +2586,38 @@ holds only that app's own device grant, in the macOS Keychain.</p>
 </tr>
 </tbody>
 </table>
+<p><strong>Refusals from Broker contract 1.4.0.</strong> Each comes before custody, so nothing
+happened, and the same grant can't succeed. The answer names it in <code>outcome</code>,
+with <code>retry: "none"</code> and the way back in <code>message</code>:</p>
+<table>
+<thead>
+<tr>
+<th><code>outcome</code></th>
+<th>Means</th>
+<th>The way back</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>door_required</code></td>
+<td>a seat's grant</td>
+<td>seats use <code>zeo</code>, ZEO-RT's front door</td>
+</tr>
+<tr>
+<td><code>app_identity_unverified</code></td>
+<td>a product's grant from another macOS user</td>
+<td>run the product as its own service user, <code>zs-&lt;product&gt;</code></td>
+</tr>
+<tr>
+<td><code>no_principal</code></td>
+<td>a grant adopted as no principal</td>
+<td>the owner adopts the grant as the product's principal</td>
+</tr>
+</tbody>
+</table>
+<p>A stop answers <code>outcome: "stopped"</code> with its <code>control</code> and <code>scope</code>, and a
+Broker that doesn't speak this zeocore's protocol answers
+<code>outcome: "upgrade_required"</code>.</p>
 <p>Every client command takes <code>--profile P</code>, or reads <code>ZEOCORE_PROFILE</code>, to choose
 the grant, so one machine can run several apps, each paired on its own. A
 profile is attribution, not a security boundary: all profiles of one macOS user
