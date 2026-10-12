@@ -2548,7 +2548,13 @@ Sigstore signature, and says so in its answer.</p>
 <li>an active ruleset on <code>refs/tags/v*</code>, with no exclusions, restricts creation,
   update and deletion, and only the release App bypasses it
   (<code>tag_ruleset_missing</code>);</li>
-<li><code>gh</code> acts as matorclawson, the approver (<code>approver_mismatch</code>);</li>
+<li><code>gh</code> acts as matorclawson, the approver (<code>approver_mismatch</code>). GitHub
+  shows a ruleset's bypass list only to a repository Admin, and under ruling
+  r7 matorclawson administers nothing, so today the list is hidden from it.
+  A hidden list is held as <code>target_unreadable</code>, never read as empty. How the
+  bypass list is checked without an agent holding Admin is the operator's
+  open choice. A private repository under a personal account can't give a
+  collaborator Admin at all;</li>
 <li>the release App's id is configured (<code>release_app_unconfigured</code>).</li>
 </ul>
 <h2 id="apply-and-approve">apply and approve<a class="headerlink" href="#apply-and-approve" title="Permanent link">&para;</a></h2>

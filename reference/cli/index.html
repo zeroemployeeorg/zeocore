@@ -2618,6 +2618,23 @@ with <code>retry: "none"</code> and the way back in <code>message</code>:</p>
 <p>A stop answers <code>outcome: "stopped"</code> with its <code>control</code> and <code>scope</code>, and a
 Broker that doesn't speak this zeocore's protocol answers
 <code>outcome: "upgrade_required"</code>.</p>
+<p><strong>A product's service user: the named session file.</strong> By the operator's
+ruling of 2026-10-12, a product running as its own service user
+(<code>zs-&lt;product&gt;</code>) may keep its grant in one named file instead of a Keychain,
+by setting <code>ZEOCORE_SESSION_FILE</code> to an absolute path, for example in its
+launchd definition. It is <strong>opt-in, never a fallback</strong>: without that variable
+the Keychain is the only store, and a Keychain that can't be read is still
+exit 12. zeocore refuses the file, with exit 12, unless all of these hold:</p>
+<ul>
+<li>the directory is owned by that user, mode 0700;</li>
+<li>the path has no symbolic link;</li>
+<li>no directory above it is writable by another user unless it is sticky;</li>
+<li>the file is a regular file owned by that user, with no group or other
+  access.</li>
+</ul>
+<p>Writes are atomic, at 0600. The file records the Broker it was paired with
+and is never sent to another. A session file names one grant, so it can't be
+combined with <code>--profile</code>. ZEO-RT qualifies it on the real account.</p>
 <p>Every client command takes <code>--profile P</code>, or reads <code>ZEOCORE_PROFILE</code>, to choose
 the grant, so one machine can run several apps, each paired on its own. A
 profile is attribution, not a security boundary: all profiles of one macOS user
