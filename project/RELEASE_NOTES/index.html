@@ -82,7 +82,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#zeocore-0150" class="md-skip">
+        <a href="#zeocore-0151" class="md-skip">
           Skip to content
         </a>
       
@@ -2055,10 +2055,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#the-zeocore-command" class="md-nav__link">
+  <a href="#fixed" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The zeocore command
+        Fixed
       
     </span>
   </a>
@@ -2066,54 +2066,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#zeoconnect-broker-contracts-100-to-140" class="md-nav__link">
+  <a href="#changed" class="md-nav__link">
     <span class="md-ellipsis">
       
-        ZEOconnect Broker contracts 1.0.0 to 1.4.0
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#the-shared-release-component" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The shared release component
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#also-new" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Also new
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#breaking-and-deprecated" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Breaking and deprecated
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#fixes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Fixes
+        Changed
       
     </span>
   </a>
@@ -2370,10 +2326,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#the-zeocore-command" class="md-nav__link">
+  <a href="#fixed" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The zeocore command
+        Fixed
       
     </span>
   </a>
@@ -2381,54 +2337,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#zeoconnect-broker-contracts-100-to-140" class="md-nav__link">
+  <a href="#changed" class="md-nav__link">
     <span class="md-ellipsis">
       
-        ZEOconnect Broker contracts 1.0.0 to 1.4.0
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#the-shared-release-component" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The shared release component
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#also-new" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Also new
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#breaking-and-deprecated" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Breaking and deprecated
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#fixes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Fixes
+        Changed
       
     </span>
   </a>
@@ -2471,70 +2383,29 @@
   
 
 
-<h1 id="zeocore-0150">zeocore 0.15.0<a class="headerlink" href="#zeocore-0150" title="Permanent link">&para;</a></h1>
-<p>ZeoCore 0.15.0 ships every change since 0.12.0. Three planned releases were never
-published (0.13.0, 0.14.0 and the binding-fence release), and their changes ship
-together here. Python 3.14 or newer remains required. See
-<a href="../CHANGELOG/">CHANGELOG.md</a> for the complete history, with every entry.</p>
-<h2 id="the-zeocore-command">The <code>zeocore</code> command<a class="headerlink" href="#the-zeocore-command" title="Permanent link">&para;</a></h2>
-<p><code>zeocore</code> is now an installed command with one protocol: JSON lines on stdout,
-the result last, and one exit family (0 done; 2 invalid; 10 approval required;
-11 waiting; 12 not paired; 13 ambiguous; 20 held or refused). It has
-<code>version</code>, <code>schema</code>, <code>validate</code> and <code>digest</code>, the ZEOconnect client, and
-<code>release</code>.</p>
-<p><strong>The ZEOconnect client</strong> (<code>login</code>, <code>logout</code>, <code>whoami</code>, <code>connections</code>,
-<code>invoke</code>, <code>artifact get</code>) is <strong>for products</strong>, running as their own macOS
-service user (<code>zs-&lt;product&gt;</code>). It is <strong>not for seats</strong>: a seat reaches the
-Broker through ZEO-RT's front door, with <code>zeo</code>. A product's service user can
-keep its grant in a named file (<code>ZEOCORE_SESSION_FILE</code>, 0600 in its own 0700
-directory), opt-in and never a fallback from the Keychain.</p>
-<h2 id="zeoconnect-broker-contracts-100-to-140">ZEOconnect Broker contracts 1.0.0 to 1.4.0<a class="headerlink" href="#zeoconnect-broker-contracts-100-to-140" title="Permanent link">&para;</a></h2>
-<p>The client conforms to Broker contract 1.0.0 and follows 1.2.0's expected-binding
-fence, 1.2.1's changed-request marker and 1.2.2's re-enrolment code. From
-1.4.0 it recognises the three access refusals, <code>door_required</code>,
-<code>app_identity_unverified</code> and <code>no_principal</code>, in both of their forms, and says
-how to get access back. A stop names its control and scope, and an old
-protocol says to upgrade. <code>contracts/broker-1.4/</code> holds the request-digest parity
-fixtures that ZEO-RT's Go door is checked against.</p>
-<h2 id="the-shared-release-component">The shared release component<a class="headerlink" href="#the-shared-release-component" title="Permanent link">&para;</a></h2>
+<h1 id="zeocore-0151">zeocore 0.15.1<a class="headerlink" href="#zeocore-0151" title="Permanent link">&para;</a></h1>
+<p>A patch release for 0.15.0. What 0.15.0 shipped is in its
+<a href="https://github.com/zeroemployeeorg/zeocore/releases/tag/v0.15.0">release notes</a>.</p>
+<h2 id="fixed">Fixed<a class="headerlink" href="#fixed" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Sign and verify</strong> (<code>zeocore release sign | verify | pack | receive | send |
-  serve</code>): one signing step for every org executable, internal Darwin
-  releases first. Signing happens on matormini only, through a tailnet service
-  that admits only reviewed, merged manifests. That service doesn't run against
-  the key until the operator signs the code-signing ruling.</li>
-<li><strong>The PyPI adapter</strong> (<code>zeocore release pypi plan | admit | apply | approve |
-  reconcile | verify</code>) for a reviewed table of targets: zeocore, zeocreator and
-  sovereign-agent. Under the operator's delegation, the <code>zeo-release</code> App
-  creates the release tag and matorclawson approves the deployment once.
-  <code>admit</code> refuses unless the two of them, together, are the only way to release.</li>
+<li><strong>The <code>zeocore</code> command runs on a plain install.</strong> In 0.15.0,
+  <code>uv tool install zeocore</code> and <code>pip install zeocore</code> installed a command that
+  crashed at start-up, because two of its modules came only with extras. The
+  library itself imported fine.</li>
+<li><code>rfc8785</code>, which the canonical digest needs, is now a base dependency.</li>
+<li><code>zeocore release</code> loads only when it is used. Without the <code>github</code> extra
+    it answers <code>extra_missing</code> (exit 20) and names the extra.</li>
+<li>The publish smoke test now runs the command on the plain install.</li>
 </ul>
-<h2 id="also-new">Also new<a class="headerlink" href="#also-new" title="Permanent link">&para;</a></h2>
+<p>On 0.15.0, the workaround is <code>pip install 'zeocore[runtime-host,github]==0.15.0'</code>.</p>
+<h2 id="changed">Changed<a class="headerlink" href="#changed" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>The merger</strong>, a zeocore app: a port of ZEO-LEDGER's Go core, held to its
-  parity fixtures.</li>
-<li><strong>GitHub App installation tokens</strong> for a principal that holds its own key.</li>
-<li><strong>Revolut Business reads</strong> for expenses, receipts and labels: an offline
-  contract, with no live request made to Revolut.</li>
-</ul>
-<h2 id="breaking-and-deprecated">Breaking and deprecated<a class="headerlink" href="#breaking-and-deprecated" title="Permanent link">&para;</a></h2>
-<ul>
-<li><code>merge_pull_request</code> needs the head <code>sha</code>, and merges only by <code>merge</code>.</li>
-<li>The ZEOconnect client commands are deprecated for seats.</li>
-</ul>
-<h2 id="fixes">Fixes<a class="headerlink" href="#fixes" title="Permanent link">&para;</a></h2>
-<ul>
-<li><strong>Hosted access:</strong> it reaches ZEOconnect again. A Broker 503 is an outage, never a
-  refusal or a stop, and a response without its protocol header is terminal.</li>
-<li><strong>YouTube:</strong> retention no longer deletes data during a stop or an outage, and a
-  job survives a kill mid-write.</li>
-<li><strong>The custody relay</strong> no longer retries what no retry can cure.</li>
-<li><strong>A GitHub effect</strong> is sent once and never retried.</li>
-<li><strong><code>make setup</code> and CI</strong> install exactly what <code>uv.lock</code> pins.</li>
+<li><strong>Every publish goes through the protected <code>pypi</code> environment.</strong> The
+  workflow's TestPyPI target, which had no protection, is gone.</li>
 </ul>
 <h2 id="upgrade">Upgrade<a class="headerlink" href="#upgrade" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>uv<span class="w"> </span>tool<span class="w"> </span>install<span class="w"> </span><span class="nv">zeocore</span><span class="o">==</span><span class="m">0</span>.15.0<span class="w">      </span><span class="c1"># the command</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"zeocore==0.15.0"</span><span class="w">     </span><span class="c1"># the library, pinned with hashes in your lock</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>uv<span class="w"> </span>tool<span class="w"> </span>install<span class="w"> </span><span class="nv">zeocore</span><span class="o">==</span><span class="m">0</span>.15.1<span class="w">      </span><span class="c1"># the command</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"zeocore==0.15.1"</span><span class="w">     </span><span class="c1"># the library, pinned with hashes in your lock</span>
 </code></pre></div>
 
 
