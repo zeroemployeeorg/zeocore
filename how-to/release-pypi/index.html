@@ -2505,7 +2505,7 @@ refuses unless every other field equals <code>release.yaml</code> at that commit
 <tr>
 <td><code>plan</code></td>
 <td>none</td>
-<td><code>planned</code>, with the tag it would create, once the commit is on the default branch, <code>pyproject.toml</code>, <code>release.yaml</code> and <code>CHANGELOG.md</code> name the version, PyPI hasn't got it, and the tag is absent or already at the commit</td>
+<td><code>planned</code>, with the tag it would create, once the commit is on the default branch, the target's workflow file is at that commit (<code>workflow_missing</code> otherwise: a <code>v*</code> tag can't be deleted under the ruleset, so it is never made with nothing to publish it), <code>pyproject.toml</code>, <code>release.yaml</code> and <code>CHANGELOG.md</code> name the version, PyPI hasn't got it, and the tag is absent or already at the commit</td>
 </tr>
 <tr>
 <td><code>admit</code></td>
@@ -2563,8 +2563,11 @@ release is tagged once and approved once, whatever the commit or directory.</p>
   <code>apply_unreconciled</code> (exit 13), and is never retried.</li>
 <li><code>approve</code> approves only the one run of that exact tag and commit, waiting
   on <code>pypi</code> alone, after <code>plan</code> and <code>admit</code> pass again. Anything else is
-  <code>approval_unexpected</code>. A lost answer is <code>approve_unreconciled</code>, and is never
-  sent again.</li>
+  <code>approval_unexpected</code>. A run that has stopped waiting is <code>run_not_waiting</code>,
+  held, never a success. A lost answer is <code>approve_unreconciled</code>, and is never
+  sent again. It is settled only by reading GitHub's own record of the run's
+  reviews: matorclawson's approval of <code>pypi</code> closes it, and a rejection closes
+  it as <code>approval_rejected</code>.</li>
 </ul>
 <p>The adapter never holds a PyPI credential and never dispatches a workflow.
 GitHub reads go through <code>gh</code>, and PyPI is read anonymously from
