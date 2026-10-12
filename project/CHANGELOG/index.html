@@ -2083,17 +2083,6 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#unreleased" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Unreleased
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#0151-2026-10-12" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3048,17 +3037,6 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#unreleased" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Unreleased
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#0151-2026-10-12" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3831,10 +3809,19 @@
 <p>All notable changes to this project will be documented in this file.</p>
 <p>The format is based on <a href="https://keepachangelog.com/en/1.1.0/">Keep a Changelog</a>,
 and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
-<h2 id="unreleased"><a href="https://github.com/zeroemployeeorg/zeocore/compare/v0.12.0...HEAD">Unreleased</a><a class="headerlink" href="#unreleased" title="Permanent link">&para;</a></h2>
+<p><strong>From 0.15.2 on, every merge to <code>main</code> is a release, and this file no longer
+grows.</strong> Each PR adds a fragment to <a href="https://github.com/zeroemployeeorg/zeocore/blob/main/changelog.d/README.md"><code>changelog.d/</code></a>, and
+each version's notes are on its
+<a href="https://github.com/zeroemployeeorg/zeocore/releases">GitHub Release</a>. The
+history below runs up to 0.15.1.</p>
 <h2 id="0151-2026-10-12">[0.15.1] - 2026-10-12<a class="headerlink" href="#0151-2026-10-12" title="Permanent link">&para;</a></h2>
 <p>A patch release: 0.15.0's <code>zeocore</code> command didn't run on a plain install.
 It also closes the unprotected TestPyPI publish target.</p>
+<p><strong>0.15.1 has no tag.</strong> It was published from <code>e22a16ca</code> by Publish run
+38201406179, a manual dispatch, before release on merge. Its smoke test failed
+on index lag 30 s after the upload, so that run made no GitHub Release. The
+files on PyPI carry GitHub attestations for <code>zeroemployeeorg/zeocore</code>,
+<code>publish.yml</code> and <code>pypi</code>, and install and run on a plain install.</p>
 <h3 id="fixed">Fixed<a class="headerlink" href="#fixed" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>The <code>zeocore</code> command runs on a plain install.</strong> In 0.15.0 it crashed

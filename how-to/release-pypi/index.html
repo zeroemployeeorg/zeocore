@@ -2450,6 +2450,19 @@
 
 
 <h1 id="release-to-pypi">Release to PyPI<a class="headerlink" href="#release-to-pypi" title="Permanent link">&para;</a></h1>
+<div class="admonition note">
+<p class="admonition-title">Release on merge replaces the tag and approval stages</p>
+<p>Since 0.15.2, every merge to <code>main</code> is a release. <code>publish.yml</code> computes
+the version, tags it and publishes it, with no approval
+(<a href="https://github.com/zeroemployeeorg/zeocore/blob/main/changelog.d/README.md"><code>changelog.d/README.md</code></a>).
+Another repository calls the same workflow,
+<code>zeroemployeeorg/zeocore/.github/workflows/release-on-merge.yml@&lt;sha&gt;</code>,
+and keeps its own top-level PyPI job, because trusted publishing can't run
+inside a reusable workflow. The <code>plan</code>, <code>admit</code>, <code>apply</code> and <code>approve</code>
+stages below describe the earlier tag-and-approve path. <code>reconcile</code> and
+<code>verify</code> still check a published release, from a local manifest that
+names its version and commit.</p>
+</div>
 <p><code>zeocore release pypi</code> is the PyPI adapter (ZEOCORE-SOW-26). It changes
 nothing about how a package publishes: the repository's <code>publish.yml</code> builds
 and publishes through trusted publishing when a <code>vX.Y.Z</code> tag is pushed,

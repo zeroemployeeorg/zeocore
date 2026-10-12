@@ -2626,20 +2626,20 @@ publishing</a> (OIDC) -- no API
 token is stored as a repo secret. There is no TestPyPI target: its
 environment was unprotected, so every publish now goes through the
 protected <code>pypi</code> environment.</p>
+<p><strong>Every merge to <code>main</code> is a release.</strong> Nobody bumps a version, tags or
+approves; the review and the merge are the gate.</p>
 <ol>
-<li>Bump <code>pyproject.toml</code>'s <code>[project] version</code>. It is the single source of
-   truth: installed <code>zeo_core.__version__</code> reads the distribution metadata
-   through <code>importlib.metadata</code>, so there is no second version literal to edit.</li>
-<li>Add a dated entry to <code>CHANGELOG.md</code>, update <code>RELEASE_NOTES.md</code> with the
-   exact heading <code># zeocore X.Y.Z</code>, update docs/examples, and run <code>uv lock</code>.
-   Run <code>make verify</code>, <code>make build</code>, and <code>make release-check</code>. The latter
-   verifies metadata consistency and that the version is unused on both
-   indexes, using live positive controls. Index filenames cannot be reused.</li>
-<li>After the reviewed release changes land on main, the operator tags the
-   merge commit <code>vX.Y.Z</code> (tags on main are the operator's alone, RULING-471)
-   and approves the <code>pypi</code> deployment. This triggers real PyPI publication. The workflow
-   refuses a tag that disagrees with package metadata or release notes and
-   creates the GitHub release from <code>RELEASE_NOTES.md</code> after the PyPI smoke passes.</li>
+<li>In your PR, add one fragment to <code>changelog.d/</code> whose first line is
+   <code>bump: patch</code>, <code>bump: minor</code> or <code>bump: major</code>, followed by the release
+   notes text (<a href="https://github.com/zeroemployeeorg/zeocore/blob/main/changelog.d/README.md"><code>changelog.d/README.md</code></a>). With no
+   fragment, the merge is a patch release.</li>
+<li>When the PR merges, <code>publish.yml</code> (through the shared
+   <code>release-on-merge.yml</code>) computes the version: the highest <code>v</code> tag plus
+   your increment. It runs <code>make verify</code>, builds with that version
+   (<code>hatch-vcs</code> reads it from the tag), tags <code>vX.Y.Z</code> at the merge commit,
+   publishes to PyPI, and creates the GitHub Release from your fragment.
+   <code>pyproject.toml</code> has no version literal, and installed
+   <code>zeo_core.__version__</code> reads the distribution metadata.</li>
 <li>The workflow's own <code>smoke-test</code> job installs the just-published package
    into a clean venv and imports it -- treat that job's failure as the
    release having NOT actually succeeded, even if the publish step itself
