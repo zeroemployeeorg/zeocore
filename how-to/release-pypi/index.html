@@ -2472,9 +2472,11 @@ secret) with <code>ZEOCORE_RELEASE_APP_ID</code>; set
 <code>private-key</code>.</p>
 <h2 id="the-targets">The targets<a class="headerlink" href="#the-targets" title="Permanent link">&para;</a></h2>
 <p>Each target is a row in zeocore's reviewed table
-(<code>zeo_core.release.pypi.targets.TARGETS</code>): <code>zeocore</code>, <code>zeocreator</code>,
-<code>zero-employee</code> and <code>sovereign-agent</code>. Each row gives the repository, the
-workflow and the environment. A manifest can name only a row in that table.</p>
+(<code>zeo_core.release.pypi.targets.TARGETS</code>): <code>zeocore</code>, <code>zeocreator</code> and
+<code>sovereign-agent</code>. Each row gives the repository, the workflow and the
+environment. A manifest can name only a row in that table. <code>zero-employee</code> is
+not a PyPI target: it is now zeoruntime, released Go-only through the shared
+signed release component (the operator, 2026-10-12).</p>
 <h2 id="the-manifest">The manifest<a class="headerlink" href="#the-manifest" title="Permanent link">&para;</a></h2>
 <p>Each target's <code>release.yaml</code>, changed in the release's own reviewed PR. A
 file can't name the commit it's part of, so the committed section has no
@@ -2546,17 +2548,17 @@ Sigstore signature, and says so in its answer.</p>
   (<code>deployment_policy_unrestricted</code>). Every page of the policy list is read,
   and a list read short of GitHub's count is unreadable;</li>
 <li>an active ruleset on <code>refs/tags/v*</code>, with no exclusions, restricts creation,
-  update and deletion, and only the release App bypasses it
-  (<code>tag_ruleset_missing</code>);</li>
-<li><code>gh</code> acts as matorclawson, the approver (<code>approver_mismatch</code>). GitHub
-  shows a ruleset's bypass list only to a repository Admin, and under ruling
-  r7 matorclawson administers nothing, so today the list is hidden from it.
-  A hidden list is held as <code>target_unreadable</code>, never read as empty. How the
-  bypass list is checked without an agent holding Admin is the operator's
-  open choice. A private repository under a personal account can't give a
-  collaborator Admin at all;</li>
-<li>the release App's id is configured (<code>release_app_unconfigured</code>).</li>
+  update and deletion (<code>tag_ruleset_missing</code>), and matorclawson can't bypass
+  it: its own <code>current_user_can_bypass</code> is <code>never</code> (<code>approver_can_bypass</code>);</li>
+<li><code>gh</code> acts as matorclawson, the approver (<code>approver_mismatch</code>).</li>
 </ul>
+<p>The ruleset's exact bypass list isn't checked. GitHub shows it only to a
+repository Admin, and under ruling r7 no agent is one, so the operator chose to
+check what is visible instead (SOW-29, option C). The residual risk is an unseen
+bypass actor creating a <code>v*</code> tag, and that can't publish on its own: the run
+still waits on matorclawson, and <code>approve</code> approves only a reviewed commit on
+the default branch. The runbook already accepts that risk.
+- the release App's id is configured (<code>release_app_unconfigured</code>).</p>
 <h2 id="apply-and-approve">apply and approve<a class="headerlink" href="#apply-and-approve" title="Permanent link">&para;</a></h2>
 <p>Both journal in this user's <code>$XDG_STATE_HOME/zeocore/release/pypi-journal.jsonl</code>
 (by default under <code>~/.local/state</code>), keyed by repository and version. So one

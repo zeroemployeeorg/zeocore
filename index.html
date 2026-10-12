@@ -335,6 +335,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#new-in-0150" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New in 0.15.0
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#new-in-0120" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2366,6 +2377,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#new-in-0150" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New in 0.15.0
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#new-in-0120" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2455,7 +2477,7 @@ so scripts, services, Zeocreator and Sovereign Agent can call the same capabilit
 <p><a class="md-button md-button--primary" href="project/QUICKSTART/">Start in ten minutes</a>
 <a class="md-button" href="integrations/">Connect a service</a>
 <a class="md-button" href="how-to/provider-registration/">Register a provider</a></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"zeocore==0.12.0"</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"zeocore==0.15.0"</span>
 </code></pre></div>
 <p>Python <strong>3.14+</strong> · Package <code>zeocore</code> · Import <code>zeo_core</code></p>
 <div class="grid cards">
@@ -2492,20 +2514,27 @@ so scripts, services, Zeocreator and Sovereign Agent can call the same capabilit
 <p>Capabilities describe and perform bounded work. Your host supplies authorization,
 credentials, scheduling and delivery policy. Marketing examples start offline;
 real sending requires explicit setup and host authorization.</p>
+<h2 id="new-in-0150">New in 0.15.0<a class="headerlink" href="#new-in-0150" title="Permanent link">&para;</a></h2>
+<p>The <a href="reference/cli/"><code>zeocore</code> command</a>, with one JSON-lines protocol; the
+ZEOconnect client for products; Broker contracts up to 1.4.0; and the shared
+release component (<a href="how-to/release-signing/">signing</a> and
+<a href="how-to/release-pypi/">PyPI</a>).</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>uv<span class="w"> </span>tool<span class="w"> </span>install<span class="w"> </span><span class="nv">zeocore</span><span class="o">==</span><span class="m">0</span>.15.0
+</code></pre></div>
 <h2 id="new-in-0120">New in 0.12.0<a class="headerlink" href="#new-in-0120" title="Permanent link">&para;</a></h2>
 <p><a href="integrations/youtube/">YouTube publishing</a> for multi-gigabyte files and a
 local <a href="integrations/revolut-business/">Revolut Business</a> profile for your own
 account. Both are offline contracts; no live request has been made to either
 provider.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"zeocore[youtube]==0.12.0"</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"zeocore[revolut]==0.12.0"</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"zeocore[youtube]==0.12.0"</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"zeocore[revolut]==0.12.0"</span>
 </code></pre></div>
 <h2 id="new-in-0110">New in 0.11.0<a class="headerlink" href="#new-in-0110" title="Permanent link">&para;</a></h2>
 <p>The <a href="how-to/runtime-host/">Runtime host</a> and <a href="integrations/meetings/">meeting adapters</a>
 are available from 0.11.0. Run these examples from the matching <code>v0.11.0</code> checkout:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"zeocore[runtime-host]==0.11.0"</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>python<span class="w"> </span>examples/runtime_host_catalogue_v1.py
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>python<span class="w"> </span>examples/meeting_request_v1.py
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"zeocore[runtime-host]==0.11.0"</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>python<span class="w"> </span>examples/runtime_host_catalogue_v1.py
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>python<span class="w"> </span>examples/meeting_request_v1.py
 </code></pre></div>
 <p>These examples prepare real catalogues and request bytes offline; they do not
 create admission or call providers. Start with <a href="how-to/provider-registration/">provider registration</a>
@@ -2539,7 +2568,7 @@ required before deploying the generic host.</p>
 <td><a href="reference/generated/">Generated API reference</a></td>
 </tr>
 <tr>
-<td>Upgrade to 0.12.0</td>
+<td>Upgrade to 0.15.0</td>
 <td><a href="project/RELEASE_NOTES/">Release notes</a></td>
 </tr>
 <tr>

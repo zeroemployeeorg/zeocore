@@ -2356,6 +2356,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#new-in-0150-the-zeocore-command-broker-contracts-to-140-and-the-release-component" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New in 0.15.0: the zeocore command, Broker contracts to 1.4.0, and the release component
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#new-in-0120-youtube-publishing-and-local-revolut-business" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2689,9 +2700,17 @@ private artifacts and reconciliation. <a href="../integrations/notebook-executio
 and <a href="../integrations/authoring-reference/">the authoring reference</a> provide
 fresh-kernel execution and independently checked staging receipts.
 See <a href="RELEASE_NOTES/">release notes</a> for migration and remaining qualification limits.</p>
+<h2 id="new-in-0150-the-zeocore-command-broker-contracts-to-140-and-the-release-component">New in 0.15.0: the <code>zeocore</code> command, Broker contracts to 1.4.0, and the release component<a class="headerlink" href="#new-in-0150-the-zeocore-command-broker-contracts-to-140-and-the-release-component" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>uv<span class="w"> </span>tool<span class="w"> </span>install<span class="w"> </span><span class="nv">zeocore</span><span class="o">==</span><span class="m">0</span>.15.0
+</code></pre></div>
+<p><code>zeocore</code> is an installed command with one JSON-lines protocol and one exit
+family. Its ZEOconnect client is for products running as their own service
+user, not for seats, which use <code>zeo</code>. The release component signs org
+executables and releases to PyPI under the operator's delegation. See the
+<a href="RELEASE_NOTES/">release notes</a>.</p>
 <h2 id="new-in-0120-youtube-publishing-and-local-revolut-business">New in 0.12.0: YouTube publishing and local Revolut Business<a class="headerlink" href="#new-in-0120-youtube-publishing-and-local-revolut-business" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"zeocore[youtube]==0.12.0"</span><span class="w">   </span><span class="c1"># resumable multi-GB publishing</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"zeocore[revolut]==0.12.0"</span><span class="w">   </span><span class="c1"># local enrollment of your own account</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"zeocore[youtube]==0.12.0"</span><span class="w">   </span><span class="c1"># resumable multi-GB publishing</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"zeocore[revolut]==0.12.0"</span><span class="w">   </span><span class="c1"># local enrollment of your own account</span>
 </code></pre></div>
 <p><a href="../integrations/youtube/">YouTube publishing</a> uploads resumably from a
 write-once job directory, resumes at the exact byte after a drop, and never
@@ -2703,9 +2722,9 @@ See the <a href="RELEASE_NOTES/">release notes</a>.</p>
 <h2 id="new-in-0110-runtime-host-and-meeting-operations">New in 0.11.0: Runtime host and meeting operations<a class="headerlink" href="#new-in-0110-runtime-host-and-meeting-operations" title="Permanent link">&para;</a></h2>
 <p>The Runtime host and meeting adapters are available in <strong>0.11.0</strong>. Install the
 package below and run the examples from the matching <code>v0.11.0</code> checkout:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"zeocore[runtime-host]==0.11.0"</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>python<span class="w"> </span>examples/runtime_host_catalogue_v1.py
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>python<span class="w"> </span>examples/meeting_request_v1.py
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"zeocore[runtime-host]==0.11.0"</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>python<span class="w"> </span>examples/runtime_host_catalogue_v1.py
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>python<span class="w"> </span>examples/meeting_request_v1.py
 </code></pre></div>
 <p>The first example builds a provider catalogue and a validated, canonical request.
 The second prepares an exact meeting read request. Both run offline without
@@ -2889,7 +2908,7 @@ module by module.</p>
   CI check fails the build if it finds <code>"pytest" in sys.modules</code> or similar).</li>
 </ul>
 <h2 id="project-status">Project status<a class="headerlink" href="#project-status" title="Permanent link">&para;</a></h2>
-<p>ZeoCore <strong>0.12.0</strong> is a beta library: the API is typed and tested, and this
+<p>ZeoCore <strong>0.15.0</strong> is a beta library: the API is typed and tested, and this
 release is the canonical capability-authoring surface for the Zero Employee
 ecosystem. The surface may still shift before 1.0. Issues, questions, and API
 feedback are welcome.</p>
