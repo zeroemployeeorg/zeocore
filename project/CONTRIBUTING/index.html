@@ -2623,7 +2623,9 @@ bugs), and your Python/zeocore version. For vulnerabilities, see
 <h2 id="releasing-maintainers">Releasing (maintainers)<a class="headerlink" href="#releasing-maintainers" title="Permanent link">&para;</a></h2>
 <p>Releases go through <code>.github/workflows/publish.yml</code>, using PyPI's <a href="https://docs.pypi.org/trusted-publishers/">trusted
 publishing</a> (OIDC) -- no API
-token is stored as a repo secret for either index.</p>
+token is stored as a repo secret. There is no TestPyPI target: its
+environment was unprotected, so every publish now goes through the
+protected <code>pypi</code> environment.</p>
 <ol>
 <li>Bump <code>pyproject.toml</code>'s <code>[project] version</code>. It is the single source of
    truth: installed <code>zeo_core.__version__</code> reads the distribution metadata
@@ -2632,18 +2634,10 @@ token is stored as a repo secret for either index.</p>
    exact heading <code># zeocore X.Y.Z</code>, update docs/examples, and run <code>uv lock</code>.
    Run <code>make verify</code>, <code>make build</code>, and <code>make release-check</code>. The latter
    verifies metadata consistency and that the version is unused on both
-   indexes, using live positive controls. Run it before staging consumes
-   the TestPyPI version. Index filenames cannot be reused.</li>
-<li>Stage through Actions -&gt; "Publish" -&gt; "Run workflow", selecting the
-   release branch and target <code>testpypi</code>. Require every job, including the
-   clean-environment install, to pass. That smoke job gets the exact wheel
-   URL from <code>https://test.pypi.org/pypi/zeocore/X.Y.Z/json</code>, verifies its
-   TestPyPI file host, and installs that URL while resolving dependencies
-   exclusively from <code>https://pypi.org/simple/</code>. Do not combine package indexes
-   or install an unpinned latest version as evidence for this release.</li>
-<li>After the reviewed release changes land on main, tag that verified commit:
-   <code>git tag -a vX.Y.Z -m "Release zeocore X.Y.Z"</code>, then
-   <code>git push origin vX.Y.Z</code>. This triggers real PyPI publication. The workflow
+   indexes, using live positive controls. Index filenames cannot be reused.</li>
+<li>After the reviewed release changes land on main, the operator tags the
+   merge commit <code>vX.Y.Z</code> (tags on main are the operator's alone, RULING-471)
+   and approves the <code>pypi</code> deployment. This triggers real PyPI publication. The workflow
    refuses a tag that disagrees with package metadata or release notes and
    creates the GitHub release from <code>RELEASE_NOTES.md</code> after the PyPI smoke passes.</li>
 <li>The workflow's own <code>smoke-test</code> job installs the just-published package
@@ -2653,17 +2647,12 @@ token is stored as a repo secret for either index.</p>
    workflow waits, but a failure here is still real signal, not a fluke to
    ignore).</li>
 </ol>
-<p><strong>Trusted publisher setup</strong> (one-time, on each index's web UI — not something
-a CI workflow can do for itself):</p>
-<ul>
-<li>https://pypi.org/manage/account/publishing/</li>
-<li>https://test.pypi.org/manage/account/publishing/</li>
-</ul>
-<p>Register a trusted publisher on each with <strong>all four</strong> fields exact:
-repository owner <code>profrodai</code>, repository name <code>zeocore</code>, workflow
+<p><strong>Trusted publisher setup</strong> (one-time, on PyPI's web UI — not something
+a CI workflow can do for itself): https://pypi.org/manage/account/publishing/</p>
+<p>Register a trusted publisher with <strong>all four</strong> fields exact:
+repository owner <code>zeroemployeeorg</code>, repository name <code>zeocore</code>, workflow
 filename <code>publish.yml</code> (just the filename, not the full path), and
-environment name <code>pypi</code> (for the pypi.org entry) or <code>testpypi</code> (for the
-test.pypi.org entry). All four are baked into the OIDC token's claims and
+environment name <code>pypi</code>. All four are baked into the OIDC token's claims and
 must match byte-for-byte, or the publish step fails with
 <code>invalid-publisher: valid token, but no corresponding publisher</code> -- an
 error that does not say which field is wrong, so get all four right rather
