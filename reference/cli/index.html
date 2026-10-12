@@ -2512,7 +2512,7 @@ result last.</p>
 <tr>
 <td><code>login</code>, <code>logout</code>, <code>whoami</code>, <code>connections</code>, <code>invoke</code>, <code>artifact get</code></td>
 <td>see below</td>
-<td>the ZEOconnect client</td>
+<td>the ZEOconnect client, for a product running as its own service user; not for seats, which use <code>zeo</code></td>
 </tr>
 <tr>
 <td><code>release sign</code>, <code>release verify</code></td>
@@ -2527,7 +2527,22 @@ result last.</p>
 </tbody>
 </table>
 <h2 id="the-zeoconnect-client">The ZEOconnect client<a class="headerlink" href="#the-zeoconnect-client" title="Permanent link">&para;</a></h2>
-<p>Apps reach the ZEOconnect Broker through these commands instead of writing a
+<div class="admonition warning">
+<p class="admonition-title">Not for seats: seats use <code>zeo</code></p>
+<p>These commands are for <strong>products</strong>, and only when the product runs as
+its <strong>own macOS service user</strong>, <code>zs-&lt;product&gt;</code> (the first is
+<code>zs-newsroom-intake</code>). They are <strong>not a seat interface</strong>: a seat reaches
+the Broker only through ZEO-RT's front door, with its <code>zeo</code> command
+(ZEOCORE-SOW-27), and they are deprecated for seats now.</p>
+<p>From Broker contract 1.4, the Broker accepts a product's grant only from
+that product's own service user. From any other user, <code>rodbot</code> and a
+product author's own login included, it is refused with
+<code>app_identity_unverified</code>. A seat's grant is refused with
+<code>door_required</code>, and a grant adopted as no principal with
+<code>no_principal</code>. zeocore can't tell these apart on one machine, so the
+Broker enforces them, not this command.</p>
+</div>
+<p>Products reach the ZEOconnect Broker through these commands instead of writing a
 Broker client of their own. An app never holds a provider token. The machine
 holds only that app's own device grant, in the macOS Keychain.</p>
 <table>

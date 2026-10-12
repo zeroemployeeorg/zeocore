@@ -2173,6 +2173,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#deprecated" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deprecated
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#added_2" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3155,6 +3166,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#deprecated" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deprecated
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#added_2" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4031,6 +4053,17 @@ this section becomes "Unreleased".</p>
   statement about what the Broker did.</li>
 </ul>
 <h2 id="unreleased"><a href="https://github.com/zeroemployeeorg/zeocore/compare/v0.12.0...HEAD">Unreleased</a><a class="headerlink" href="#unreleased" title="Permanent link">&para;</a></h2>
+<h3 id="deprecated">Deprecated<a class="headerlink" href="#deprecated" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>The ZEOconnect client commands for seats</strong> (<code>zeocore login</code>, <code>logout</code>,
+  <code>whoami</code>, <code>connections</code>, <code>invoke</code> and <code>artifact get</code>). A seat uses <code>zeo</code>,
+  ZEO-RT's front door, for every Broker operation (ZEOCORE-SOW-27). The
+  commands stay for a product running as its own macOS service user,
+  <code>zs-&lt;product&gt;</code> (the first is <code>zs-newsroom-intake</code>). From Broker contract 1.4
+  the Broker refuses a product's grant from any other user, <code>rodbot</code> and an
+  author's own login included, with <code>app_identity_unverified</code>, and a seat's
+  grant with <code>door_required</code>. The Broker enforces this, not zeocore.</li>
+</ul>
 <h3 id="added_2">Added<a class="headerlink" href="#added_2" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>Delegated PyPI releases</strong> (<code>zeocore release pypi apply | approve</code>), on the
