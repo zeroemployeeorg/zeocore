@@ -2673,13 +2673,32 @@ enrollment is three explicit steps:</p>
 <a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>python<span class="w"> </span>-m<span class="w"> </span>zeo_core.integrations.revolut.local<span class="w"> </span>authorize<span class="w"> </span>--client-id<span class="w"> </span>&lt;client<span class="w"> </span>id&gt;
 <a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>
 <a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="c1"># 3. Revolut redirects your browser to the redirect URI with a one-time code.</span>
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="c1">#    The page need not exist: copy the address bar and paste it here. Input is</span>
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="c1">#    hidden so the code does not land in your shell history.</span>
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>python<span class="w"> </span>-m<span class="w"> </span>zeo_core.integrations.revolut.local<span class="w"> </span><span class="nb">complete</span>
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>python<span class="w"> </span>-m<span class="w"> </span>zeo_core.integrations.revolut.local<span class="w"> </span>status<span class="w">     </span><span class="c1"># never prints a secret</span>
-<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>python<span class="w"> </span>-m<span class="w"> </span>zeo_core.integrations.revolut.local<span class="w"> </span>accounts<span class="w">   </span><span class="c1"># first live check</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="c1">#    The page need not exist: copy the address bar and paste it here. This is</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="c1">#    the one human step: only you can copy that address. In a terminal the</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="c1">#    input is hidden so the code does not land in your shell history.</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>python<span class="w"> </span>-m<span class="w"> </span>zeo_core.integrations.revolut.local<span class="w"> </span><span class="nb">complete</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="c1">#    Without a terminal it reads the first line of stdin instead, so a</span>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="c1">#    program can pipe the URL; later lines are ignored. Never pass the URL as an</span>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="c1">#    argument: the code would show in process listings and shell history, and</span>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="c1">#    `complete` refuses an argument without echoing it. Pipe it from your own</span>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="c1">#    shell without writing it into a command line or a variable:</span>
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>pbpaste<span class="w"> </span><span class="p">|</span><span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>zeo_core.integrations.revolut.local<span class="w"> </span><span class="nb">complete</span>
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a><span class="c1">#    or read it silently:  read -rs URL; printf '%s\n' "$URL" | ... complete</span>
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a><span class="c1">#    A pipe that sends nothing, or stops before the line ends, for 30 seconds in</span>
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a><span class="c1">#    all is refused; `&lt; /dev/null` is refused at once.</span>
+<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>
+<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>python<span class="w"> </span>-m<span class="w"> </span>zeo_core.integrations.revolut.local<span class="w"> </span>status<span class="w">     </span><span class="c1"># never prints a secret</span>
+<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a>python<span class="w"> </span>-m<span class="w"> </span>zeo_core.integrations.revolut.local<span class="w"> </span>accounts<span class="w">   </span><span class="c1"># first live check</span>
 </code></pre></div>
+<p><strong>Exit codes.</strong> <code>0</code> done. <code>2</code> the input was not accepted and nothing was sent: a
+usage error, <code>CLIENT_ID</code> (an <code>authorize --client-id</code> that looks like an address,
+so it is refused without echoing it), or <code>REDIRECT_URL</code> (no usable first line on
+stdin, a first line over 8192 bytes or that is not UTF-8, a pipe that is silent or
+stops mid-line, no stdin at all, an address that <code>urlsplit</code> rejects, or a URL given
+as an argument). Text that is a well-formed address but not Revolut's redirect, and
+plain words, are not <code>REDIRECT_URL</code>: they end as <code>CONSENT_MISMATCH</code>, exit <code>1</code>. <code>1</code> every other refusal of this module (<code>NOT_SET_UP</code>,
+<code>CONSENT_MISMATCH</code>, <code>EXCHANGE_*</code>, store errors); these older refusals keep <code>1</code>.
+Every <code>REDIRECT_URL</code> message ends with what to do, and none quotes the address.</p>
 <p>The same steps are available in Python as
 <code>LocalRevolutEnrollment(environment).setup(...)</code>, <code>.authorize(...)</code>,
 <code>.complete(...)</code>. The JWT <code>iss</code> Revolut checks is the host of your redirect URI.</p>
