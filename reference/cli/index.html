@@ -2765,6 +2765,22 @@ Development origins also need <code>ZEOCONNECT_DEVELOPMENT=1</code>.</p>
   events prints exactly one line. Diagnostics go to stderr.</li>
 <li><strong>Input is strict JSON:</strong> no duplicate keys, no <code>NaN</code> or infinities, at most
   1 MiB.</li>
+<li><strong>A failing message ends with the next action.</strong> A failing answer's <code>message</code>
+  names what failed, then, after a <code>;</code>, what to do next: a command to run, a
+  flag to set, or who has to act (for example <code>this device is not paired with
+  ZEOconnect; run zeocore login</code>). Where a layer below gave no next step, the
+  answer adds one chosen by outcome, so every refusal, held and waiting answer
+  carries one. The next action is fixed text and never quotes the input. Only a
+  message zeocore wrote itself, ending in its own action, skips the added one;
+  a message built from an error's text always gets it, however it ends.</li>
+<li><strong><code>ZEOCORE_DEBUG=1</code> explains an internal error.</strong> An internal error's
+  message says to rerun the same command with <code>ZEOCORE_DEBUG=1</code> and report the
+  command, the zeocore version and that output. With the variable set to <code>1</code>,
+  stderr gets the exception's type and where it happened (file, line and
+  function of each frame). Never its text, arguments, locals or the input.
+  The file paths are absolute, so they can include the installing user's home
+  directory: that is why it is an explicit opt-in, and stderr only. stdout
+  stays one JSON line.</li>
 <li><strong>Errors never echo input.</strong> A validation error is its location and type only.
   A location keeps declared field names and list positions; any other key (inside
   a free-form object such as <code>arguments</code>, or an unknown extra) shows as <code>*</code>.</li>
@@ -2809,7 +2825,7 @@ Development origins also need <code>ZEOCONNECT_DEVELOPMENT=1</code>.</p>
 </tr>
 <tr>
 <td>1</td>
-<td>internal error in zeocore: <code>{"ok": false, "outcome": "internal"}</code>, no detail. For an operation, treat it like 13</td>
+<td>internal error in zeocore: <code>{"ok": false, "outcome": "internal", "message": …}</code>, with no detail of the input. For an operation, treat it like 13</td>
 </tr>
 </tbody>
 </table>
