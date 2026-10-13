@@ -760,6 +760,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#bundles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bundles
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#running-it" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2409,6 +2420,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#bundles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bundles
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#running-it" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2551,10 +2573,110 @@ from flags. Paths are relative to the manifest.</p>
 <a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="w">        </span><span class="nt">sha256</span><span class="p">:</span><span class="w"> </span><span class="s">"…"</span>
 </code></pre></div>
 <p>A current binding's identifier is always <code>ac.zeo.&lt;product&gt;.&lt;name&gt;</code>.</p>
+<h2 id="bundles">Bundles<a class="headerlink" href="#bundles" title="Permanent link">&para;</a></h2>
+<p><code>release_manifest: 2</code> adds <code>bundles</code> beside <code>executables</code>: a macOS <code>.app</code>,
+signed whole and inside-out (ZEOCORE-SOW-32). A bundle is for the internal
+audience only. Version 1 manifests are unchanged.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nt">signing</span><span class="p">:</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="nt">release_manifest</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span><span class="nt">product</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">zeoapp</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span><span class="nt">bundles</span><span class="p">:</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">zeoapp</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">      </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">app/build/Zeo.app</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">      </span><span class="nt">bundle_identifier</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">org.zeroemployee.zeo.operator</span><span class="w">   </span><span class="c1"># Info.plist's CFBundleIdentifier</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">      </span><span class="nt">identifier</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">org.zeroemployee.zeo.operator</span><span class="w">          </span><span class="c1"># equals it, for the outer bundle only</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">      </span><span class="nt">audience</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">internal</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">      </span><span class="nt">platform</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">darwin</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="w">      </span><span class="nt">policy</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">current</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="w">      </span><span class="nt">entitlements</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">none</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="w">      </span><span class="nt">unsigned_tree_sha256</span><span class="p">:</span><span class="w"> </span><span class="s">"…"</span><span class="w">     </span><span class="c1"># zeocore release tree-digest, at build time</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="w">      </span><span class="nt">main_executable</span><span class="p">:</span><span class="w">              </span><span class="c1"># Info.plist's CFBundleExecutable; or: none</span>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="w">        </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Contents/MacOS/ZEOPlayground</span>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="w">        </span><span class="nt">unsigned_sha256</span><span class="p">:</span><span class="w"> </span><span class="s">"…"</span>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="w">      </span><span class="nt">nested</span><span class="p">:</span><span class="w">                       </span><span class="c1"># every piece of code, by its path inside the .app</span>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Contents/Frameworks/libZEOConsoleRenderer.dylib</span>
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a><span class="w">          </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">macho</span>
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a><span class="w">          </span><span class="nt">unsigned_sha256</span><span class="p">:</span><span class="w"> </span><span class="s">"…"</span><span class="w">      </span><span class="c1"># the file's sha256</span>
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a><span class="w">          </span><span class="nt">identifier</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ac.zeo.zeoapp.console-renderer</span>
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a><span class="w">          </span><span class="nt">entitlements</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">none</span>
+<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a><span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Contents/Resources/SwiftTerm_SwiftTerm.bundle</span>
+<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a><span class="w">          </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">bundle</span><span class="w">              </span><span class="c1"># a codeless resource bundle: still signed</span>
+<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a><span class="w">          </span><span class="nt">unsigned_sha256</span><span class="p">:</span><span class="w"> </span><span class="s">"…"</span><span class="w">      </span><span class="c1"># a nested bundle's subtree tree digest</span>
+<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a><span class="w">          </span><span class="nt">identifier</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ac.zeo.zeoapp.swiftterm-resources</span>
+<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a><span class="w">          </span><span class="nt">entitlements</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">none</span>
+<a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a><span class="w">          </span><span class="nt">main_executable</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">none</span>
+</code></pre></div>
+<ul>
+<li><strong>The outer bundle keeps its own identifier.</strong> <code>identifier</code> equals
+  <code>bundle_identifier</code>, the one reviewed exception to
+  <code>ac.zeo.&lt;product&gt;.&lt;name&gt;</code>. Nested code keeps the rule, and its name, which
+  names its receipt, is the identifier's last part.</li>
+<li><strong>The tree digest.</strong> <code>zeocore release tree-digest &lt; {"path": "app/build/Zeo.app"}</code>
+  prints <code>unsigned_tree_sha256</code>: the sha256 of one line per entry, sorted by
+  path as UTF-8 bytes, each <code>path TAB type TAB mode TAB value LF</code>. The path is
+  relative and UTF-8; the type is <code>file</code>, <code>dir</code> or <code>symlink</code>; the mode is
+  <code>755</code> for a directory or a file with any execute bit, <code>644</code> otherwise, <code>-</code>
+  for a link; the value is the file's sha256, the link's target, or <code>-</code>. A
+  path or target with a control character, a backslash or bytes that aren't
+  UTF-8 is refused, so nothing is escaped. So are a fifo, socket or device, a
+  file with more than one hard link, an entry with the setuid, setgid or
+  sticky bit, and one with any BSD file flag but transparent compression.
+  Extended attributes, owners and times aren't part of it: xattrs are neither
+  described nor sealed by the tree digest (codesign seals the resources), and
+  the signing copy carries only each file's bytes and its pack mode. The pack and the step
+  compute it with the same code.</li>
+<li><strong>Links</strong> are allowed only where a framework needs them: its
+  <code>Versions/Current</code>, naming one version beside it, and a link at its top
+  whose target starts <code>Versions/</code>. Every hop of the resolution, through any
+  other link, stays inside that framework. Anything else, an absolute
+  target, a <code>..</code> that leaves it, a dangling link or a loop, refuses the
+  bundle as <code>bundle_unsafe</code>. The walk and the copy never follow a link, the
+  check runs on the unsigned original, on the copy before signing and at
+  every verify, and a listed path or main executable with a link in it is
+  <code>bundle_unsafe</code>: codesign is never pointed through one.</li>
+<li><strong>Every piece of code is listed.</strong> Before anything is signed, the step finds
+  every Mach-O file by its magic number, every other file with an execute bit,
+  and every nested <code>.app</code>, <code>.framework</code>, <code>.bundle</code>, <code>.xpc</code>, <code>.appex</code>,
+  <code>.plugin</code>, <code>.kext</code>, <code>.dext</code> or <code>.systemextension</code>. One that isn't listed is
+  <code>nested_unlisted</code>. Each item's <code>kind</code> is <code>macho</code> or <code>bundle</code>, and an item
+  that isn't that kind is <code>nested_missing</code>, so an executable script can't be
+  listed and refuses the bundle.</li>
+<li><strong>A bundle's main executable is its own.</strong> <code>main_executable</code> is declared and
+  hashed, for the outer bundle and for each nested bundle, and is never a
+  nested item: listing it is refused. Its path is the file Info.plist's
+  <code>CFBundleExecutable</code> names, relative to its bundle: <code>Contents/MacOS/&lt;name&gt;</code>,
+  or a framework's binary's real path, such as <code>Versions/A/&lt;name&gt;</code>. Info.plist
+  with a <code>CFBundleExecutable</code> needs a matching declaration, of a Mach-O file;
+  without one, the declaration is <code>none</code>. Anything else is
+  <code>main_executable_invalid</code>. It is signed by its bundle's own codesign call
+  and verified after it, under the bundle's identifier.</li>
+<li><strong>A codeless resource bundle</strong> (<code>kind: bundle</code>, <code>main_executable: none</code>) is
+  listed and signed like any nested bundle, with <code>--identifier</code>. Its own
+  <code>CFBundleIdentifier</code> is kept and isn't checked; only the outer bundle's
+  <code>bundle_identifier</code> is checked against its Info.plist.</li>
+<li><strong>Signing</strong> copies the bundle to <code>work_dir/signed/&lt;name&gt;/</code>, keeping links,
+  signs the nested items deepest first, then the outer bundle. It never uses
+  <code>--deep</code>, hardened runtime or a timestamp. Each nested item gets a receipt,
+  and the bundle a receipt naming the signed tree's digest and the sha256 of
+  every nested receipt. A bundle is one unit: a clean failure closes every
+  part of it, so the next run signs a fresh copy; a lost answer is
+  reconciled by reading the whole bundle back.</li>
+<li><strong>Admission</strong> counts the bundle once and each nested item once against the
+  16-item limit (a main executable doesn't count). Nested identifiers must be
+  among the grant's <code>ac.zeo.&lt;product&gt;.&lt;name&gt;</code> identifiers, and the outer
+  bundle's among its <code>bundle_identifiers</code>: the only identifiers outside
+  <code>ac.zeo.</code>, each granted to exactly one product. An outer identifier in
+  another product's <code>ac.zeo.</code> namespace is refused in the manifest.</li>
+<li><strong>No hardened runtime</strong> for internal signing, so library validation is off:
+  a process running as the same user can load a dylib into the app, and it
+  then acts with the app's TCC grants and its connections. The signature
+  shows what was released; it doesn't stop a same-user process. That user
+  boundary is the control for internal releases.</li>
+</ul>
 <h2 id="running-it">Running it<a class="headerlink" href="#running-it" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">ZEOCORE_SIGNING_HOST</span><span class="o">=</span>mac-mini<span class="w">      </span><span class="c1"># this host's `hostname -s`, lower case</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="gp">$ </span><span class="nb">echo</span><span class="w"> </span><span class="s1">'{"manifest": "release.yaml", "work_dir": "/path/to/work"}'</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>zeocore<span class="w"> </span>release<span class="w"> </span>sign
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="gp">$ </span><span class="nb">echo</span><span class="w"> </span><span class="s1">'{"manifest": "release.yaml", "work_dir": "/path/to/work"}'</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>zeocore<span class="w"> </span>release<span class="w"> </span>verify
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">ZEOCORE_SIGNING_HOST</span><span class="o">=</span>mac-mini<span class="w">      </span><span class="c1"># this host's `hostname -s`, lower case</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="gp">$ </span><span class="nb">echo</span><span class="w"> </span><span class="s1">'{"manifest": "release.yaml", "work_dir": "/path/to/work"}'</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>zeocore<span class="w"> </span>release<span class="w"> </span>sign
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="gp">$ </span><span class="nb">echo</span><span class="w"> </span><span class="s1">'{"manifest": "release.yaml", "work_dir": "/path/to/work"}'</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>zeocore<span class="w"> </span>release<span class="w"> </span>verify
 </code></pre></div>
 <ul>
 <li><code>sign</code> runs only on the configured signing host. Anywhere else it holds as
@@ -2569,11 +2691,11 @@ from flags. Paths are relative to the manifest.</p>
 <p>The operator's decision: signing happens on matormini only, and no second copy
 of the key is made. A build host sends a request pack there and gets a
 response pack back (ZEOCORE-SOW-23).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="gp">$ </span><span class="nb">echo</span><span class="w"> </span><span class="err">'</span><span class="o">{</span><span class="s2">"manifest"</span>:<span class="w"> </span><span class="s2">"release.yaml"</span>,<span class="w"> </span><span class="s2">"out"</span>:<span class="w"> </span><span class="s2">"request.tar"</span>,
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="go">        "repo": "owner/repo", "commit": "&lt;40-hex merged commit&gt;",</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="go">        "manifest_path": "release.yaml"}' | zeocore release pack</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="gp">$ </span><span class="nb">echo</span><span class="w"> </span><span class="err">'</span><span class="o">{</span><span class="s2">"manifest"</span>:<span class="w"> </span><span class="s2">"release.yaml"</span>,<span class="w"> </span><span class="s2">"response"</span>:<span class="w"> </span><span class="s2">"response.tar"</span>,
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="go">        "work_dir": "/path/to/new/dir"}' | zeocore release receive</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="gp">$ </span><span class="nb">echo</span><span class="w"> </span><span class="err">'</span><span class="o">{</span><span class="s2">"manifest"</span>:<span class="w"> </span><span class="s2">"release.yaml"</span>,<span class="w"> </span><span class="s2">"out"</span>:<span class="w"> </span><span class="s2">"request.tar"</span>,
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="go">        "repo": "owner/repo", "commit": "&lt;40-hex merged commit&gt;",</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="go">        "manifest_path": "release.yaml"}' | zeocore release pack</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="gp">$ </span><span class="nb">echo</span><span class="w"> </span><span class="err">'</span><span class="o">{</span><span class="s2">"manifest"</span>:<span class="w"> </span><span class="s2">"release.yaml"</span>,<span class="w"> </span><span class="s2">"response"</span>:<span class="w"> </span><span class="s2">"response.tar"</span>,
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="go">        "work_dir": "/path/to/new/dir"}' | zeocore release receive</span>
 </code></pre></div>
 <ul>
 <li><code>pack</code> holds <code>request.json</code> (where the manifest was reviewed), the manifest,
@@ -2583,15 +2705,18 @@ response pack back (ZEOCORE-SOW-23).</p>
   directory, then runs <code>verify</code> on this host. A release counts as signed only
   when that passes.</li>
 <li>Opening a pack refuses links, absolute paths, <code>..</code>, duplicates, unlisted
-  files and any digest that differs.</li>
+  files and any digest that differs. A link is allowed only inside a listed
+  bundle, under the bundle's link rules. In a response, <code>signed/&lt;name&gt;/</code> and
+  the signed bundle must be real directories inside the work directory,
+  never links.</li>
 </ul>
 <h3 id="the-service-on-matormini">The service on matormini<a class="headerlink" href="#the-service-on-matormini" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">ZEOCORE_SIGNING_HOST</span><span class="o">=</span>mac-mini
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="gp">$ </span><span class="nb">echo</span><span class="w"> </span><span class="s1">'{"listen": "100.x.y.z:7744", "state_dir": "/path/to/state"}'</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>zeocore<span class="w"> </span>release<span class="w"> </span>serve
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">ZEOCORE_SIGNING_HOST</span><span class="o">=</span>mac-mini
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="gp">$ </span><span class="nb">echo</span><span class="w"> </span><span class="s1">'{"listen": "100.x.y.z:7744", "state_dir": "/path/to/state"}'</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>zeocore<span class="w"> </span>release<span class="w"> </span>serve
 </code></pre></div>
 <p>On the build host:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="gp">$ </span><span class="nb">echo</span><span class="w"> </span><span class="s1">'{"pack": "request.tar", "service": "100.x.y.z:7744", "out": "response.tar"}'</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">    </span><span class="p">|</span><span class="w"> </span>zeocore<span class="w"> </span>release<span class="w"> </span>send
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="gp">$ </span><span class="nb">echo</span><span class="w"> </span><span class="s1">'{"pack": "request.tar", "service": "100.x.y.z:7744", "out": "response.tar"}'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">    </span><span class="p">|</span><span class="w"> </span>zeocore<span class="w"> </span>release<span class="w"> </span>send
 </code></pre></div>
 <p>The service listens only on a tailnet <code>100.x</code> address and takes the caller's
 node from <code>tailscale whois</code>. Sending the same pack again is safe: a signed
@@ -2629,8 +2754,23 @@ ZEO Runtime key until the code-signing ruling that carries it is signed.</p>
 <li>the designated requirement is exactly the binding's, and <code>codesign --verify
   --strict -R</code> accepts the file against it. Only codesign's exit 3 is a
   non-match; a syntax or tool error holds as unreadable;</li>
-<li>the signed entitlements equal the manifest's file: none dropped, none added.</li>
+<li>the signed entitlements equal the manifest's file exactly: none dropped,
+  none added. <code>none</code> means no entitlements blob at all, so an empty
+  entitlements file is refused as <code>entitlements_invalid</code>: declare <code>none</code>.</li>
 </ul>
+<p>For a bundle, each nested item is checked like that, then the outer bundle
+with the same checks (its identifier is <code>bundle_identifier</code>, which must
+still be Info.plist's <code>CFBundleIdentifier</code>), then each main executable under
+its bundle's identifier and entitlements, and then <code>codesign --verify --strict --deep</code> on the whole: <code>--deep</code> verifies
+every nested signature and the sealed resources, and is used only to verify.
+The signed tree's digest must match the bundle's receipt, each nested item's
+digest its own receipt, and the bundle's receipt must name each nested
+receipt's sha256. The tree is walked again, so code added after signing is
+refused.</p>
+<p>The bundle's verify receipt also carries <code>spctl</code>, the <code>status</code> and <code>output</code> of
+<code>spctl --assess --type execute -vv</code>. It is information only: an internal
+bundle isn't notarised, so Gatekeeper rejecting it is expected, and its answer
+never makes a pass or a failure.</p>
 <p>The link between the signed file and the unsigned original is the receipt
 chain. Stripping both signatures does not give equal bytes, so a byte-level
 link isn't claimed.</p>
@@ -2667,7 +2807,7 @@ held or refused.</p>
 <td>held</td>
 </tr>
 <tr>
-<td><code>not_signed</code>, <code>identity_mismatch</code>, <code>wrong_audience</code>, <code>entitlements_mismatch</code>, <code>companion_unsigned</code>, <code>input_mismatch</code>, <code>signed_digest_mismatch</code>, <code>receipt_mismatch</code>, <code>receipt_invalid</code>, <code>entitlements_invalid</code>, <code>platform_signature_unadopted</code>, <code>legacy_policy_verify_only</code></td>
+<td><code>not_signed</code>, <code>identity_mismatch</code>, <code>wrong_audience</code>, <code>entitlements_mismatch</code>, <code>companion_unsigned</code>, <code>input_mismatch</code>, <code>signed_digest_mismatch</code>, <code>receipt_mismatch</code>, <code>receipt_invalid</code>, <code>entitlements_invalid</code>, <code>platform_signature_unadopted</code>, <code>legacy_policy_verify_only</code>, <code>bundle_unsafe</code>, <code>nested_unlisted</code>, <code>nested_missing</code>, <code>main_executable_listed</code>, <code>main_executable_invalid</code>, <code>bundle_identifier_mismatch</code></td>
 <td>20</td>
 <td>refused</td>
 </tr>
