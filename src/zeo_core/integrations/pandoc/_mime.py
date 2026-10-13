@@ -56,6 +56,10 @@ _BOUNDARY: Final = re.compile(
     rb"boundary\s*=\s*(?:\"([^\"\r\n]{1,70})\"|([^\s;\"]{1,70}))",
     re.IGNORECASE,
 )
+#: An RFC 2231 parameter continuation or encoding of the boundary (``boundary*0=``,
+#: ``boundary*=utf-8''...``). The ``email`` package honours it, but the pattern above
+#: cannot see through it, so the boundary lines could not be counted: refused.
+_BOUNDARY_EXTENDED: Final = re.compile(rb"boundary\s*\*", re.IGNORECASE)
 _MAX_BOUNDARIES: Final = 2 * MAX_MIME_DEPTH + 8
 _MAX_BOUNDARY_MENTIONS: Final = 4 * MAX_MIME_PARTS
 
@@ -356,7 +360,11 @@ def _bound_boundary_lines(raw: bytes) -> None:
 
     A part with no headers has no ``Content-Type`` to count, but it still costs one
     boundary line, so the lines starting ``--<boundary>`` are counted before parsing.
+    A boundary written as an RFC 2231 continuation (``boundary*0=``) cannot be seen by
+    that count, so such a message is refused.
     """
+    if _BOUNDARY_EXTENDED.search(raw):
+        raise refusal("message_too_complex")
     boundaries: set[bytes] = set()
     for mentions, found in enumerate(_BOUNDARY.finditer(raw), 1):
         if mentions > _MAX_BOUNDARY_MENTIONS:

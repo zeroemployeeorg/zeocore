@@ -483,6 +483,47 @@ def test_headerless_parts_are_counted_by_their_boundary_lines() -> None:
     assert caught.value.code == "message_too_complex"
 
 
+@pytest.mark.parametrize(
+    "parameter",
+    [
+        b'boundary*0="ab"; boundary*1="cd"',
+        b"boundary*=utf-8''abcd",
+        b"boundary*0*=utf-8''ab; boundary*1=\"cd\"",
+        b'BOUNDARY *0="abcd"',
+    ],
+    ids=["continuation", "encoded", "encoded-continuation", "case-and-space"],
+)
+def test_a_boundary_written_as_an_rfc_2231_continuation_is_refused_before_parsing(
+    parameter: bytes,
+) -> None:
+    """email honours ``boundary*0=``; the pre-scan could not count such a boundary."""
+    import time
+
+    # ~1.7M header-less parts in under the 10 MiB limit: 6 bytes each
+    parts = b"--abcd\n\n" * 1_300_000
+    raw = (
+        b"From: n@example.org\n"
+        b"Content-Type: multipart/mixed; " + parameter + b"\n\n" + parts
+    )
+    assert len(raw) < _mime.RAW_MAX_BYTES
+    started = time.monotonic()
+    with pytest.raises(NewsletterRefusalError) as caught:
+        decode_raw_message(raw)
+    assert caught.value.code == "message_too_complex"
+    assert time.monotonic() - started < 2.0  # refused by the pre-scan, not parsed
+
+
+def test_a_plain_boundary_with_no_star_is_still_counted_not_refused_for_a_star() -> (
+    None
+):
+    parts = b"--b\r\nContent-Type: text/plain\r\n\r\nx\r\n" * 3
+    raw = (
+        b"From: n@example.org\r\n"
+        b'Content-Type: multipart/mixed; boundary="b"\r\n\r\n' + parts + b"--b--\r\n"
+    )
+    _mime._bound(raw, _mime.RAW_MAX_BYTES)  # no refusal
+
+
 def test_a_message_with_the_largest_allowed_parts_is_not_refused_by_the_prescan() -> (
     None
 ):
