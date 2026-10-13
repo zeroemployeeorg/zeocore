@@ -1890,6 +1890,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#is-this-machine-ready-zeocore-doctor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Is this machine ready? zeocore doctor
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#the-zeoconnect-client" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2376,6 +2387,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#is-this-machine-ready-zeocore-doctor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Is this machine ready? zeocore doctor
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#the-zeoconnect-client" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2468,7 +2490,7 @@ script. Each call reads JSON on stdin and writes JSON lines on stdout, the
 result last.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>zeocore<span class="w"> </span><span class="nb">help</span><span class="w"> </span>--json
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="gp">$ </span>zeocore<span class="w"> </span>version
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="go">{"cli_protocol": "1", "commands": ["artifact", "connections", "digest", "help", "invoke", "login", "logout", "release", "schema", "validate", "version", "whoami"], "ok": true, "schema": "zeocore.version/v1", "zeoconnect_protocol": "1", "zeocore": "…"}</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="go">{"cli_protocol": "1", "commands": ["artifact", "connections", "digest", "doctor", "help", "invoke", "login", "logout", "release", "schema", "validate", "version", "whoami"], "ok": true, "schema": "zeocore.version/v1", "zeoconnect_protocol": "1", "zeocore": "…"}</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="gp">$ </span>zeocore<span class="w"> </span>schema<span class="w"> </span>list
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="gp">$ </span>zeocore<span class="w"> </span>schema<span class="w"> </span>hosted.operation-request
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="gp">$ </span><span class="nb">echo</span><span class="w"> </span><span class="s1">'{"code": "RATE_LIMITED", "message": "slow down"}'</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>zeocore<span class="w"> </span>validate<span class="w"> </span>connections.normalized-error
@@ -2499,6 +2521,11 @@ JSON already, so <code>zeocore help</code> without <code>--json</code> answers t
 <td><code>version</code></td>
 <td>no</td>
 <td>the release, <code>cli_protocol</code>, the ZEOconnect protocol, the commands</td>
+</tr>
+<tr>
+<td><code>doctor [--profile P]</code></td>
+<td>no</td>
+<td>is this machine ready: Python, session store, pairing, <code>ZEOCONNECT_URL</code>, extras; see below</td>
 </tr>
 <tr>
 <td><code>schema list</code></td>
@@ -2537,6 +2564,57 @@ JSON already, so <code>zeocore help</code> without <code>--json</code> answers t
 </tr>
 </tbody>
 </table>
+<h2 id="is-this-machine-ready-zeocore-doctor">Is this machine ready? <code>zeocore doctor</code><a class="headerlink" href="#is-this-machine-ready-zeocore-doctor" title="Permanent link">&para;</a></h2>
+<p><code>zeocore doctor</code> answers what an agent would otherwise find out by failing. It is
+local and read-only: no network call, nothing written, and never a token, a path
+or an environment value in the answer.</p>
+<p>Each check is one event line, <code>{"event": "check", "check": …, "ok": …, "message": …}</code>.
+The result is last, with <code>ok</code>, <code>outcome</code> (<code>ready</code> or <code>not_ready</code>), <code>failing</code> (the
+names of the checks that failed) and <code>checks</code> (the same lines, for a caller that
+doesn't stream). A failing check carries <code>next</code>, the exact command or step that
+fixes it, and <code>who</code> when someone other than the caller must act.</p>
+<table>
+<thead>
+<tr>
+<th>Check</th>
+<th>Passes when</th>
+<th>When it fails, <code>next</code> is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>python</code></td>
+<td>Python meets the package's floor, 3.14</td>
+<td><code>uv tool install --python 3.14 zeocore</code></td>
+</tr>
+<tr>
+<td><code>zeoconnect_url</code></td>
+<td><code>ZEOCONNECT_URL</code> is unset or an allowed Broker origin</td>
+<td>unset it, or set <code>ZEOCONNECT_DEVELOPMENT=1</code> for a development Broker</td>
+</tr>
+<tr>
+<td><code>session_store</code></td>
+<td>the Keychain (asked for at most 5 s), or the file <code>ZEOCORE_SESSION_FILE</code> names, is readable</td>
+<td>how to make the store usable, for that refusal</td>
+</tr>
+<tr>
+<td><code>pairing</code></td>
+<td>this profile holds a grant that hasn't expired</td>
+<td><code>zeocore login</code>, by <code>who</code>: a person, who approves it in ZEOconnect</td>
+</tr>
+<tr>
+<td><code>extra:github</code></td>
+<td><code>zeocore release</code> can load</td>
+<td><code>pip install 'zeocore[github]'</code></td>
+</tr>
+</tbody>
+</table>
+<p>Exit 0 when every check passes, 20 when any fails (for <code>doctor</code>, 20 means <em>not
+ready</em>), 2 for a <code>--profile</code> that can't be used, found before any check prints. Checks
+print as they finish. A
+failing <code>zeoconnect_url</code> or <code>session_store</code> also fails <code>pairing</code>, which then says
+it was not checked: with a bad origin <code>zeocore login</code> would fail too, so no
+person is named.</p>
 <h2 id="the-zeoconnect-client">The ZEOconnect client<a class="headerlink" href="#the-zeoconnect-client" title="Permanent link">&para;</a></h2>
 <div class="admonition warning">
 <p class="admonition-title">Not for seats: seats use <code>zeo</code></p>
@@ -2678,8 +2756,8 @@ Development origins also need <code>ZEOCONNECT_DEVELOPMENT=1</code>.</p>
 </ul>
 <h2 id="rules-every-command-keeps-cli_protocol-1">Rules every command keeps (<code>cli_protocol</code> 1)<a class="headerlink" href="#rules-every-command-keeps-cli_protocol-1" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>stdout is JSON lines and nothing else.</strong> Events (a pairing code, an approval
-  link, waiting) carry an <code>event</code> key. The result is always the last line: it
+<li><strong>stdout is JSON lines and nothing else.</strong> Events (a pairing code, a doctor
+  check, an approval link, waiting) carry an <code>event</code> key. The result is always the last line: it
   carries <code>ok</code> and <code>schema</code> (<code>zeocore.&lt;command&gt;/v1</code>; <code>zeocore.usage/v1</code> for
   an unknown command; <code>zeocore.internal/v1</code> for an internal error) and never
   <code>event</code>. <code>zeocore schema &lt;name&gt;</code> is the one exception: its answer is the
@@ -2727,7 +2805,7 @@ Development origins also need <code>ZEOCONNECT_DEVELOPMENT=1</code>.</p>
 </tr>
 <tr>
 <td>20</td>
-<td>held or refused, including a value that doesn't match its schema</td>
+<td>held or refused, including a value that doesn't match its schema; for <code>doctor</code>, not ready</td>
 </tr>
 <tr>
 <td>1</td>
