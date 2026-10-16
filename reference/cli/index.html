@@ -2724,7 +2724,7 @@ holds only that app's own device grant, in the macOS Keychain.</p>
 <td>Lists the grant's connections.</td>
 </tr>
 <tr>
-<td><code>invoke &lt;operation_id&gt; --connection C [--occurrence L] [--wait-approval SECONDS]</code></td>
+<td><code>invoke &lt;operation_id&gt; --connection C [--occurrence L] [--wait SECONDS \| --wait-approval SECONDS]</code></td>
 <td>the arguments object</td>
 <td>Runs one operation and answers the Broker's response plus <code>request_key</code> and <code>retry</code>.</td>
 </tr>
@@ -2801,6 +2801,14 @@ Development origins also need <code>ZEOCONNECT_DEVELOPMENT=1</code>.</p>
   approval. It emits <code>{"event": "approval", "approval_url", "request_key"}</code>
   once, then asks again with the same key every 5 s until the answer is no
   longer <code>approval_required</code>, or the time runs out (exit 10).</li>
+<li><strong><code>--wait SECONDS</code></strong> (1 to 3600) waits until the outcome is final, so an agent
+  never has to poll. It asks again with the same key every 5 s through a
+  person's approval, an answer still in flight, and ZEOconnect being
+  unavailable. It emits each kind of wait once: the <code>approval</code> event, then
+  <code>{"event": "waiting", "reason": "in_flight" | "unavailable", "request_key"}</code>.
+  The exit is the final answer's own. At the deadline it is the last answer's:
+  10 or 11. An ambiguous answer (13), or a Broker that didn't answer at all, is
+  never retried. <code>--wait</code> and <code>--wait-approval</code> can't be combined.</li>
 <li><strong><code>retry</code></strong> says what another attempt needs:</li>
 <li><code>same_request</code>: ask again as it is;</li>
 <li><code>new_occurrence</code>: the failure is recorded, so a retry is a new act;</li>
