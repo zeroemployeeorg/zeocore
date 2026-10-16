@@ -2746,6 +2746,15 @@
 <li>Production code never detects that it runs under test. Inject a parameter, fixture or fake.</li>
 <li>Examples under <code>examples/</code> import <code>zeo_core</code> and run with <code>uv run examples/&lt;name&gt;.py</code>. The beginner examples stay deterministic, offline and credential-free.</li>
 </ul>
+<p><code>make setup</code> also points git at the hooks committed in <code>.githooks</code> (it runs
+<code>git config core.hooksPath .githooks</code>; <code>make hooks</code> does just that step). The
+<code>pre-push</code> hook runs <code>make verify</code> before anything leaves your machine, so a
+fresh clone has the gate without anyone installing a hook by hand. It tests the
+checked-out tree, so it refuses a push with uncommitted tracked changes or of a
+ref that isn't <code>HEAD</code>. <code>git push --no-verify</code> skips it; don't use it, because the
+merge gate runs the same check. A failing gate is fixed, then you push again. If you already set <code>core.hooksPath</code> to something else, <code>make setup</code> keeps
+it and prints the one command that installs these.</p>
+<p>Run <code>make help</code> at any point to see every available target.</p>
 <p><strong>Tests.</strong> They live under <code>tests/</code>, mirroring <code>src/zeo_core/</code> (see <a href="https://github.com/zeroemployeeorg/zeocore/blob/main/tests/README.md">tests/README.md</a>). Rules:</p>
 <ul>
 <li>Test the failure path as well as the success path. Every refusal gets a negative control.</li>
