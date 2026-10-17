@@ -8,8 +8,10 @@ so an old import path keeps working; nothing in zeocore imports it.
 
 from __future__ import annotations
 
+from zeo_core.release import app_tokens as _moved
 from zeo_core.release.app_tokens import (
     GITHUB_API,
+    Access,
     AppKeySource,
     AppTokenError,
     FileAppKeySource,
@@ -21,6 +23,7 @@ from zeo_core.release.app_tokens import (
 
 __all__ = [
     "GITHUB_API",
+    "Access",
     "AppKeySource",
     "AppTokenError",
     "FileAppKeySource",
@@ -29,3 +32,11 @@ __all__ = [
     "KeychainAppKeySource",
     "app_jwt",
 ]
+
+
+def __getattr__(name: str) -> object:
+    """Any other name (a private helper, a patched attribute) is the moved module's."""
+    try:
+        return getattr(_moved, name)
+    except AttributeError:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}") from None

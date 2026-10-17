@@ -92,3 +92,63 @@ def test_a_bare_root_source_would_check_nothing(tmp_path: Path) -> None:
     )
     result = _lint(text.replace(section, vacuous), tmp_path)
     assert result.returncode == 0
+
+
+def test_the_stale_edge_is_reported_by_the_linter_not_by_a_parse_error(
+    tmp_path: Path,
+) -> None:
+    text = CONFIG.read_text()
+    first = _ignore_lines(_section(text))[0]
+    stale = "    zeo_core.cli.release -> zeo_core.integrations.notion.upsert"
+    result = _lint(text.replace(first, first + "\n" + stale, 1), tmp_path)
+    assert "No matches for ignored import" in result.stdout + result.stderr
+
+
+def test_the_root_contract_also_forbids_a_submodule_of_a_moving_integration() -> None:
+    text = CONFIG.read_text()
+    start = text.index("[importlinter:contract:sow36-package-roots-do-not")
+    section = text[start:]
+    assert "zeo_core.integrations.github.**" in section
+
+
+def test_the_old_app_tokens_path_is_the_moved_module() -> None:
+    from zeo_core.integrations.github import app_tokens as old
+    from zeo_core.release import app_tokens as new
+
+    assert old.Access is new.Access
+    assert old.InstallationTokens is new.InstallationTokens
+    assert old._b64url is new._b64url  # a private helper still resolves
+    try:
+        old.no_such_name  # noqa: B018
+    except AttributeError:
+        pass
+    else:
+        raise AssertionError("an unknown name did not raise")
+
+
+def _grepban(src: Path) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(  # noqa: S603 - our own make target
+        ["make", "-s", "integration-edge-strings", f"PKG_SRC={src}"],  # noqa: S607
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        timeout=120,
+        check=False,
+    )
+
+
+def test_the_grep_ban_fails_on_a_planted_string_and_on_a_missing_tree(
+    tmp_path: Path,
+) -> None:
+    clean = tmp_path / "clean"
+    clean.mkdir()
+    (clean / "a.py").write_text('X = "zeo_core.release.app_tokens"\n')
+    assert _grepban(clean).returncode == 0
+    planted = tmp_path / "planted"
+    planted.mkdir()
+    (planted / "a.py").write_text('X = "zeo_core.integrations.hubspot.client"\n')
+    result = _grepban(planted)
+    assert result.returncode != 0
+    assert "names a module of an integration that moves" in result.stdout
+    missing = _grepban(tmp_path / "nowhere")
+    assert missing.returncode != 0

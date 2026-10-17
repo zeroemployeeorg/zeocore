@@ -122,17 +122,32 @@ source_modules =
     zeo_core.integrations
 forbidden_modules =
     zeo_core.integrations.github
+    zeo_core.integrations.github.**
     zeo_core.integrations.google
+    zeo_core.integrations.google.**
     zeo_core.integrations.hubspot
+    zeo_core.integrations.hubspot.**
     zeo_core.integrations.kit
+    zeo_core.integrations.kit.**
     zeo_core.integrations.notion
+    zeo_core.integrations.notion.**
     zeo_core.integrations.database
+    zeo_core.integrations.database.**
     zeo_core.integrations.social
+    zeo_core.integrations.social.**
     zeo_core.integrations.llms
+    zeo_core.integrations.llms.**
     zeo_core.integrations.revolut
+    zeo_core.integrations.revolut.**
     zeo_core.integrations.meetings
+    zeo_core.integrations.meetings.**
     zeo_core.integrations.gemini
+    zeo_core.integrations.gemini.**
     zeo_core.integrations.pandoc
+    zeo_core.integrations.pandoc.**
     zeo_core.integrations.ffmpeg
+    zeo_core.integrations.ffmpeg.**
     zeo_core.integrations.jupytext
+    zeo_core.integrations.jupytext.**
     zeo_core.integrations.notebook
+    zeo_core.integrations.notebook.**
