@@ -2658,11 +2658,16 @@ says what was present. Fidelity limits, stated plainly:</p>
   offsets, <code>clip-path</code>, <code>content-visibility</code>, a closed <code>&lt;details&gt;</code>, a <code>&lt;dialog&gt;</code> and
   colour on colour are <strong>not</strong> evaluated (the first six are named in a kept element's own style
   and counted; the rest are not detected).</li>
-<li>A <code>display</code> or <code>visibility</code> declaration whose value is not a plain keyword (<code>var()</code>,
+<li>A <code>display</code> or <code>visibility</code> declaration whose value is not a plain keyword (a plain keyword is lower-case letters and hyphens only, read after whitespace is removed and <code>!important</code> is set aside; <code>var()</code>,
   <code>env()</code>, anything with a bracket) is not evaluated, wherever it stands among the
   declarations: a later invalid keyword does not clear it (<code>display:var(--h);display:bogus</code>
   is hidden in a browser). The text is kept and counted under <code>inline_display</code> or
   <code>inline_visibility</code>.</li>
+<li>The non-keyword check reads the style as written, comments included, while the
+  technique names are read after comments are removed. A style that holds a comment is
+  already counted as unparsed, and a comment inside a value (<code>display:block/*x*/</code>) can
+  also add one <code>inline_display</code>: the count may be one higher than the commented-out
+  text alone would give, never lower.</li>
 <li>Whitespace INSIDE a keyword is removed before reading, so <code>display:no ne</code> and
   <code>dis play:none</code> are read as <code>display:none</code> and dropped here where a browser shows
   the text.</li>
