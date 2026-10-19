@@ -2582,8 +2582,29 @@ plain text as paragraphs) and passes the authentication verdict through.</p>
 <li>Removes <strong>hidden text</strong>, counted by kind in <code>stripped</code> (<code>hidden_display</code>,
    <code>hidden_visibility</code>, <code>hidden_opacity</code>, <code>hidden_font_size</code>, <code>hidden_max_size</code>,
    <code>hidden_zero_size</code>, <code>hidden_offscreen</code>, <code>hidden_clip</code>,
-   <code>hidden_color_match</code>, <code>hidden_style_class</code>, <code>hidden_attribute</code>). <code>mso-hide:all</code> alone is <strong>not</strong> treated as hidden (only Outlook honours it; the council's ruling zc-dtl-webkit-b312-v1). Rules inside
+   <code>hidden_color_match</code>, <code>hidden_style_class</code>, <code>hidden_attribute</code>). A technique counts
+   only where a browser really hides the text (a loss the council ruled): <code>max-height</code>
+   or <code>max-width:0</code>, and <code>width</code>, <code>height</code> or <code>line-height:0</code>, hide only an element
+   that clips (<code>overflow</code> hidden or clip) and is not inline, and <code>max-*</code> never hides a
+   table cell, row or row group; a negative <code>left</code> or <code>top</code> needs a positioned element
+   (absolute, fixed, relative or sticky), while a negative <code>margin-left</code> or
+   <code>margin-top</code> always counts; a negative <code>text-indent</code> needs a non-inline element;
+   <code>clip</code> needs <code>position:absolute</code> or <code>fixed</code>; <code>mso-hide:all</code> alone is <strong>not</strong>
+   hidden (only Outlook honours it). An element is judged by its own <code>style</code> and the
+   <code>&lt;style&gt;</code> rules for its classes and id together, the same way. A technique is
+   kept only where its condition is <strong>shown false</strong> from fully read styles: anything
+   the converter does not model (a rule with another selector or inside an at-rule that
+   sets <code>overflow</code>, <code>contain</code>, <code>position</code>, <code>display</code> or <code>float</code>, an <code>!important</code>, a CSS
+   comment or escape, a <code>var()</code>, a CSS-wide keyword, <code>all</code>, a later invalid value, two
+   class rules that disagree, a class matched only by case, an unknown <code>display</code>, a
+   <code>&lt;link&gt;</code>, an <code>@import</code>, a <code>&lt;style media&gt;</code> or <code>&lt;template&gt;</code> style, a flex or grid
+   parent) makes it hide the text, as before the narrowing. Rules inside
    <code>@media</code> are not applied, because they may hide content only on a small screen.
+   Limits: clipping by an ancestor is not modelled (an element is judged by itself, so a
+   non-clipping child of a clipping parent is kept). Limits, not detected: standalone <code>content-visibility:hidden</code>, <code>clip-path</code>, <code>font:0/0</code>,
+   <code>transform:scale(0)</code>, a closed <code>&lt;details&gt;</code> and a <code>&lt;dialog&gt;</code>. Text is parsed as a
+   browser does where it matters: the first of two equal attributes wins, and a class is
+   split on ASCII whitespace only.
    A <code>style</code> attribute or rule body longer than 4096 characters is <strong>not parsed</strong>
    (padding must not cost time) and is <strong>treated as hidden</strong>: the element is dropped
    and counted in <code>stripped["style_oversize"]</code> and <code>stripped["hidden_oversize"]</code>, so
