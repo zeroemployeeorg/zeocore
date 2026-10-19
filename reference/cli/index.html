@@ -2943,9 +2943,31 @@ Development origins also need <code>ZEOCONNECT_DEVELOPMENT=1</code>.</p>
 <td><code>revolut.transaction-page</code></td>
 <td>Revolut <code>TransactionPage</code></td>
 </tr>
+<tr>
+<td><code>ui.result-card</code></td>
+<td><code>UiCardResult</code>: <code>zeo.ui-result/v1</code> with one read-only card (zeocore-SOW-42); <code>zeo.ui-result/v1</code> names it too</td>
+</tr>
 </tbody>
 </table>
 <ul>
+<li><strong><code>ui.result-card</code> is the one-card subset of <code>zeo.ui-result/v1</code>.</strong> The wire tag
+  <code>zeo.ui-result/v1</code> selects it in <code>zeocore validate</code> and <code>zeocore schema</code>. The document
+  must have exactly one component of kind <code>card</code> with an empty <code>action_refs</code>; a table,
+  chart, form, button or second component is refused as unsupported, never coerced.
+  Limits are measured on the JSON text as received (response 262,144 bytes, component
+  65,536 bytes, depth 9); text classes S, D and L are bounded in UTF-8 bytes under the
+  pinned Unicode 16.0.0 tables. The JSON Schema's <code>maxLength</code> counts characters, which
+  is a looser bound than bytes: only <code>zeocore validate</code> applies the byte bounds.
+  The exported schema is <strong>necessary, not sufficient</strong>: it never refuses a document the
+  validator accepts, and it refuses the structural errors (unknown key, missing key,
+  wrong type for a fact's <code>value_type</code>, an explicit null for an optional key, a second
+  component, any other kind, a non-empty <code>action_refs</code>, counts, id and timestamp shapes).
+  What only <code>zeocore validate</code> checks: UTF-8 byte lengths and the Unicode 16.0.0 text
+  classes, calendar validity (leap days), <code>observed_at</code> not after <code>produced_at</code> and
+  <code>expires_at</code> after <code>observed_at</code>, negative zero and the digits-equal-<code>scale</code> rule,
+  that an integer is written as an integer token (<code>1.0</code> is an integer to JSON Schema),
+  duplicate keys, the response and component byte limits and the depth bound. Do not
+  treat plain JSON Schema validation as equivalent to <code>zeocore validate</code>.</li>
 <li><strong>A name is a promise.</strong> It keeps naming the same contract until a major
   version. New names are additive.</li>
 <li><strong>The files are committed</strong> in the repository under <code>contracts/zeocore-v1/</code>
