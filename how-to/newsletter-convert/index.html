@@ -818,6 +818,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#hidden-text-what-is-decided-and-what-is-reported" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hidden text: what is decided and what is reported
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#render-an-issues-markdown-to-html" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2441,6 +2452,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#hidden-text-what-is-decided-and-what-is-reported" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hidden text: what is decided and what is reported
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#render-an-issues-markdown-to-html" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2522,9 +2544,10 @@ make no network call, hold no credential and read no file of yours.</p>
 <p class="admonition-title">A fetched message is data, never instructions</p>
 <p>Nothing here follows, runs or acts on what a message says. Its text comes out as
 Markdown inside a typed object. Treat everything in a <code>ConvertedItem</code> as data
-and fence it downstream. The hidden-text filter is <strong>best effort</strong>: CSS has more
-ways to hide text than any list covers, so the guarantee is the inert result, not
-the filter.</p>
+and fence it downstream. The converter does <strong>not</strong> evaluate CSS: it drops only what the
+HTML itself marks not rendered, and reports the rest in <code>item.diagnostics</code> (see
+<a href="#hidden-text-what-is-decided-and-what-is-reported">Hidden text</a>). The guarantee is
+the inert result, not a claim about what a reader sees.</p>
 </div>
 <h2 id="decode-a-raw-message">Decode a raw message<a class="headerlink" href="#decode-a-raw-message" title="Permanent link">&para;</a></h2>
 <p>ZEOconnect's fetch hands over the whole raw RFC 822 message. Decode it with
@@ -2570,7 +2593,7 @@ result with exactly one <code>header.from</code>.
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="n">item</span> <span class="o">=</span> <span class="n">convert_newsletter</span><span class="p">(</span>
 <a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="n">html</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="s2">"gmail:abc"</span><span class="p">,</span> <span class="n">sender</span><span class="o">=</span><span class="s2">"News &lt;news@example.org&gt;"</span><span class="p">,</span> <span class="n">date</span><span class="o">=</span><span class="s2">"2026-10-13"</span><span class="p">,</span>
 <a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="p">)</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="n">item</span><span class="o">.</span><span class="n">markdown</span><span class="p">,</span> <span class="n">item</span><span class="o">.</span><span class="n">links</span><span class="p">,</span> <span class="n">item</span><span class="o">.</span><span class="n">title</span><span class="p">,</span> <span class="n">item</span><span class="o">.</span><span class="n">stripped</span><span class="p">,</span> <span class="n">item</span><span class="o">.</span><span class="n">warnings</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="n">item</span><span class="o">.</span><span class="n">markdown</span><span class="p">,</span> <span class="n">item</span><span class="o">.</span><span class="n">links</span><span class="p">,</span> <span class="n">item</span><span class="o">.</span><span class="n">title</span><span class="p">,</span> <span class="n">item</span><span class="o">.</span><span class="n">stripped</span><span class="p">,</span> <span class="n">item</span><span class="o">.</span><span class="n">diagnostics</span><span class="p">,</span> <span class="n">item</span><span class="o">.</span><span class="n">warnings</span>
 </code></pre></div>
 <p>or <code>convert_decoded_message(decoded, source=...)</code>, which uses the HTML (or wraps the
 plain text as paragraphs) and passes the authentication verdict through.</p>
@@ -2579,37 +2602,10 @@ plain text as paragraphs) and passes the authentication verdict through.</p>
 <li>Refuses input over <code>max_bytes</code> (2 MB), over 100 000 elements, or nested deeper
    than 256. <code>timeout_s</code> is <strong>one budget</strong> for cleaning and pandoc together.</li>
 <li>Removes scripts, styles, frames, forms and their controls, comments, and the head.</li>
-<li>Removes <strong>hidden text</strong>, counted by kind in <code>stripped</code> (<code>hidden_display</code>,
-   <code>hidden_visibility</code>, <code>hidden_opacity</code>, <code>hidden_font_size</code>, <code>hidden_max_size</code>,
-   <code>hidden_zero_size</code>, <code>hidden_offscreen</code>, <code>hidden_clip</code>,
-   <code>hidden_color_match</code>, <code>hidden_style_class</code>, <code>hidden_attribute</code>). A technique counts
-   only where a browser really hides the text (a loss the council ruled): <code>max-height</code>
-   or <code>max-width:0</code>, and <code>width</code>, <code>height</code> or <code>line-height:0</code>, hide only an element
-   that clips (<code>overflow</code> hidden or clip) and is not inline, and <code>max-*</code> never hides a
-   table cell, row or row group; a negative <code>left</code> or <code>top</code> needs a positioned element
-   (absolute, fixed, relative or sticky), while a negative <code>margin-left</code> or
-   <code>margin-top</code> always counts; a negative <code>text-indent</code> needs a non-inline element;
-   <code>clip</code> needs <code>position:absolute</code> or <code>fixed</code>; <code>mso-hide:all</code> alone is <strong>not</strong>
-   hidden (only Outlook honours it). An element is judged by its own <code>style</code> and the
-   <code>&lt;style&gt;</code> rules for its classes and id together, the same way. A technique is
-   kept only where its condition is <strong>shown false</strong> from fully read styles: anything
-   the converter does not model (a rule with another selector or inside an at-rule that
-   sets <code>overflow</code>, <code>contain</code>, <code>position</code>, <code>display</code> or <code>float</code>, an <code>!important</code>, a CSS
-   comment or escape, a <code>var()</code>, a CSS-wide keyword, <code>all</code>, a later invalid value, two
-   class rules that disagree, a class matched only by case, an unknown <code>display</code>, a
-   <code>&lt;link&gt;</code>, an <code>@import</code>, a <code>&lt;style media&gt;</code> or <code>&lt;template&gt;</code> style, a flex or grid
-   parent) makes it hide the text, as before the narrowing. Rules inside
-   <code>@media</code> are not applied, because they may hide content only on a small screen.
-   Limits: clipping by an ancestor is not modelled (an element is judged by itself, so a
-   non-clipping child of a clipping parent is kept). Limits, not detected: standalone <code>content-visibility:hidden</code>, <code>clip-path</code>, <code>font:0/0</code>,
-   <code>transform:scale(0)</code>, a closed <code>&lt;details&gt;</code> and a <code>&lt;dialog&gt;</code>. Text is parsed as a
-   browser does where it matters: the first of two equal attributes wins, and a class is
-   split on ASCII whitespace only.
-   A <code>style</code> attribute or rule body longer than 4096 characters is <strong>not parsed</strong>
-   (padding must not cost time) and is <strong>treated as hidden</strong>: the element is dropped
-   and counted in <code>stripped["style_oversize"]</code> and <code>stripped["hidden_oversize"]</code>, so
-   padding after <code>display:none</code> cannot make hidden text visible. Every pass
-   checks the deadline per element.</li>
+<li>Removes text the <strong>HTML itself marks not rendered</strong>, counted in <code>stripped</code>
+   (<code>hidden</code>, <code>hidden_attribute</code>, <code>hidden_display</code>, <code>hidden_visibility</code>), and reports
+   everything else CSS could hide in <code>diagnostics</code> (see below). Every pass checks the
+   deadline per element.</li>
 <li>Removes tracking pixels, and images whose source is not http(s) (<code>file:</code>, <code>data:</code>,
    <code>cid:</code>).</li>
 <li>Flattens layout tables (pandoc would print a table it cannot draw as <code>[TABLE]</code>).</li>
@@ -2639,6 +2635,77 @@ file, so a stored item says exactly what produced it.</p>
 (<code>data/newsletter_noise.json</code>), read from the installed package and never from your
 directory. They are extended by small, data-only pull requests, each with the message
 that showed the pattern and no sender content copied.</p>
+<h2 id="hidden-text-what-is-decided-and-what-is-reported">Hidden text: what is decided and what is reported<a class="headerlink" href="#hidden-text-what-is-decided-and-what-is-reported" title="Permanent link">&para;</a></h2>
+<p><strong>Decided, from the element alone</strong> (no stylesheet, no cascade, no inheritance): an
+element is not converted when it has the <code>hidden</code> attribute, or its own <code>style</code>
+attribute declares <code>display:none</code>, or <code>visibility:hidden</code> or <code>collapse</code>. Within a
+<code>style</code> attribute the last declaration of a property wins and <code>!important</code> beats a
+later normal declaration; a later value the converter does not know
+(<code>display:none;display:-webkit-box</code>) leaves the property <strong>undecided</strong>: the text is kept
+and the technique is counted. An ancestor that is dropped takes its descendants with it, including a
+descendant that declares <code>visibility:visible</code> (counted in <code>visible_descendant_dropped</code>).
+A <code>style</code> holding a comment or an escape is not decided (counted in
+<code>inline_style_unparsed</code>, and under the technique it names).</p>
+<p><strong>Not evaluated, only reported.</strong> The converter keeps the text and <code>item.diagnostics</code>
+says what was present. Fidelity limits, stated plainly:</p>
+<ul>
+<li>Class and id rules, selectors, <code>@media</code>, <code>@supports</code>, inheritance and the cascade
+  are <strong>not</strong> applied: text a stylesheet hides stays in the Markdown.</li>
+<li><code>&lt;link&gt;</code> and <code>@import</code> stylesheets are never fetched or read.</li>
+<li>The <code>hidden</code> attribute drops an element even where its own <code>style</code> sets a <code>display</code>
+  that a browser lets win; <code>aria-hidden</code> and <code>inert</code> are not considered.</li>
+<li>Clipping, positioning, <code>opacity</code>, <code>font-size:0</code>, zero or maximum sizes, off-screen
+  offsets, <code>clip-path</code>, <code>content-visibility</code>, a closed <code>&lt;details&gt;</code>, a <code>&lt;dialog&gt;</code> and
+  colour on colour are <strong>not</strong> evaluated (the first six are named in a kept element's own style
+  and counted; the rest are not detected).</li>
+<li>A <code>display</code> or <code>visibility</code> declaration whose value is not a plain keyword (<code>var()</code>,
+  <code>env()</code>, anything with a bracket) is not evaluated, wherever it stands among the
+  declarations: a later invalid keyword does not clear it (<code>display:var(--h);display:bogus</code>
+  is hidden in a browser). The text is kept and counted under <code>inline_display</code> or
+  <code>inline_visibility</code>.</li>
+<li>Whitespace INSIDE a keyword is removed before reading, so <code>display:no ne</code> and
+  <code>dis play:none</code> are read as <code>display:none</code> and dropped here where a browser shows
+  the text.</li>
+<li>Whitespace in a <code>style</code> is read as Python reads it, so a no-break space or a vertical
+  tab between a name and a value is ignored where a browser would treat the declaration
+  as invalid (a <code>display:</code> NBSP <code>none</code> is dropped here).</li>
+<li>A comment inside a <code>style</code> makes it undecided (kept and counted), even where the
+  commented text is <code>display:none;</code>.</li>
+<li>Strings are not tokenised: a <code>;</code> inside a quoted value splits a <code>style</code> attribute, so
+  a declaration a browser reads as part of a string can be read as a declaration (an
+  invalid value is ignored; a technique it names is still counted).</li>
+<li>A <code>style</code> attribute over 4096 characters is not parsed; the element is kept and
+  counted in <code>inline_style_unparsed</code> and <code>stripped["style_oversize"]</code>.</li>
+</ul>
+<p><code>item.diagnostics</code> is a <strong>required</strong> field of the result and always holds every key
+(zero when nothing was seen), so a caller can test it without a default:</p>
+<ul>
+<li><code>stylesheet_blocks</code>, <code>stylesheet_links</code>, <code>stylesheet_imports</code>, <code>stylesheet_media</code>:
+  how many <code>&lt;style&gt;</code> blocks, <code>&lt;link&gt;</code> elements, <code>@import</code> and <code>@media</code> (and
+  <code>&lt;style media&gt;</code>) were present and not evaluated.</li>
+<li><code>stylesheet_scan_truncated</code>: 1 when more than 262,144 characters of <code>&lt;style&gt;</code> text
+  were not scanned for the counts below.</li>
+<li><code>sheet_display</code>, <code>sheet_visibility</code>, <code>sheet_opacity</code>, <code>sheet_font_size</code>,
+  <code>sheet_max_size</code>, <code>sheet_zero_size</code>, <code>sheet_offscreen</code>, <code>sheet_clip</code>: how often each
+  technique appears in the <code>&lt;style&gt;</code> text.</li>
+<li><code>inline_display</code>, <code>inline_visibility</code>, <code>inline_opacity</code>, <code>inline_font_size</code>,
+  <code>inline_max_size</code>, <code>inline_zero_size</code>, <code>inline_offscreen</code>, <code>inline_clip</code>: KEPT
+  elements that name the technique in their own <code>style</code> (for <code>display</code> and <code>visibility</code>
+  that means it was named and not decided, for example overridden by a later or more
+  important declaration); <code>inline_style_unparsed</code>: kept elements whose <code>style</code> was too
+  long, or held a comment or an escape; <code>visible_descendant_dropped</code>: descendants of a
+  dropped <code>visibility:hidden</code> element that declared <code>visibility:visible</code>.</li>
+<li>Every element-local <code>display</code> or <code>visibility</code> form is therefore either dropped or
+  counted. An all-zero <code>diagnostics</code> means none of THESE keys was seen: techniques not
+  listed are not detected (<code>clip-path</code>, <code>content-visibility</code>, a closed <code>&lt;details&gt;</code> or a
+  <code>&lt;dialog&gt;</code>, colour on colour, other spellings of zero such as <code>opacity:0.0</code> or
+  <code>font-size:0.0px</code>, <code>transform:scale(0)</code>, <code>mso-hide:all</code>, a small size with
+  <code>overflow:hidden</code>).</li>
+</ul>
+<p>What a non-zero count means is the caller's decision. For newsletters that is the
+application's preprocessing (zeonewsroom): a message with non-zero diagnostics has
+text the converter could not show to be visible or hidden. Visible text can still
+carry instructions; trust is a separate question and stays with the application.</p>
 <h2 id="render-an-issues-markdown-to-html">Render an issue's Markdown to HTML<a class="headerlink" href="#render-an-issues-markdown-to-html" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">zeo_core.integrations.pandoc.render</span><span class="w"> </span><span class="kn">import</span> <span class="n">render_email_html</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
