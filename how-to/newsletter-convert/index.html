@@ -2581,8 +2581,8 @@ plain text as paragraphs) and passes the authentication verdict through.</p>
 <li>Removes scripts, styles, frames, forms and their controls, comments, and the head.</li>
 <li>Removes <strong>hidden text</strong>, counted by kind in <code>stripped</code> (<code>hidden_display</code>,
    <code>hidden_visibility</code>, <code>hidden_opacity</code>, <code>hidden_font_size</code>, <code>hidden_max_size</code>,
-   <code>hidden_mso</code>, <code>hidden_zero_size</code>, <code>hidden_offscreen</code>, <code>hidden_clip</code>,
-   <code>hidden_color_match</code>, <code>hidden_style_class</code>, <code>hidden_attribute</code>). Rules inside
+   <code>hidden_zero_size</code>, <code>hidden_offscreen</code>, <code>hidden_clip</code>,
+   <code>hidden_color_match</code>, <code>hidden_style_class</code>, <code>hidden_attribute</code>). <code>mso-hide:all</code> alone is <strong>not</strong> treated as hidden (only Outlook honours it; the council's ruling zc-dtl-webkit-b312-v1). Rules inside
    <code>@media</code> are not applied, because they may hide content only on a small screen.
    A <code>style</code> attribute or rule body longer than 4096 characters is <strong>not parsed</strong>
    (padding must not cost time) and is <strong>treated as hidden</strong>: the element is dropped
@@ -2606,6 +2606,11 @@ service's click tracker, carries a per-recipient parameter, or had tracking remo
 tracked link identifies the reader or the send: never make one a pick's link. A link
 through an opaque tracker (one whose target is encoded) cannot be unwrapped without
 fetching it; that is noted in <code>warnings</code>.</p>
+<p><strong>A pinned pandoc.</strong> <code>convert_newsletter(..., pandoc_path="/abs/pandoc",
+expected_pandoc_sha256="...")</code> (and <code>convert_decoded_message</code>) uses exactly that binary
+and no <code>PATH</code> lookup. It is still copied, hashed and verified before it runs; a relative
+path is refused <code>pandoc_missing</code>, and another digest <code>renderer_mismatch</code> before anything
+is executed.</p>
 <p><code>item.converter</code> is the convert step's own tuple: the pandoc version, the sha256 of the
 pandoc binary, the flags, the cleaner version, and the version and digest of the data
 file, so a stored item says exactly what produced it.</p>
