@@ -469,10 +469,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-2-install-python-314-only-if-you-need-it" class="md-nav__link">
+  <a href="#step-2-install-python-312-only-if-you-need-it" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 2: Install Python 3.14 (only if you need it)
+        Step 2: Install Python 3.12 (only if you need it)
       
     </span>
   </a>
@@ -2568,10 +2568,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-2-install-python-314-only-if-you-need-it" class="md-nav__link">
+  <a href="#step-2-install-python-312-only-if-you-need-it" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 2: Install Python 3.14 (only if you need it)
+        Step 2: Install Python 3.12 (only if you need it)
       
     </span>
   </a>
@@ -2778,7 +2778,7 @@ problems are on that list.</p>
 <ol>
 <li><a href="#step-0-install-uv">Step 0: Install uv</a></li>
 <li><a href="#step-1-check-your-python-version">Step 1: Check your Python version</a></li>
-<li><a href="#step-2-install-python-314-only-if-you-need-it">Step 2: Install Python 3.14 (only if you need it)</a></li>
+<li><a href="#step-2-install-python-312-only-if-you-need-it">Step 2: Install Python 3.12 (only if you need it)</a></li>
 <li><a href="#step-3-make-a-project-folder-and-a-virtual-environment">Step 3: Make a project folder and a virtual environment</a></li>
 <li><a href="#step-4-install-zeocore">Step 4: Install ZeoCore</a></li>
 <li><a href="#step-5-write-your-first-capability">Step 5: Write your first capability</a></li>
@@ -2801,7 +2801,7 @@ problems are on that list.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>uv<span class="w"> </span>--version
 </code></pre></div>
 <h2 id="step-1-check-your-python-version">Step 1: Check your Python version<a class="headerlink" href="#step-1-check-your-python-version" title="Permanent link">&para;</a></h2>
-<p>ZeoCore requires <strong>Python 3.14 or newer</strong>. Older versions will refuse to
+<p>ZeoCore requires <strong>Python 3.12 or newer</strong>. Older versions will refuse to
 install it. Check what you have:</p>
 <p><strong>macOS / Linux</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>python3<span class="w"> </span>--version
@@ -2809,22 +2809,22 @@ install it. Check what you have:</p>
 <p><strong>Windows (PowerShell)</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">py</span> <span class="p">-</span><span class="n">-version</span>
 </code></pre></div>
-<p>If you see <code>Python 3.14.x</code> (or higher, like <code>3.15.x</code>), skip ahead to
+<p>If you see <code>Python 3.12.x</code> (or higher, like <code>3.13.x</code>), skip ahead to
 <a href="#step-3-make-a-project-folder-and-a-virtual-environment">Step 3</a>.</p>
 <p>If you see an older version such as <code>Python 3.11.9</code>, or a
 "command not found" error, do Step 2 first.</p>
-<h2 id="step-2-install-python-314-only-if-you-need-it">Step 2: Install Python 3.14 (only if you need it)<a class="headerlink" href="#step-2-install-python-314-only-if-you-need-it" title="Permanent link">&para;</a></h2>
+<h2 id="step-2-install-python-312-only-if-you-need-it">Step 2: Install Python 3.12 (only if you need it)<a class="headerlink" href="#step-2-install-python-312-only-if-you-need-it" title="Permanent link">&para;</a></h2>
 <p><strong>Any platform, recommended</strong> — since you already have <code>uv</code> from
 <a href="#step-0-install-uv">Step 0</a>, let it fetch an interpreter for you without
 touching your system Python:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>uv<span class="w"> </span>python<span class="w"> </span>install<span class="w"> </span><span class="m">3</span>.14
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>uv<span class="w"> </span>python<span class="w"> </span>install<span class="w"> </span><span class="m">3</span>.12
 </code></pre></div>
-<p>Re-run the check from Step 1. You should see <code>Python 3.14.x</code>.</p>
-<p><strong>Alternative: install Python 3.14 yourself</strong>, if you'd rather manage the
+<p>Re-run the check from Step 1. You should see <code>Python 3.12.x</code>.</p>
+<p><strong>Alternative: install Python 3.12 yourself</strong>, if you'd rather manage the
 interpreter outside uv. Choose <strong>one</strong> of the options for your platform.</p>
 <p><strong>macOS</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># Option A: Homebrew (https://brew.sh)</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>brew<span class="w"> </span>install<span class="w"> </span>python@3.14
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>brew<span class="w"> </span>install<span class="w"> </span>python@3.12
 <a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
 <a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="c1"># Option B: download the official installer from python.org</span>
 <a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>open<span class="w"> </span>https://www.python.org/downloads/
@@ -2832,18 +2832,18 @@ interpreter outside uv. Choose <strong>one</strong> of the options for your plat
 <p><strong>Linux (Debian / Ubuntu)</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>sudo<span class="w"> </span>add-apt-repository<span class="w"> </span>ppa:deadsnakes/ppa
 <a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>sudo<span class="w"> </span>apt<span class="w"> </span>update
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>python3.14<span class="w"> </span>python3.14-venv
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>python3.12<span class="w"> </span>python3.12-venv
 </code></pre></div>
-<p>On Fedora: <code>sudo dnf install python3.14</code>. On Arch: <code>sudo pacman -S python</code>.</p>
+<p>On Fedora: <code>sudo dnf install python3.12</code>. On Arch: <code>sudo pacman -S python</code>.</p>
 <p><strong>Windows (PowerShell)</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="n">winget</span> <span class="n">install</span> <span class="n">Python</span><span class="p">.</span><span class="n">Python</span><span class="p">.</span><span class="n">3</span><span class="p">.</span><span class="n">14</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="n">winget</span> <span class="n">install</span> <span class="n">Python</span><span class="p">.</span><span class="n">Python</span><span class="p">.</span><span class="n">3</span><span class="p">.</span><span class="n">12</span>
 </code></pre></div>
 <p>Or download the installer from
 <a href="https://www.python.org/downloads/">python.org/downloads</a> and — this part
 matters — tick <strong>"Add python.exe to PATH"</strong> on the first screen of the
 installer.</p>
 <p>Now close and reopen your terminal, then re-run the check from Step 1. You
-should see <code>Python 3.14.x</code>.</p>
+should see <code>Python 3.12.x</code>.</p>
 <h2 id="step-3-make-a-project-folder-and-a-virtual-environment">Step 3: Make a project folder and a virtual environment<a class="headerlink" href="#step-3-make-a-project-folder-and-a-virtual-environment" title="Permanent link">&para;</a></h2>
 <p>A <strong>virtual environment</strong> is a private folder of Python packages that belongs
 to one project. It keeps ZeoCore and its dependencies out of your system
@@ -2852,24 +2852,24 @@ per project and "activate" it in each new terminal session.</p>
 <p><strong>macOS / Linux</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>mkdir<span class="w"> </span>zeocore-quickstart
 <a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="nb">cd</span><span class="w"> </span>zeocore-quickstart
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>uv<span class="w"> </span>venv<span class="w"> </span>--python<span class="w"> </span><span class="m">3</span>.14
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>uv<span class="w"> </span>venv<span class="w"> </span>--python<span class="w"> </span><span class="m">3</span>.12
 <a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="nb">source</span><span class="w"> </span>.venv/bin/activate
 </code></pre></div>
 <p><strong>Windows (PowerShell)</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="n">mkdir</span> <span class="n">zeocore-quickstart</span>
 <a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="nb">cd </span><span class="n">zeocore-quickstart</span>
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="n">uv</span> <span class="n">venv</span> <span class="p">-</span><span class="n">-python</span> <span class="n">3</span><span class="p">.</span><span class="n">14</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="n">uv</span> <span class="n">venv</span> <span class="p">-</span><span class="n">-python</span> <span class="n">3</span><span class="p">.</span><span class="n">12</span>
 <a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="p">.</span><span class="n">venv</span><span class="p">\</span><span class="n">Scripts</span><span class="p">\</span><span class="n">Activate</span><span class="p">.</span><span class="n">ps1</span>
 </code></pre></div>
 <p><strong>Windows (Command Prompt)</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>mkdir zeocore-quickstart
 <a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>cd zeocore-quickstart
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>uv venv --python 3.14
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>uv venv --python 3.12
 <a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>.venv\Scripts\activate.bat
 </code></pre></div>
-<p>If you installed Python 3.14 yourself in Step 2 instead of letting uv fetch
+<p>If you installed Python 3.12 yourself in Step 2 instead of letting uv fetch
 it, the system interpreter also works:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>python3.14<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>.venv<span class="w">          </span><span class="c1"># Windows: py -3.14 -m venv .venv</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>python3.12<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>.venv<span class="w">          </span><span class="c1"># Windows: py -3.12 -m venv .venv</span>
 <a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="nb">source</span><span class="w"> </span>.venv/bin/activate<span class="w">         </span><span class="c1"># Windows PowerShell: .venv\Scripts\Activate.ps1</span>
 </code></pre></div>
 <p>Your prompt should now start with <code>(.venv)</code>. That prefix is how you know the
@@ -2877,7 +2877,7 @@ environment is active. Confirm the right interpreter is in charge:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>python<span class="w"> </span>--version
 </code></pre></div>
 <p>Expected output:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>Python 3.14.x
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>Python 3.12.x
 </code></pre></div>
 <blockquote>
 <p><strong>PowerShell blocked the activation script?</strong> Run
@@ -3110,8 +3110,8 @@ skip all of that, so route invocations through <code>invoke_sync</code> (or
 <tbody>
 <tr>
 <td><code>ERROR: Package 'zeocore' requires a different Python</code></td>
-<td>Your interpreter is older than 3.14.</td>
-<td>Redo <a href="#step-2-install-python-314-only-if-you-need-it">Step 2</a>, then rebuild the venv with the 3.14 interpreter.</td>
+<td>Your interpreter is older than 3.12.</td>
+<td>Redo <a href="#step-2-install-python-312-only-if-you-need-it">Step 2</a>, then rebuild the venv with the 3.12 interpreter.</td>
 </tr>
 <tr>
 <td><code>ModuleNotFoundError: No module named 'zeo_core'</code></td>

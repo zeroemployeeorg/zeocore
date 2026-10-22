@@ -2588,12 +2588,13 @@ for every supported integration.</p>
 <p>You should be comfortable writing Python functions and classes. You do <em>not</em>
 need prior experience with Pydantic, MCP, or agent frameworks.</p>
 <h2 id="requirements">Requirements<a class="headerlink" href="#requirements" title="Permanent link">&para;</a></h2>
-<p><strong>Python 3.14 or newer.</strong> That's the only hard requirement. (The floor moved
-to <code>&gt;=3.14</code> in 0.6.0, matching sovereign-agent; if you're pinned to an older
-interpreter, stay on 0.5.0, which requires <code>&gt;=3.13</code>.)</p>
+<p><strong>Python 3.12 or newer.</strong> That's the only hard requirement, and it is the
+interpreter Google Colab provides, so ZeoCore runs there without a custom
+Python. (The floor moved to <code>&gt;=3.14</code> in 0.6.0 and back to <code>&gt;=3.12</code> in 0.29.0; if
+you are pinned to an older interpreter, stay on 0.5.0, which requires <code>&gt;=3.13</code>.)</p>
 <p>Not sure what you have? Run <code>python3 --version</code> on macOS/Linux or
 <code>py --version</code> on Windows. The <a href="QUICKSTART/#step-1-check-your-python-version">Quickstart</a>
-walks through installing 3.14 if you need it.</p>
+walks through installing 3.12 if you need it.</p>
 <h2 id="install">Install<a class="headerlink" href="#install" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>zeocore
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="c1"># or, without uv</span>
@@ -2696,7 +2697,7 @@ See <a href="https://github.com/zeroemployeeorg/zeocore/blob/main/examples/minim
 <tbody>
 <tr>
 <td><a href="QUICKSTART/">QUICKSTART.md</a></td>
-<td>Install Python 3.14, make a venv, write and run your first capability. No prior knowledge assumed.</td>
+<td>Install Python 3.12, make a venv, write and run your first capability. No prior knowledge assumed.</td>
 </tr>
 <tr>
 <td><a href="../">docs/README.md</a></td>
@@ -2962,8 +2963,8 @@ module by module.</p>
   and skip/run depending on credentials or OS behavior), with 90.00%+ coverage
   enforced as a two-decimal hard CI floor
   (<code>--cov-fail-under=90</code>) — a pull request that drops coverage fails the gate.</li>
-<li><strong>CI runs the full suite on Python 3.14</strong> (the minimum supported
-  interpreter) on every push.</li>
+<li><strong>CI runs the full suite on Python 3.12</strong> (the minimum supported
+  interpreter) and on 3.14 (the newest) on every push.</li>
 <li>Production code is not allowed to detect that it's under test (a dedicated
   CI check fails the build if it finds <code>"pytest" in sys.modules</code> or similar).</li>
 </ul>

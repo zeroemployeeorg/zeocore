@@ -2428,7 +2428,7 @@ as package commands. Do not use an older wheel for this API surface.</p>
 <p>The <a href="https://github.com/zeroemployeeorg/zeocore/blob/main/examples/authoring_reference/run.py">self-contained consumer</a> uses
 only public ZeoCore conversion, comparison, execution and environment APIs.
 It contains a small generic fixture, not a book chapter or an exercise grader.</p>
-<p>From this checkout, with Python 3.14, Git, uv and Pandoc installed:</p>
+<p>From this checkout, with Python 3.12, Git, uv and Pandoc installed:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>uv<span class="w"> </span>sync<span class="w"> </span>--frozen<span class="w"> </span>--extra<span class="w"> </span>jupytext<span class="w"> </span>--extra<span class="w"> </span>pandoc<span class="w"> </span>--extra<span class="w"> </span>notebook
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>.venv/bin/python<span class="w"> </span>examples/authoring_reference/run.py<span class="w"> </span>--state-root<span class="w"> </span>/tmp/authoring-example<span class="w"> </span>--mode<span class="w"> </span><span class="nb">test</span><span class="w"> </span>--run-id<span class="w"> </span>one<span class="w"> </span>--docx
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>.venv/bin/python<span class="w"> </span>examples/authoring_reference/run.py<span class="w"> </span>--state-root<span class="w"> </span>/tmp/authoring-example<span class="w"> </span>--mode<span class="w"> </span><span class="nb">test</span><span class="w"> </span>--run-id<span class="w"> </span>two<span class="w"> </span>--docx
