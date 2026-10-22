@@ -2606,6 +2606,13 @@ for a completed turn with non-blank output.</p>
 <li><strong>Never show the model's prose as data.</strong> Build the values you display from
   what your handlers returned. The <a href="../../how-to/briefing-cards/">briefing cards guide</a>
   does this.</li>
+<li><strong>There is no per-session money cap.</strong> The SDK has a <code>spend_control</code> field, but the
+  service refused it (HTTP 400, parameter <code>spend_control</code>) in a bounded run on 2026-10-22,
+  so <code>run_native</code> never sends it. The real cap is the budget on your OpenAI project.
+  <code>run_native(..., spend_limit_cents=500, estimated_cents_per_call=25)</code> is a LOCAL check
+  on your own estimate: if <code>max_calls</code> times the estimate is over the limit, the run is
+  refused with <code>spend_estimate_over_limit</code> before any request. It is an estimate, not a
+  cap.</li>
 <li><strong>A follow-up message is a new session</strong> carrying the earlier brief.</li>
 </ul>
 <h2 id="test-without-a-key">Test without a key<a class="headerlink" href="#test-without-a-key" title="Permanent link">&para;</a></h2>
