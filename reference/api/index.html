@@ -542,6 +542,8 @@
       
         
       
+        
+      
     
     
     
@@ -714,6 +716,34 @@
     
   
     Release to PyPI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/briefing-cards/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Briefing cards
   
 
     
@@ -1149,6 +1179,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -1470,6 +1504,62 @@
     
   
     Language models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../integrations/agents-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OpenAI managed Agents API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../integrations/briefing-sources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Briefing sources
   
 
     
@@ -2357,6 +2447,17 @@
     <span class="md-ellipsis">
       
         zeo_core.contract_pack — ecosystem pin
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#briefing-cards-and-the-managed-agents-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Briefing cards and the managed Agents API
       
     </span>
   </a>
@@ -3285,6 +3386,17 @@
     <span class="md-ellipsis">
       
         zeo_core.contract_pack — ecosystem pin
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#briefing-cards-and-the-managed-agents-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Briefing cards and the managed Agents API
       
     </span>
   </a>
@@ -4456,6 +4568,37 @@ plaintext access are excluded. The <code>bigquery</code> and <code>sqlite</code>
 <p>A versioned consumption contract for ecosystem runners that need to pin what
 they consume without importing Sovereign Agent.</p>
 <p><a id="extras"></a></p>
+<h2 id="briefing-cards-and-the-managed-agents-api">Briefing cards and the managed Agents API<a class="headerlink" href="#briefing-cards-and-the-managed-agents-api" title="Permanent link">&para;</a></h2>
+<p>Added in 0.30.0 to 0.35. Guides: <a href="../../how-to/briefing-cards/">Briefing cards</a>,
+<a href="../../integrations/agents-api/">OpenAI managed Agents API</a>.</p>
+<table>
+<thead>
+<tr>
+<th>Import path</th>
+<th>Public names</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>zeo_core.contracts.ui</code></td>
+<td><code>DataRef</code>, <code>WidgetUpsert</code>, <code>WidgetBoard</code>, <code>WidgetRefused</code>, <code>UiCardResult</code>, <code>UiRefused</code>, <code>validate_bytes</code>, <code>errors_of</code>, <code>SCHEMA_TAG</code></td>
+</tr>
+<tr>
+<td><code>zeo_core.adapters.widget_html</code></td>
+<td><code>render_snapshot_html</code>, <code>render_card_html</code></td>
+</tr>
+<tr>
+<td><code>zeo_core.integrations.briefing_sources</code></td>
+<td><code>PublicBriefingSources</code>, <code>PublicSourceHTTP</code>, <code>StatedDestination</code>, <code>SourceUnavailableError</code>, <code>arrival_timeline</code></td>
+</tr>
+<tr>
+<td><code>zeo_core.integrations.agents</code></td>
+<td><code>run_native</code>, <code>run</code>, <code>function_tool</code>, <code>mcp_server</code>, <code>NativeTurn</code>, <code>TurnResult</code>, <code>ScriptedTransport</code>, <code>AgentsRefused</code></td>
+</tr>
+</tbody>
+</table>
+<p><code>zeo_core.integrations.agents.SdkTransport</code> is documented as not for use with
+the real SDK; use <code>run_native</code>.</p>
 <h2 id="optional-extras">Optional extras<a class="headerlink" href="#optional-extras" title="Permanent link">&para;</a></h2>
 <p>Declared in <a href="https://github.com/zeroemployeeorg/zeocore/blob/main/pyproject.toml"><code>pyproject.toml</code></a>; <code>uv pip install "zeocore[name]"</code>.</p>
 <table>

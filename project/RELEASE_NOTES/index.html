@@ -82,7 +82,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#zeocore-0151" class="md-skip">
+        <a href="#release-notes" class="md-skip">
           Skip to content
         </a>
       
@@ -542,6 +542,8 @@
       
         
       
+        
+      
     
     
     
@@ -714,6 +716,34 @@
     
   
     Release to PyPI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/briefing-cards/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Briefing cards
   
 
     
@@ -1149,6 +1179,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -1470,6 +1504,62 @@
     
   
     Language models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../integrations/agents-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OpenAI managed Agents API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../integrations/briefing-sources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Briefing sources
   
 
     
@@ -2115,10 +2205,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#fixed" class="md-nav__link">
+  <a href="#recent-milestones" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Fixed
+        Recent milestones
       
     </span>
   </a>
@@ -2126,21 +2216,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#changed" class="md-nav__link">
+  <a href="#upgrading" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Changed
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#upgrade" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Upgrade
+        Upgrading
       
     </span>
   </a>
@@ -2386,10 +2465,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#fixed" class="md-nav__link">
+  <a href="#recent-milestones" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Fixed
+        Recent milestones
       
     </span>
   </a>
@@ -2397,21 +2476,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#changed" class="md-nav__link">
+  <a href="#upgrading" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Changed
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#upgrade" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Upgrade
+        Upgrading
       
     </span>
   </a>
@@ -2443,30 +2511,39 @@
   
 
 
-<h1 id="zeocore-0151">zeocore 0.15.1<a class="headerlink" href="#zeocore-0151" title="Permanent link">&para;</a></h1>
-<p>A patch release for 0.15.0. What 0.15.0 shipped is in its
-<a href="https://github.com/zeroemployeeorg/zeocore/releases/tag/v0.15.0">release notes</a>.</p>
-<h2 id="fixed">Fixed<a class="headerlink" href="#fixed" title="Permanent link">&para;</a></h2>
+<h1 id="release-notes">Release notes<a class="headerlink" href="#release-notes" title="Permanent link">&para;</a></h1>
+<p>Every merge to <code>main</code> is a release. The notes for each version are on its
+<a href="https://github.com/zeroemployeeorg/zeocore/releases">GitHub Release</a>; the
+history up to 0.15.1 is in <a href="../CHANGELOG/">CHANGELOG.md</a>, and
+<a href="https://github.com/zeroemployeeorg/zeocore/blob/main/changelog.d/README.md"><code>changelog.d/</code></a> holds the notes of changes not yet
+released.</p>
+<h2 id="recent-milestones">Recent milestones<a class="headerlink" href="#recent-milestones" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>The <code>zeocore</code> command runs on a plain install.</strong> In 0.15.0,
-  <code>uv tool install zeocore</code> and <code>pip install zeocore</code> installed a command that
-  crashed at start-up, because two of its modules came only with extras. The
-  library itself imported fine.</li>
-<li><code>rfc8785</code>, which the canonical digest needs, is now a base dependency.</li>
-<li><code>zeocore release</code> loads only when it is used. Without the <code>github</code> extra
-    it answers <code>extra_missing</code> (exit 20) and names the extra.</li>
-<li>The publish smoke test now runs the command on the plain install.</li>
+<li><strong>0.35.x: briefing sources.</strong> Keyless public sources for a live briefing:
+  MET Norway weather, ADSB.lol flight position and ECB daily reference rates.
+  A traveller-stated destination fills in when the public route lookup returns
+  nothing, and the card says so. 0.35.1 accepts the route lookup's <code>201</code>
+  answer. See <a href="../../how-to/briefing-cards/">Briefing cards</a>.</li>
+<li><strong>0.34.0.</strong> A market card's change is labelled <code>COMPUTED</code> with the two days
+  it came from, not provider data.</li>
+<li><strong>0.33.0: the HTML renderer.</strong> <code>zeo_core.adapters.widget_html</code> turns a
+  <code>WidgetBoard</code> into self-contained HTML: inline style only, no JavaScript, no
+  remote resource, every field escaped.</li>
+<li><strong>0.32.x.</strong> Real-source fields in the widget contract are nullable (no
+  schedule, no rain probability, no previous rate) and a daily reference rate
+  is its own freshness basis.</li>
+<li><strong>0.31.0: managed Agents API wrapper.</strong> <code>zeo_core.integrations.agents</code> runs
+  one message on an OpenAI managed agent session and answers its tool calls
+  with your functions. See <a href="../../integrations/agents-api/">the guide</a>.</li>
+<li><strong>0.30.0: widget contracts.</strong> <code>zeo_core.contracts.ui</code> adds <code>DataRef</code>,
+  <code>WidgetUpsert</code> and <code>WidgetBoard</code> with the honesty rules checked in code.</li>
+<li><strong>0.29.0: Python 3.12 or newer.</strong> The floor moved from 3.14 to 3.12, the
+  interpreter Google Colab provides.</li>
 </ul>
-<p>On 0.15.0, the workaround is <code>pip install 'zeocore[runtime-host,github]==0.15.0'</code>.</p>
-<h2 id="changed">Changed<a class="headerlink" href="#changed" title="Permanent link">&para;</a></h2>
-<ul>
-<li><strong>Every publish goes through the protected <code>pypi</code> environment.</strong> The
-  workflow's TestPyPI target, which had no protection, is gone.</li>
-</ul>
-<h2 id="upgrade">Upgrade<a class="headerlink" href="#upgrade" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>uv<span class="w"> </span>tool<span class="w"> </span>install<span class="w"> </span><span class="nv">zeocore</span><span class="o">==</span><span class="m">0</span>.15.1<span class="w">      </span><span class="c1"># the command</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"zeocore==0.15.1"</span><span class="w">     </span><span class="c1"># the library, pinned with hashes in your lock</span>
-</code></pre></div>
+<h2 id="upgrading">Upgrading<a class="headerlink" href="#upgrading" title="Permanent link">&para;</a></h2>
+<p><code>pip install --upgrade zeocore</code>. The package follows semantic versioning but is
+a beta library until 1.0: read the release notes before moving across minor
+versions.</p>
 
 
 

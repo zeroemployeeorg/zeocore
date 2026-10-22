@@ -542,6 +542,8 @@
       
         
       
+        
+      
     
     
     
@@ -714,6 +716,34 @@
     
   
     Release to PyPI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-to/briefing-cards/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Briefing cards
   
 
     
@@ -1149,6 +1179,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -1470,6 +1504,62 @@
     
   
     Language models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../integrations/agents-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OpenAI managed Agents API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../integrations/briefing-sources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Briefing sources
   
 
     
@@ -2306,6 +2396,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#what-you-can-build-with-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What you can build with it
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#who-this-is-for" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2376,72 +2477,6 @@
     <span class="md-ellipsis">
       
         Examples
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#kit-marketing" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Kit marketing
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#hubspot-marketing" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        HubSpot marketing
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#new-in-0100" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        New in 0.10.0
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#new-in-0150-the-zeocore-command-broker-contracts-to-140-and-the-release-component" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        New in 0.15.0: the zeocore command, Broker contracts to 1.4.0, and the release component
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#new-in-0120-youtube-publishing-and-local-revolut-business" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        New in 0.12.0: YouTube publishing and local Revolut Business
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#new-in-0110-runtime-host-and-meeting-operations" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        New in 0.11.0: Runtime host and meeting operations
       
     </span>
   </a>
@@ -2551,13 +2586,10 @@
 
 
 <h1 id="zeocore">ZeoCore<a class="headerlink" href="#zeocore" title="Permanent link">&para;</a></h1>
-<!-- Teaches CLAUDE.md Rev 17; reviewed 2026-09-10: Runtime host and meeting source APIs. -->
-
-<p><a href="https://zeroemployeeorg.github.io/zeocore/">Documentation</a> · <a href="RELEASE_NOTES/">Release notes</a></p>
+<p><a href="https://zeroemployeeorg.github.io/zeocore/">Documentation</a> · <a href="https://github.com/zeroemployeeorg/zeocore/releases">Release notes</a></p>
 <p><a href="https://github.com/zeroemployeeorg/zeocore/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/zeroemployeeorg/zeocore/workflows/CI/badge.svg" /></a>
 <a href="https://pypi.org/project/zeocore/"><img alt="PyPI version" src="https://img.shields.io/pypi/v/zeocore.svg" /></a>
 <a href="https://pypi.org/project/zeocore/"><img alt="Python versions" src="https://img.shields.io/pypi/pyversions/zeocore.svg" /></a>
-<a href="https://github.com/zeroemployeeorg/zeocore"><img alt="Coverage" src="https://img.shields.io/badge/coverage-90%25-brightgreen.svg" /></a>
 <a href="https://github.com/zeroemployeeorg/zeocore/blob/main/LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue.svg" /></a></p>
 <p><strong>ZeoCore is a Python framework for writing capabilities: small, typed,
 named units of work that anything can call.</strong></p>
@@ -2569,12 +2601,22 @@ a callable tool. You don't rewrite it for each destination.</p>
 <p><strong>New here? Start with the <a href="QUICKSTART/">Quickstart</a>.</strong> It takes you from
 an empty folder to a running capability in about ten minutes, and assumes no
 prior knowledge of ZeoCore.</p>
-<p>Connect external services with the <a href="../integrations/">integration account setup guides</a>:
-credential acquisition, test accounts, production accounts and runnable checks
-for every supported integration.</p>
-<p>For Runtime-supervised applications, start with the
-<a href="../how-to/provider-registration/">provider registration guide</a> and the
-<a href="#new-in-0110-runtime-host-and-meeting-operations">0.11.0 setup</a>.</p>
+<h2 id="what-you-can-build-with-it">What you can build with it<a class="headerlink" href="#what-you-can-build-with-it" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Your own tools</strong>, written once and used from a script, an HTTP service, an
+  MCP server or an LLM tool call (<a href="QUICKSTART/">Quickstart</a>).</li>
+<li><strong>Integrations with real services</strong> — GitHub, Google Workspace, Notion,
+  Supabase, Bluesky, YouTube, HubSpot, Kit, language models and more —
+  each with a setup guide for credentials and test accounts
+  (<a href="../integrations/">integration guides</a>).</li>
+<li><strong>A briefing with live cards</strong> — flight, weather, arrival timeline and a
+  daily currency watchlist — from keyless public sources, rendered as
+  self-contained HTML and driven by an OpenAI managed agent
+  (<a href="../how-to/briefing-cards/">briefing cards</a>,
+  <a href="../integrations/agents-api/">Agents API</a>).</li>
+<li><strong>The <code>zeocore</code> command</strong>, a JSON-lines command line over the same contracts
+  for callers that do not import Python (<a href="../reference/cli/">reference</a>).</li>
+</ul>
 <h2 id="who-this-is-for">Who this is for<a class="headerlink" href="#who-this-is-for" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>Students and newcomers</strong> learning how to structure real Python tools —
@@ -2582,30 +2624,29 @@ for every supported integration.</p>
 <li><strong>Developers</strong> building automation, content pipelines, or integrations who
   don't want to re-solve configuration, filesystem, and error handling in
   every project.</li>
-<li><strong>Teams</strong> in the Zero Employee ecosystem who need one authoring surface
-  that runners, HTTP services, and agents can all consume.</li>
+<li><strong>Teams</strong> who want one authoring surface that scripts, HTTP services, and
+  agents can all consume.</li>
 </ul>
 <p>You should be comfortable writing Python functions and classes. You do <em>not</em>
 need prior experience with Pydantic, MCP, or agent frameworks.</p>
 <h2 id="requirements">Requirements<a class="headerlink" href="#requirements" title="Permanent link">&para;</a></h2>
-<p><strong>Python 3.12 or newer.</strong> That's the only hard requirement, and it is the
+<p><strong>Python 3.12 or newer.</strong> That is the only hard requirement, and it is the
 interpreter Google Colab provides, so ZeoCore runs there without a custom
-Python. (The floor moved to <code>&gt;=3.14</code> in 0.6.0 and back to <code>&gt;=3.12</code> in 0.29.0; if
-you are pinned to an older interpreter, stay on 0.5.0, which requires <code>&gt;=3.13</code>.)</p>
+Python.</p>
 <p>Not sure what you have? Run <code>python3 --version</code> on macOS/Linux or
 <code>py --version</code> on Windows. The <a href="QUICKSTART/#step-1-check-your-python-version">Quickstart</a>
-walks through installing 3.12 if you need it.</p>
+walks through installing a current Python if you need it.</p>
 <h2 id="install">Install<a class="headerlink" href="#install" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>zeocore
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="c1"># or, without uv</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>pip<span class="w"> </span>install<span class="w"> </span>zeocore
 </code></pre></div>
 <p>The package is <code>zeocore</code>; the module you import is <code>zeo_core</code>.</p>
-<p>Normal installations also include the inert
-<a href="../tutorials/zeoconnect-hosted-profile/">ZEOconnect managed-profile client</a>.
-It performs no import-time or default-profile networking. Applications opt into
-hosted execution explicitly and pair through the browser; provider credentials
-never enter application code.</p>
+<p>ZeoCore never reads a provider key for you and never stores one. Anything that
+needs a credential reads it from your process environment (for example
+<code>OPENAI_API_KEY</code>), and the example scripts that need one say so at the top.
+Copy <a href="https://github.com/zeroemployeeorg/zeocore/blob/main/.env.example"><code>.env.example</code></a> to <code>.env</code> for local use; <code>.env</code> is
+git-ignored.</p>
 <h2 id="your-first-capability">Your first capability<a class="headerlink" href="#your-first-capability" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">tempfile</span><span class="w"> </span><span class="kn">import</span> <span class="n">TemporaryDirectory</span>
@@ -2744,70 +2785,8 @@ key, …) read it from the process environment. Copy
 however your shell or tooling prefers (e.g. <code>uv run --env-file .env ...</code>) —
 see <a href="GET-STARTED/#secrets-and-env">GET-STARTED.md's "Secrets and <code>.env</code>"</a>
 section.</p>
-<h2 id="kit-marketing">Kit marketing<a class="headerlink" href="#kit-marketing" title="Permanent link">&para;</a></h2>
-<p><a href="../tutorials/kit-marketing/">Kit newsletters and sequences</a> provides
-broadcasts, sequence authoring, subscriber consent, tags and reporting through
-thirteen registered agent capabilities. Run <code>python examples/kit_usage.py</code> offline.</p>
-<h2 id="hubspot-marketing">HubSpot marketing<a class="headerlink" href="#hubspot-marketing" title="Permanent link">&para;</a></h2>
-<p><a href="../tutorials/hubspot-marketing/">HubSpot newsletters and automation</a> provides
-registered capabilities for drafts, campaigns, subscription preferences and
-marketing email sequences. Included in 0.10.0; no extra dependency is needed.</p>
-<h2 id="new-in-0100">New in 0.10.0<a class="headerlink" href="#new-in-0100" title="Permanent link">&para;</a></h2>
-<p><a href="../integrations/environments/">Managed environments</a> keep test and production
-credentials and state separate. The <a href="../integrations/">account setup index</a>
-covers acquisition of keys, test accounts, real accounts and bounded E2E checks.
-<a href="../integrations/gemini-images/">Gemini reference images</a> use admitted effects,
-private artifacts and reconciliation. <a href="../integrations/notebook-execution/">Notebook execution</a>
-and <a href="../integrations/authoring-reference/">the authoring reference</a> provide
-fresh-kernel execution and independently checked staging receipts.
-See <a href="RELEASE_NOTES/">release notes</a> for migration and remaining qualification limits.</p>
-<h2 id="new-in-0150-the-zeocore-command-broker-contracts-to-140-and-the-release-component">New in 0.15.0: the <code>zeocore</code> command, Broker contracts to 1.4.0, and the release component<a class="headerlink" href="#new-in-0150-the-zeocore-command-broker-contracts-to-140-and-the-release-component" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>uv<span class="w"> </span>tool<span class="w"> </span>install<span class="w"> </span><span class="nv">zeocore</span><span class="o">==</span><span class="m">0</span>.15.1<span class="w">   </span><span class="c1"># 0.15.1: the command runs on a plain install</span>
-</code></pre></div>
-<p><code>zeocore</code> is an installed command with one JSON-lines protocol and one exit
-family. Its ZEOconnect client is for products running as their own service
-user, not for seats, which use <code>zeo</code>. The release component signs org
-executables and releases to PyPI under the operator's delegation. See the
-<a href="RELEASE_NOTES/">release notes</a>.</p>
-<h2 id="new-in-0120-youtube-publishing-and-local-revolut-business">New in 0.12.0: YouTube publishing and local Revolut Business<a class="headerlink" href="#new-in-0120-youtube-publishing-and-local-revolut-business" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"zeocore[youtube]==0.12.0"</span><span class="w">   </span><span class="c1"># resumable multi-GB publishing</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"zeocore[revolut]==0.12.0"</span><span class="w">   </span><span class="c1"># local enrollment of your own account</span>
-</code></pre></div>
-<p><a href="../integrations/youtube/">YouTube publishing</a> uploads resumably from a
-write-once job directory, resumes at the exact byte after a drop, and never
-uploads twice. The <a href="../integrations/revolut-business/">Revolut Business</a>
-read client ships in the base package; the <code>revolut</code> extra adds local
-enrollment of your own account, with credentials in private per-user files.
-Both are <strong>offline contracts: no live request has been made to either provider.</strong>
-See the <a href="RELEASE_NOTES/">release notes</a>.</p>
-<h2 id="new-in-0110-runtime-host-and-meeting-operations">New in 0.11.0: Runtime host and meeting operations<a class="headerlink" href="#new-in-0110-runtime-host-and-meeting-operations" title="Permanent link">&para;</a></h2>
-<p>The Runtime host and meeting adapters are available in <strong>0.11.0</strong>. Install the
-package below and run the examples from the matching <code>v0.11.0</code> checkout:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"zeocore[runtime-host]==0.11.0"</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>python<span class="w"> </span>examples/runtime_host_catalogue_v1.py
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>python<span class="w"> </span>examples/meeting_request_v1.py
-</code></pre></div>
-<p>The first example builds a provider catalogue and a validated, canonical request.
-The second prepares an exact meeting read request. Both run offline without
-credentials, admission or provider calls.</p>
-<ul>
-<li><a href="../how-to/provider-registration/">Provider registration</a> explains capabilities,
-  providers, adapters, integrations and the existing plugin registry.</li>
-<li><a href="../how-to/runtime-host/">Runtime host</a> documents <code>zeo-capability</code>, trusted
-  launch context, bounded IPC, managed effects and Runtime-owned artifacts. The
-  Unix protocol is a candidate awaiting joint wire and application acceptance.</li>
-<li><a href="../integrations/meetings/">Meeting operations</a> covers Notion upsert, Sheets
-  and Calendar reads, and Gmail draft creation, retrieval and reconciliation.
-  This meeting-v1 protocol has separate bindings from the generic host.</li>
-</ul>
-<p>Registering a capability never grants permission to execute it. Runtime owns
-admission and durable operations; ZEOconnect owns protected connector dispatch.
-Legacy plugin registration now publishes transactionally and restores surviving
-contributions on unload. It remains an explicit local loading API.</p>
 <h2 id="optional-integrations">Optional integrations<a class="headerlink" href="#optional-integrations" title="Permanent link">&para;</a></h2>
-<p>Optional SDKs ship as extras. HubSpot, Kit, managed environments and the Gemini
-adapter are in the base package; their live operations still require configured
-accounts and authorization. Install additional dependencies only as needed:</p>
+<p>Optional SDKs ship as extras. Install only what you need:</p>
 <table>
 <thead>
 <tr>
@@ -2833,12 +2812,12 @@ accounts and authorization. Install additional dependencies only as needed:</p>
 <td>Google Calendar (read + write)</td>
 </tr>
 <tr>
-<td><code>zeocore[youtube]</code></td>
-<td>YouTube publishing: sessions opened in custody, multi-GB resumable transfer from the device, schedule, thumbnail, captions, playlists, publish-job executor</td>
+<td><code>zeocore[google]</code></td>
+<td>Drive + Gmail + Docs auth plumbing together</td>
 </tr>
 <tr>
-<td><code>zeocore[google]</code></td>
-<td>Drive + Gmail + <strong>Docs</strong> auth plumbing together</td>
+<td><code>zeocore[youtube]</code></td>
+<td>YouTube publishing: resumable transfer, schedule, thumbnail, captions, playlists</td>
 </tr>
 <tr>
 <td><code>zeocore[bluesky]</code></td>
@@ -2862,15 +2841,11 @@ accounts and authorization. Install additional dependencies only as needed:</p>
 </tr>
 <tr>
 <td><code>zeocore[jupytext]</code></td>
-<td>Script ↔ Jupyter notebook conversion and semantic receipts</td>
+<td>Script ↔ Jupyter notebook conversion</td>
 </tr>
 <tr>
 <td><code>zeocore[notebook]</code></td>
-<td>Fresh-kernel execution with bounded output and cleanup</td>
-</tr>
-<tr>
-<td><code>zeocore[ffmpeg]</code></td>
-<td>Media probing/transcoding via the org's <code>ffmpeg-zeo</code> package</td>
+<td>Fresh-kernel notebook execution with bounded output</td>
 </tr>
 <tr>
 <td><code>zeocore[http]</code></td>
@@ -2886,14 +2861,15 @@ accounts and authorization. Install additional dependencies only as needed:</p>
 </tr>
 <tr>
 <td><code>zeocore[all]</code></td>
-<td>Integration extras; excludes <code>http</code>, <code>mcp</code>, <code>runtime-host</code>, <code>dev</code> and <code>lint</code></td>
+<td>The integration extras; excludes <code>http</code>, <code>mcp</code>, <code>runtime-host</code>, <code>dev</code> and <code>lint</code></td>
 </tr>
 </tbody>
 </table>
-<p><code>runtime-host</code> must be installed explicitly; it is available from 0.11.0.</p>
-<p><code>mcp</code> and <code>mcp-dev</code> are real, separate extras — <code>zeocore[all]</code> does <strong>not</strong>
-pull in the MCP adapter. Install it explicitly (e.g. <code>zeocore[all,mcp]</code>).
-The <code>dev</code> and <code>lint</code> extras are for contributors; see
+<p>HubSpot, Kit and the briefing cards are in the base package; their live
+operations still need your own account or provider terms. The OpenAI managed
+agent wrapper needs the <code>openai</code> package (3.29 or newer), which you install
+yourself. <code>mcp</code> is a separate extra: <code>zeocore[all]</code> does <strong>not</strong> include it
+(use <code>zeocore[all,mcp]</code>). The <code>dev</code> and <code>lint</code> extras are for contributors; see
 <a href="CONTRIBUTING/">CONTRIBUTING.md</a>.</p>
 <h2 id="whats-in-the-package">What's in the package<a class="headerlink" href="#whats-in-the-package" title="Permanent link">&para;</a></h2>
 <table>
@@ -2909,36 +2885,32 @@ The <code>dev</code> and <code>lint</code> extras are for contributors; see
 <td>Authoring — <code>@capability</code>, <code>CapabilityRegistry</code>, <code>invoke_sync</code> / <code>invoke_async</code>, <code>BaseZeoTool</code>, <code>ToolContext</code>, <code>tool_to_capability</code>, optional mixins.</td>
 </tr>
 <tr>
-<td><code>zeo_core.execution</code></td>
-<td>Host-side bounded execution — one total deadline, explicit retries/fallback, cancellation, truthful target identity, and sanitized attempt records for read-only/advisory work.</td>
+<td><code>zeo_core.contracts</code></td>
+<td>Data contracts — <code>CapabilityId</code>, <code>CapabilityDefinition</code>, <code>CapabilityManifest</code>, <code>CapabilityResult</code>, <code>CapabilityOutcome</code>, guards.</td>
 </tr>
 <tr>
-<td><code>zeo_core.contracts</code></td>
-<td>Data contracts — <code>CapabilityId</code>, <code>CapabilityDefinition</code>, <code>CapabilityManifest</code>, <code>CapabilityResult</code>, <code>CapabilityOutcome</code>, guards, invocation records. See <a href="src/zeo_core/contracts/">contracts/README.md</a>.</td>
+<td><code>zeo_core.contracts.ui</code></td>
+<td>Card and widget contracts: <code>DataRef</code>, <code>WidgetUpsert</code>, <code>WidgetBoard</code>.</td>
+</tr>
+<tr>
+<td><code>zeo_core.execution</code></td>
+<td>Bounded execution — one total deadline, explicit retries and fallback, cancellation, sanitized attempt records.</td>
 </tr>
 <tr>
 <td><code>zeo_core.adapters</code></td>
-<td>HTTP, MCP, LLM function projection, and the Runtime capability host.</td>
+<td>HTTP, MCP and LLM function adapters, the Runtime capability host, and <code>widget_html</code> (cards to self-contained HTML).</td>
 </tr>
 <tr>
-<td><code>zeo_core.contracts.runtime</code></td>
-<td>Version-1 launch, attempt, request, effect and result bindings for the Runtime host.</td>
-</tr>
-<tr>
-<td><code>zeo_core.integrations.meetings</code></td>
-<td>Runtime-admitted meeting reads, Notion upsert and Gmail draft operations.</td>
+<td><code>zeo_core.integrations</code></td>
+<td>Adapters for GitHub, Google Workspace, Supabase, LLM providers, Notion, HubSpot, Kit, Gemini images, Pandoc, jupytext, notebooks, ffmpeg, the OpenAI managed Agents API (<code>agents</code>) and keyless public briefing sources (<code>briefing_sources</code>).</td>
 </tr>
 <tr>
 <td><code>zeo_core.core</code></td>
-<td>Filesystem operations, path resolution, a typed error hierarchy, MIME detection, serialization, logging, an operation registry.</td>
+<td>Filesystem operations, path resolution, a typed error hierarchy, MIME detection, serialization, logging.</td>
 </tr>
 <tr>
 <td><code>zeo_core.config</code></td>
 <td>YAML/env-var configuration loading and per-tool config models.</td>
-</tr>
-<tr>
-<td><code>zeo_core.integrations</code></td>
-<td>Adapters for GitHub, Google Workspace, Supabase, LLM providers, Notion, HubSpot, Kit, Gemini images, Pandoc, jupytext, notebooks, ffmpeg, and Bluesky; managed environments and native service profiles. Supabase covers Database, Auth, Storage, Edge Functions, and async Realtime while deliberately excluding raw SQL and Vault plaintext access.</td>
 </tr>
 <tr>
 <td><code>zeo_core.modules</code></td>
@@ -2948,10 +2920,6 @@ The <code>dev</code> and <code>lint</code> extras are for contributors; see
 <td><code>zeo_core.prompt</code></td>
 <td>Prompt template selection and enhancement utilities.</td>
 </tr>
-<tr>
-<td><code>zeo_core.contract_pack</code></td>
-<td>Versioned consumption contract pack for ecosystem runners (no <code>sovereign_agent</code> import).</td>
-</tr>
 </tbody>
 </table>
 <p><a href="GET-STARTED/#core-modules-overview">GET-STARTED.md</a> walks through these
@@ -2959,26 +2927,21 @@ module by module.</p>
 <h2 id="quality-bar">Quality bar<a class="headerlink" href="#quality-bar" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>mypy --strict</strong>, clean across the whole source tree.</li>
-<li>The <strong>full test suite</strong> runs on every change (a handful are environment-gated
-  and skip/run depending on credentials or OS behavior), with 90.00%+ coverage
-  enforced as a two-decimal hard CI floor
-  (<code>--cov-fail-under=90</code>) — a pull request that drops coverage fails the gate.</li>
-<li><strong>CI runs the full suite on Python 3.12</strong> (the minimum supported
-  interpreter) and on 3.14 (the newest) on every push.</li>
-<li>Production code is not allowed to detect that it's under test (a dedicated
+<li>The <strong>full test suite</strong> runs after every merge to <code>main</code> and nightly, on
+  Python 3.12 (the minimum supported interpreter) and 3.14 (the newest); pull
+  requests run a fast smoke job first. Coverage is held to a 90% hard floor.</li>
+<li>Production code is not allowed to detect that it is under test (a dedicated
   CI check fails the build if it finds <code>"pytest" in sys.modules</code> or similar).</li>
 </ul>
 <h2 id="project-status">Project status<a class="headerlink" href="#project-status" title="Permanent link">&para;</a></h2>
-<p>ZeoCore <strong>0.15.1</strong> is a beta library: the API is typed and tested, and this
-release is the canonical capability-authoring surface for the Zero Employee
-ecosystem. The surface may still shift before 1.0. Issues, questions, and API
-feedback are welcome.</p>
+<p>ZeoCore is a beta library: the API is typed and tested, but the surface may
+still shift before 1.0. <strong>Every merge to <code>main</code> is a release</strong> — see the
+<a href="https://github.com/zeroemployeeorg/zeocore/releases">GitHub releases</a> for what
+changed in each version. Issues, questions and API feedback are welcome.</p>
 <h2 id="contributing">Contributing<a class="headerlink" href="#contributing" title="Permanent link">&para;</a></h2>
-<p>New contributors start at <a href="CONTRIBUTING/">CONTRIBUTING.md</a>, which covers
-dev environment setup (<code>make setup</code>), the verification gate (<code>make verify</code>),
-and how to submit a change. This project follows the
-<a href="CODE_OF_CONDUCT/">Contributor Covenant</a>. Security reports go through
-<a href="SECURITY/">SECURITY.md</a>.</p>
+<p>New contributors start at <a href="CONTRIBUTING/">CONTRIBUTING.md</a>. This project
+follows the <a href="CODE_OF_CONDUCT/">Contributor Covenant</a>. Security reports go
+through <a href="SECURITY/">SECURITY.md</a>.</p>
 <h2 id="project-links">Project links<a class="headerlink" href="#project-links" title="Permanent link">&para;</a></h2>
 <p><a href="https://pypi.org/project/zeocore/">PyPI</a> ·
 <a href="https://github.com/zeroemployeeorg/zeocore">Source</a> ·
