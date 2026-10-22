@@ -2364,6 +2364,20 @@ fresh-clone and graphical acceptance remain separate.</p>
 <code>POST /api/0/routeset</code> only. GET responses still require HTTP 200; redirects,
 202 Accepted and 204 No Content remain unavailable. Ops observed the 201
 status on a real route lookup; regression payloads remain synthetic.</p>
+<p>A caller may pass <code>StatedDestination(code, latitude, longitude)</code> resolved from
+its own versioned local airport table to <code>flight</code> or <code>read_briefing</code>. Core
+validates the code and finite coordinate ranges before access. It does not
+look up a destination or contact a new host. A stated destination overrides a
+conflicting source route, with a visible disagreement and the explicit label
+"destination stated by traveller". The estimate and timeline name this input;
+they remain COMPUTED, never an airline schedule.</p>
+<p>An empty or malformed route no longer discards a valid position. The flight
+card keeps its validated altitude, speed and position age in the existing
+provider-facts status string and says "Route not provided by the source".
+Without a destination, route and estimate stay not provided; dependent weather
+and timeline stay unavailable with that fixed reason. Real position failures
+still return an empty unavailable reference. These offline cases use synthetic
+payloads, not a claim that a live journey has been accepted.</p>
 
 
 
