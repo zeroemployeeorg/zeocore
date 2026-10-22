@@ -2671,8 +2671,9 @@ request budget.</p>
 <ul>
 <li>Every card shows <strong>one provenance label</strong> (<code>PROVIDER DATA</code>, <code>COMPUTED</code> or
   <code>REPLAY</code>) and, unless it is a replay, <strong>one freshness line</strong> (<code>live</code> for a
-  position, <code>forecast, not a live reading</code>, <code>computed from its inputs, not a live
-  reading</code>, <code>delayed, not real time</code>, or <code>daily reference rate, not a live quote</code>).</li>
+  position, <code>forecast, issued &lt;time&gt;</code> from the provider's own issue time,
+  <code>computed from a live position &lt;age&gt; old</code>, <code>delayed, not real time</code>, or <code>daily
+  reference rate, not a live quote</code>).</li>
 <li>A failed source gives an <strong>empty <code>DataRef</code> with a short reason</strong>, shown as
   "unavailable". A previous value is never shown as current.</li>
 <li>Missing data stays missing: no schedule, no rain probability and no previous
@@ -2685,7 +2686,7 @@ request budget.</p>
 <h2 id="build-a-briefing">Build a briefing<a class="headerlink" href="#build-a-briefing" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">UTC</span><span class="p">,</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">zeo_core.adapters.widget_html</span><span class="w"> </span><span class="kn">import</span> <span class="n">render_snapshot_html</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">zeo_core.adapters.widget_html</span><span class="w"> </span><span class="kn">import</span> <span class="n">Place</span><span class="p">,</span> <span class="n">render_snapshot_html</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">zeo_core.contracts.ui</span><span class="w"> </span><span class="kn">import</span> <span class="n">WidgetBoard</span><span class="p">,</span> <span class="n">WidgetUpsert</span>
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="kn">from</span><span class="w"> </span><span class="nn">zeo_core.integrations.briefing_sources</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">PublicBriefingSources</span><span class="p">,</span>
@@ -2721,8 +2722,13 @@ request budget.</p>
 <a id="__codelineno-0-36" name="__codelineno-0-36" href="#__codelineno-0-36"></a>        <span class="n">ref</span><span class="p">,</span>
 <a id="__codelineno-0-37" name="__codelineno-0-37" href="#__codelineno-0-37"></a>    <span class="p">)</span>
 <a id="__codelineno-0-38" name="__codelineno-0-38" href="#__codelineno-0-38"></a>
-<a id="__codelineno-0-39" name="__codelineno-0-39" href="#__codelineno-0-39"></a><span class="n">html</span> <span class="o">=</span> <span class="n">render_snapshot_html</span><span class="p">(</span><span class="n">board</span><span class="o">.</span><span class="n">snapshot</span><span class="p">(),</span> <span class="n">document</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">"My briefing"</span><span class="p">)</span>
-<a id="__codelineno-0-40" name="__codelineno-0-40" href="#__codelineno-0-40"></a><span class="nb">open</span><span class="p">(</span><span class="s2">"briefing.html"</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">html</span><span class="p">)</span>
+<a id="__codelineno-0-39" name="__codelineno-0-39" href="#__codelineno-0-39"></a><span class="c1"># Where you are going: the only authority for local times on the cards. Without it the</span>
+<a id="__codelineno-0-40" name="__codelineno-0-40" href="#__codelineno-0-40"></a><span class="c1"># times are UTC and say so.</span>
+<a id="__codelineno-0-41" name="__codelineno-0-41" href="#__codelineno-0-41"></a><span class="n">place</span> <span class="o">=</span> <span class="n">Place</span><span class="p">(</span><span class="s2">"EDDF"</span><span class="p">,</span> <span class="s2">"Frankfurt"</span><span class="p">,</span> <span class="s2">"Europe/Berlin"</span><span class="p">)</span>
+<a id="__codelineno-0-42" name="__codelineno-0-42" href="#__codelineno-0-42"></a><span class="n">html</span> <span class="o">=</span> <span class="n">render_snapshot_html</span><span class="p">(</span>
+<a id="__codelineno-0-43" name="__codelineno-0-43" href="#__codelineno-0-43"></a>    <span class="n">board</span><span class="o">.</span><span class="n">snapshot</span><span class="p">(),</span> <span class="n">document</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">"My briefing"</span><span class="p">,</span> <span class="n">place</span><span class="o">=</span><span class="n">place</span>
+<a id="__codelineno-0-44" name="__codelineno-0-44" href="#__codelineno-0-44"></a><span class="p">)</span>
+<a id="__codelineno-0-45" name="__codelineno-0-45" href="#__codelineno-0-45"></a><span class="nb">open</span><span class="p">(</span><span class="s2">"briefing.html"</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">html</span><span class="p">)</span>
 </code></pre></div>
 <p>Open <code>briefing.html</code> in a browser. With <code>document=True</code> the page carries a
 content-security-policy that allows nothing but inline style.</p>
