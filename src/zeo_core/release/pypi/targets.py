@@ -48,7 +48,7 @@ TARGETS: Final[Mapping[str, Target]] = {
         Target("zeocore", "zeroemployeeorg/zeocore", "publish.yml", "pypi"),
         # 0.5.4 was published from profrodai/zeocreator with no environment;
         # its PyPI publisher is re-bound to this row before a release.
-        Target("zeocreator", "zeroemployeeorg/zeocreator", "publish.yml", "pypi"),
+        Target("zeocreator", "ducktyper-ai/dt-creator", "publish.yml", "pypi"),
         Target("sovereign-agent", "profrodai/sovereign-agent", "publish.yml", "pypi"),
     )
 }

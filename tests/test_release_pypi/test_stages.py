@@ -1567,7 +1567,7 @@ def test_the_reviewed_targets() -> None:
     assert sorted(TARGETS) == ["sovereign-agent", "zeocore", "zeocreator"]
     assert "zero-employee" not in TARGETS  # Go-only now, never PyPI
     assert {t.environment for t in TARGETS.values()} == {"pypi"}
-    assert _manifest(project="zeocreator", repository="zeroemployeeorg/zeocreator").tag
+    assert _manifest(project="zeocreator", repository="ducktyper-ai/dt-creator").tag
 
 
 def test_a_hidden_bypass_list_is_read_as_hidden_never_empty() -> None:
