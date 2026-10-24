@@ -814,6 +814,34 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#digests-from-a-reviewed-build-inventory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Digests from a reviewed build inventory
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Digests from a reviewed build inventory">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-release-event-after-the-seal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The release event after the seal
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#what-verify-checks" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2560,6 +2588,34 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#digests-from-a-reviewed-build-inventory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Digests from a reviewed build inventory
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Digests from a reviewed build inventory">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-release-event-after-the-seal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The release event after the seal
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#what-verify-checks" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2831,6 +2887,82 @@ Only a signed answer is stored: a refusal is worked out again, so a manifest
 refused as unreviewed is admitted once its commit merges.</p>
 <p>The rule is the operator's to sign. The service does not run against the
 ZEO Runtime key until the code-signing ruling that carries it is signed.</p>
+<h2 id="digests-from-a-reviewed-build-inventory">Digests from a reviewed build inventory<a class="headerlink" href="#digests-from-a-reviewed-build-inventory" title="Permanent link">&para;</a></h2>
+<p>By default the manifest pins every digest it signs, and a person writes the new
+digests into <code>release.yaml</code> for each release. With <code>pins: inventory</code> in the
+<code>signing</code> section the manifest keeps only the reviewed structure (paths,
+identifiers, audience, entitlements) and carries no digest; the digests come
+from an inventory file made after the build.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nt">signing</span><span class="p">:</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="nt">release_manifest</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span><span class="nt">pins</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">inventory</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">  </span><span class="nt">product</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pomar</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">  </span><span class="c1"># executables / bundles as usual, without any unsigned_*sha256 field</span>
+</code></pre></div>
+<p>The inventory is JSON, schema <code>zeo.build-inventory/v1</code>, with the product, the
+release <code>version</code> (<code>1.2.3</code>) and one digest for every pin the manifest needs. A
+key that appears twice in the file refuses: the reviewed value is the used one. Its keys are exact:
+<code>executable:&lt;name&gt;</code>, <code>bundle:&lt;name&gt;:tree</code>, <code>bundle:&lt;name&gt;:main</code>,
+<code>bundle:&lt;name&gt;:nested:&lt;path&gt;</code> and <code>bundle:&lt;name&gt;:nested:&lt;path&gt;:main</code>. A key
+the manifest does not need, a key it needs and the inventory lacks, an inventory
+for another product, and a pin left in the manifest all refuse. A manifest that
+pins its own digests refuses an inventory, so there is never a second source of
+pins. After loading, the result is the same fully pinned manifest the step has
+always signed: nothing downstream changes.</p>
+<p>The inventory is a file in the owner repository, <code>release/inventory/&lt;version&gt;.json</code>,
+and goes through an ordinary pull request. It is trusted only as far as the
+evidence for it. The signing service reads GitHub itself and admits the request
+only when:</p>
+<ul>
+<li>the request's <code>inventory_path</code> is exactly <code>release/inventory/&lt;version&gt;.json</code>
+  for the request's <code>version</code>, which is also the inventory's own <code>version</code>;</li>
+<li>the request's <code>commit</code> is the pull request's APPROVED HEAD, not the merge
+  commit the merger makes: the council approves a head, and the merge commit is
+  another commit that carries no approval. The head is on the default branch and
+  its tree holds exactly these bytes at that path;</li>
+<li>the one pull request merged into the default branch with that head added or
+  changed that very file, with that blob (an inventory already in the tree, an
+  older release's or one that arrived without review, is not reviewed by a
+  later head's approval; a file that was renamed into place is refused, add it
+  at its own path);</li>
+<li>the latest <code>council/approve</code> status on the head was created by the adopted
+  approver (the App's bot user id, not any account that happens to use the same
+  context name) and is a success. A later pending, error or failure supersedes
+  an earlier success, and so does a newer success by another account.</li>
+</ul>
+<p>Anything else is <code>inventory_unreviewed</code> (refused), and a GitHub that cannot be
+read, or a reader that cannot read approvals, is <code>review_unreadable</code> (held).
+The review is of the digests against the head-bound build receipt, not a
+rebuild.</p>
+<p>The repository paths a request names (<code>manifest_path</code>, <code>inventory_path</code>) have no
+empty, <code>.</code> or <code>..</code> segment. Every file the service reads from GitHub, the
+manifest included, is read in its JSON form, which states its size first; one
+above 1 MiB is held as <code>review_unreadable</code>, where the raw form used to read it
+(a manifest over 1 MiB is now held). An answer above 8 MiB, or a pull request
+with too many files to read in full, is <code>review_unreadable</code> too. The 8 MiB check
+runs after <code>gh</code> has returned, so it limits what is accepted, not the memory
+<code>gh</code> uses; the 1 MiB check is the one that keeps a huge file from being fetched.</p>
+<p>On the command line, <code>sign</code>, <code>verify</code> and <code>receive</code> take an optional <code>inventory</code>
+(the file), and <code>pack</code> takes <code>inventory</code>, <code>inventory_path</code> and <code>version</code>. The
+pack carries the inventory as <code>inventory.json</code> beside the manifest. A request
+with none of them is byte for byte what it always was. The inventory's hash and
+version are named in every receipt; its hash is also in the service's answer and
+in its journal.</p>
+<h3 id="the-release-event-after-the-seal">The release event after the seal<a class="headerlink" href="#the-release-event-after-the-seal" title="Permanent link">&para;</a></h3>
+<p>The release event (<code>zeo.release-event/v1</code>, made after signing from the signed
+hashes) is authenticated, if at all, after the seal and never before it.
+<code>zeo_core.release.signing.event_auth</code> is the verifier side of that step. It
+refuses unless the seal's <code>verify</code> passed and unless the event is the unchanged
+canonical document (the codec of <code>.github/release/event.py</code>, with exactly its
+fields, no repeated key and a digest that matches its payload).</p>
+<p>It never answers "authenticated". The producer's only adopted authentication is
+a code signature and the tailnet identity of the caller; it has none for a JSON
+payload, and using a signing key for one is a new key purpose that belongs to
+the operator. So a well-formed event after a verified seal is <code>held</code> with
+<code>event_authentication_unadopted</code>, and nothing can be injected to change that: a
+returned hash is not an authentication. When a mechanism is adopted, the check
+that replaces this one verifies a signature against a pinned key. No key,
+service or second signer is added here.</p>
 <h2 id="what-verify-checks">What verify checks<a class="headerlink" href="#what-verify-checks" title="Permanent link">&para;</a></h2>
 <p>A valid Apple signature alone is not enough. For every executable:</p>
 <ul>
@@ -2895,6 +3027,11 @@ held or refused.</p>
 <td><code>signing_identity_missing</code>, <code>signing_failed_unknown</code>, <code>journal_unreadable</code>, <code>signing_host_*</code>, <code>notarisation_unbuilt</code>, <code>legacy_policy_unpinned</code>, <code>verify_unreadable</code>, <code>signing_in_progress</code></td>
 <td>20</td>
 <td>held</td>
+</tr>
+<tr>
+<td><code>inventory_unreviewed</code></td>
+<td>20</td>
+<td>refused: the inventory is not the reviewed one (unmerged, not in the commit's tree, differs from it, or no approval by the adopted approver)</td>
 </tr>
 <tr>
 <td><code>not_signed</code>, <code>identity_mismatch</code>, <code>wrong_audience</code>, <code>entitlements_mismatch</code>, <code>companion_unsigned</code>, <code>input_mismatch</code>, <code>signed_digest_mismatch</code>, <code>receipt_mismatch</code>, <code>receipt_invalid</code>, <code>entitlements_invalid</code>, <code>platform_signature_unadopted</code>, <code>legacy_policy_verify_only</code>, <code>bundle_unsafe</code>, <code>nested_unlisted</code>, <code>nested_missing</code>, <code>main_executable_listed</code>, <code>main_executable_invalid</code>, <code>bundle_identifier_mismatch</code></td>
