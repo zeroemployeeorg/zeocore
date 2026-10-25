@@ -836,6 +836,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#the-published-release-event-github-attestation-zeocore-itself" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The published release event: GitHub attestation (zeocore itself)
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2610,6 +2621,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#the-published-release-event-github-attestation-zeocore-itself" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The published release event: GitHub attestation (zeocore itself)
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2963,6 +2985,71 @@ the operator. So a well-formed event after a verified seal is <code>held</code> 
 returned hash is not an authentication. When a mechanism is adopted, the check
 that replaces this one verifies a signature against a pinned key. No key,
 service or second signer is added here.</p>
+<h3 id="the-published-release-event-github-attestation-zeocore-itself">The published release event: GitHub attestation (zeocore itself)<a class="headerlink" href="#the-published-release-event-github-attestation-zeocore-itself" title="Permanent link">&para;</a></h3>
+<p>For zeocore's own public releases the event is authenticated differently and
+without any key of ours: <code>publish.yml</code> attests the <code>release-event.json</code> it
+uploaded to the GitHub Release, and <code>zeocore release verify-event</code> checks that
+attestation. This is separate from the signing path above, which stays held.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="gp">$ </span><span class="nb">echo</span><span class="w"> </span><span class="s1">'{"event": "release-event.json", "tag": "v0.39.0"}'</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>zeocore<span class="w"> </span>release<span class="w"> </span>verify-event
+</code></pre></div>
+<p>Three checks are distinct, and <code>authenticated</code> is only the first:</p>
+<table>
+<thead>
+<tr>
+<th>Check</th>
+<th>Answers</th>
+<th>Where</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Event authenticity</td>
+<td>did <code>publish.yml</code> on <code>main</code>, on a push, on a GitHub-hosted runner, produce exactly these bytes for the commit the event names?</td>
+<td><code>verify-event</code></td>
+</tr>
+<tr>
+<td>Release authorization</td>
+<td>was that commit reviewed and approved?</td>
+<td><code>check_release_approval</code> (the approval is on the pull request's head; the release commit is the merge commit, so it is mapped first)</td>
+</tr>
+<tr>
+<td>Installed-kit signing</td>
+<td>is the installed kit signed as expected?</td>
+<td>the signing step above</td>
+</tr>
+</tbody>
+</table>
+<p>A successful <code>verify-event</code> makes no build eligible.</p>
+<ul>
+<li><strong>What is pinned</strong> (constants of <code>zeo_core.release.signing.event_attestation</code>,
+  never read from the event or the bundle; the values were read back from a real
+  publish certificate): repository <code>zeroemployeeorg/zeocore</code>; certificate identity
+  <code>https://github.com/zeroemployeeorg/zeocore/.github/workflows/publish.yml@refs/heads/main</code>;
+  OIDC issuer <code>https://token.actions.githubusercontent.com</code>; source ref
+  <code>refs/heads/main</code>; source and signer digest equal to the event's <code>commit</code>;
+  trigger <code>push</code>; GitHub-hosted runner; predicate type
+  <code>https://slsa.dev/provenance/v1</code>; and the attestation's subject is the sha256 of
+  the event file.</li>
+<li><strong>How:</strong> <code>gh attestation verify</code> is given every pin as a flag (never
+  <code>--signer-workflow</code>, a prefix match, and never <code>--repo</code> alone), and what it
+  prints is checked again field by field, so a missing or ineffective flag cannot
+  let a wrong certificate through.</li>
+<li><strong>A tag or a commit is required</strong> (<code>tag</code> or <code>commit</code> in the request). The event
+  has no freshness of its own, so an old genuine event would otherwise verify.</li>
+<li><strong>Outcomes:</strong> <code>authenticated</code> (exit 0); <code>refused</code> (a check ran and failed:
+  wrong identity, digest, commit or repository); <code>held</code>, reason
+  <code>event_authentication_unavailable</code> (it could not complete: no network, no
+  attestation yet, <code>gh</code> missing). Nothing falls back to an unauthenticated event.</li>
+<li><strong>Trust root:</strong> <code>gh</code> fetches and refreshes the Sigstore trusted root through
+  TUF itself; no custom root is used. It needs network access to GitHub.</li>
+<li><strong>Upload and re-runs:</strong> the workflow's <code>attest-event</code> job downloads the asset
+  that was uploaded to the Release, stops unless it is byte for byte the event
+  this run wrote, and attests the downloaded file. A failure leaves the Release
+  in place; the event is then simply not authenticated yet.</li>
+<li><strong>Limit:</strong> public repositories only. On the free plan GitHub stores attestations
+  for public repositories only, so private gold is not covered; a different trust
+  model for it is the Architect's to name.</li>
+</ul>
 <h2 id="what-verify-checks">What verify checks<a class="headerlink" href="#what-verify-checks" title="Permanent link">&para;</a></h2>
 <p>A valid Apple signature alone is not enough. For every executable:</p>
 <ul>
