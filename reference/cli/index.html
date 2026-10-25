@@ -2981,6 +2981,14 @@ Development origins also need <code>ZEOCONNECT_DEVELOPMENT=1</code>.</p>
 <td><code>proof.report</code></td>
 <td>Internal <code>ProofReport</code>, alias <code>zeo.proof-report/v1</code> (sow: zeocore-SOW-45). A valid structure is not verified supporting evidence or current clearance.</td>
 </tr>
+<tr>
+<td><code>library.view-v2</code></td>
+<td>Metadata-only citation view, alias <code>zeo.library-view/v2</code>; strict 4096-byte input, no receipt pointer or content. NFC and UTF-8 byte limits require the validator; schema <code>x-maxUtf8Bytes</code> is descriptive, not standard JSON Schema enforcement.</td>
+</tr>
+<tr>
+<td><code>access.receipt-v2</code></td>
+<td>Separate citation access receipt, alias <code>zeo.access-receipt/v2</code>; acyclic digest binds exact view bytes and a distinct-read reservation. Shape is not current-read permission.</td>
+</tr>
 </tbody>
 </table>
 <p>The proof report is internal, not the library-owned outward proof-view. Its
