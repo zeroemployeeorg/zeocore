@@ -2977,8 +2977,26 @@ Development origins also need <code>ZEOCONNECT_DEVELOPMENT=1</code>.</p>
 <td><code>ui.result-card</code></td>
 <td><code>UiCardResult</code>: <code>zeo.ui-result/v1</code> with one read-only card (zeocore-SOW-42); <code>zeo.ui-result/v1</code> names it too</td>
 </tr>
+<tr>
+<td><code>proof.report</code></td>
+<td>Internal <code>ProofReport</code>, alias <code>zeo.proof-report/v1</code> (sow: zeocore-SOW-45). A valid structure is not verified supporting evidence or current clearance.</td>
+</tr>
 </tbody>
 </table>
+<p>The proof report is internal, not the library-owned outward proof-view. Its
+<code>prf_</code> identity hashes RFC8785 of all immutable fields except <code>proof_id</code>; the
+returned-byte digest includes that field. The draft binding hashes RFC8785 of
+the exact four strings <code>from_name</code>, <code>subject</code>, <code>plain_text</code>, <code>html</code>, without
+Unicode normalization. Item/selection/RAW identifiers are format-checked opaque
+references, never resolved by this model. Markdown hashes bind exact LF UTF-8
+revision bytes, retained hashes exact RAW bytes, and artifact hashes their exact
+representation bytes. Unknown or unresolved evidence stays unchecked, never
+verified because its identifier parsed. Current lifecycle, stop/read outcomes
+and fresh receipts are separate: an unperformed check is <code>not_checked</code>.
+This static schema performs no reads or freshness checks
+and authorizes neither creating nor sending a draft. Metadata is NFC with pinned
+Unicode16 codepoint checks; a host predating Unicode16 conservatively refuses
+metadata characters unknown to its normalization database. Evidence is unchanged.</p>
 <ul>
 <li><strong><code>ui.result-card</code> is the one-card subset of <code>zeo.ui-result/v1</code>.</strong> The wire tag
   <code>zeo.ui-result/v1</code> selects it in <code>zeocore validate</code> and <code>zeocore schema</code>. The document
@@ -3011,6 +3029,16 @@ Development origins also need <code>ZEOCONNECT_DEVELOPMENT=1</code>.</p>
 <p><code>digest</code> is the sha256 of the value's <a href="https://www.rfc-editor.org/rfc/rfc8785">RFC 8785</a>
 (JCS) canonical bytes, prefixed <code>sha256:</code>. Two parties that each canonicalize
 the same JSON value get the same digest without sharing code.</p>
+<p>Python consumers of untrusted proof-report bytes use
+<code>zeo_core.contracts.proof.parse_proof_report(data)</code>; it refuses duplicate keys,
+invalid UTF-8 and non-JSON constants before model validation. Direct
+<code>ProofReport.model_validate_json</code> is not the strict byte entry point. The caller
+must bound transport input. The CLI has its separate 1 MiB input cap; a report
+within all model field bounds can exceed it and cannot use the CLI transport.
+The <code>valid-maximal</code> fixture exercises populated fields, not every numeric bound.
+Excerpt-cache digests identify only the cached exact text; they do not establish
+its relation to a claim or a source span. That verification needs the pinned
+view bytes at the producer and is not performed by this data-only model.</p>
 
 
 
