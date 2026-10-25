@@ -3023,11 +3023,12 @@ attestation. This is separate from the signing path above, which stays held.</p>
 <ul>
 <li><strong>Release authorization, the second check.</strong> <code>echo '{"commit": "&lt;40-hex&gt;"}' | zeocore release check-approval</code>
   finds the ONE distinct pull request (counted by number, over every page of
-  GitHub's list) merged into the default branch whose <code>merge_commit_sha</code> is exactly
-  that commit, reads the council's <code>council/approve</code>
-  status on that pull request's head, and answers <code>approved</code> only if the newest one
-  is a success created by the adopted approver. It reads through <code>gh api</code> and
-  writes nothing. No such pull request (also when the commit given is a branch head
+  GitHub's list) merged into <code>main</code> of this repository whose <code>merge_commit_sha</code> is exactly that
+  commit, reads the council's <code>council/approve</code> status on that pull request's
+  head, and answers <code>approved</code> only if the newest one is a success created by the
+  adopted approver, whose description names this repository, pull request and head
+  (<code>apr1-&lt;repository id&gt;-&lt;pull number&gt;-&lt;head&gt;</code>), and which is dated no later than
+  the merge. It reads through <code>gh api</code> and writes nothing. No such pull request (also when the commit given is a branch head
   and not a merge commit), more than one, a head without the status, a failure, or
   any read that does not complete is <code>refused</code>: nothing is approved by default. It
   does not look at the release event, and <code>verify-event</code> does not look at approval.</li>
