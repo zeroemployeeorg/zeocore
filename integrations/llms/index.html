@@ -1591,6 +1591,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#moonshot-kimi-key-and-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Moonshot (Kimi) key and model
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#ollama-test-track" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2493,6 +2504,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#moonshot-kimi-key-and-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Moonshot (Kimi) key and model
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#ollama-test-track" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2566,8 +2588,8 @@
 
 <p>Install the provider dependencies from the activated source checkout with
 <code>uv pip install -e ".[llms]"</code>.</p>
-<p>The <code>llms</code> integration supports OpenAI, Anthropic, local Ollama, and an explicit
-mock fixture. Start with <a href="../environments/">environment setup</a>. Managed live
+<p>The <code>llms</code> integration supports OpenAI, Anthropic, Moonshot (Kimi), local Ollama,
+and an explicit mock fixture. Start with <a href="../environments/">environment setup</a>. Managed live
 runs initialize only the chosen provider and fail if its credentials/client
 are unavailable. They do not silently use another provider or a mock. Provider
 selection and model compatibility still belong to your application.</p>
@@ -2633,6 +2655,46 @@ A successful client initialization alone does not prove the API key works.</p>
 script arguments with <code>anthropic YOUR_MESSAGES_MODEL</code>. In provider usage logs,
 verify the request belongs to the test project/workspace. An unsupported model
 or invalid key must produce a failure, not a plausible mock answer.</p>
+<h2 id="moonshot-kimi-key-and-model">Moonshot (Kimi) key and model<a class="headerlink" href="#moonshot-kimi-key-and-model" title="Permanent link">&para;</a></h2>
+<p>Moonshot's API follows the OpenAI Chat Completions format, so ZeoCore reaches it
+through the OpenAI client pointed at Moonshot's base URL. Create a key in the
+<a href="https://platform.kimi.ai/">Kimi API platform</a> and keep it in your secret
+manager. The client reads it from <code>MOONSHOT_API_KEY</code> (or the <code>api_key</code>
+argument) and never from <code>OPENAI_API_KEY</code>.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">zeo_core.integrations.llms.registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_llm_client</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="n">client</span> <span class="o">=</span> <span class="n">get_llm_client</span><span class="p">(</span><span class="s2">"moonshot"</span><span class="p">)</span>  <span class="c1"># kimi-k3.1-pro at https://api.moonshot.ai/v1</span>
+</code></pre></div>
+<p>What the client does differently from the OpenAI one, from Moonshot's
+<a href="https://platform.kimi.ai/docs/guide/kimi-k3-1-pro-quickstart">K3.1 Pro quickstart</a>:</p>
+<ul>
+<li>The key is never written to <code>OPENAI_API_KEY</code>, and the SDK is told not to send
+  <code>OPENAI_ORG_ID</code> or <code>OPENAI_PROJECT_ID</code> to Moonshot.</li>
+<li>For <code>kimi-k3*</code> models <code>temperature</code>, <code>top_p</code> and the two penalties are left
+  out of the request (Moonshot fixes them), and <code>max_tokens</code> is sent as
+  <code>max_completion_tokens</code>. Other model ids keep the usual parameters.</li>
+<li>K3.1 Pro always thinks; its <code>reasoning_effort</code> setting is not exposed here.</li>
+</ul>
+<div class="admonition warning">
+<p class="admonition-title">Plain chat only</p>
+<p>The client returns the reply text. It does not carry Moonshot's
+<code>reasoning_content</code> or a tool-call round trip, which Moonshot requires to be
+sent back in multi-turn tool use. So it <strong>refuses</strong> <code>tools</code>, <code>functions</code> and
+tool or function messages (a <code>ZeoIntegrationError</code>, before anything is sent),
+and it reports a reply that is empty, cut at the token limit
+(<code>finish_reason="length"</code>) or ended as a tool call as a <code>ZeoApiError</code>, never
+as an empty success. Only <code>finish_reason="stop"</code> is a good ending, and these endings are not retried (a retry would pay for the same cut-off reply again). K3.1 Pro always thinks, so a very small <code>max_tokens</code> can
+leave no reply: raise it. The base URL must be <code>https</code>. The managed
+<code>LLMIntegration</code> service does not discover this provider yet; call
+<code>get_llm_client("moonshot")</code> directly.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Your prompts leave your machine</p>
+<p>Prompts and replies pass to Moonshot, a third party. Its terms and data
+handling apply to them, not ZeoCore's. Do not send what you may not share.</p>
+</div>
+<p>No test in this repository calls the real API. A first live check needs your own
+key and a small output limit, and its result is yours to record.</p>
 <h2 id="ollama-test-track">Ollama test track<a class="headerlink" href="#ollama-test-track" title="Permanent link">&para;</a></h2>
 <p>The local Ollama server does not require an API key on localhost. Install the
 server from <a href="https://ollama.com/download">Ollama</a>, start it, and pull the chosen
@@ -2643,11 +2705,11 @@ not implement Ollama Cloud credential setup.
 <p>For separate test and production servers, run the test server bound to a
 loopback port such as 11435 (<code>OLLAMA_HOST=127.0.0.1:11435 ollama serve</code>), and
 configure only the test mode's <code>config/integrations.yaml</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nt">llm</span><span class="p">:</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="nt">default_provider</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ollama</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span><span class="nt">ollama</span><span class="p">:</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">    </span><span class="nt">api_base</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">http://127.0.0.1:11435</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">    </span><span class="nt">default_model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">YOUR_INSTALLED_MODEL</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nt">llm</span><span class="p">:</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="nt">default_provider</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ollama</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span><span class="nt">ollama</span><span class="p">:</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">    </span><span class="nt">api_base</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">http://127.0.0.1:11435</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">    </span><span class="nt">default_model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">YOUR_INSTALLED_MODEL</span>
 </code></pre></div>
 <p>Pull/list models against that server using the same <code>OLLAMA_HOST</code> setting.
 Ollama server environment variables configure the separately started server;
@@ -2677,7 +2739,7 @@ controls are enforced limits versus alerts.
 <a href="https://platform.claude.com/docs/en/manage-claude/workspaces">Workspace administration</a>.</p>
 <p>Run the same check with the production key and production model before enabling
 the agent's workload:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>python<span class="w"> </span>-m<span class="w"> </span>zeo_core.integrations.environments<span class="w"> </span>--mode<span class="w"> </span>production<span class="w">   </span>--root<span class="w"> </span><span class="s2">"</span><span class="nv">$ZEO_ENV_ROOT</span><span class="s2">"</span><span class="w"> </span>--integration<span class="w"> </span>llms<span class="w"> </span>--secret<span class="w"> </span>OPENAI_API_KEY<span class="w"> </span>--<span class="w">   </span>python<span class="w"> </span>/absolute/path/check_llm.py<span class="w"> </span>openai<span class="w"> </span>YOUR_PRODUCTION_MODEL
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>python<span class="w"> </span>-m<span class="w"> </span>zeo_core.integrations.environments<span class="w"> </span>--mode<span class="w"> </span>production<span class="w">   </span>--root<span class="w"> </span><span class="s2">"</span><span class="nv">$ZEO_ENV_ROOT</span><span class="s2">"</span><span class="w"> </span>--integration<span class="w"> </span>llms<span class="w"> </span>--secret<span class="w"> </span>OPENAI_API_KEY<span class="w"> </span>--<span class="w">   </span>python<span class="w"> </span>/absolute/path/check_llm.py<span class="w"> </span>openai<span class="w"> </span>YOUR_PRODUCTION_MODEL
 </code></pre></div>
 <p>Use Anthropic substitutions as above, or no key for your managed local Ollama
 server. Production requires a real provider; <code>mock</code> is refused. Inspect usage
