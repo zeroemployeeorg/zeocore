@@ -3010,7 +3010,7 @@ attestation. This is separate from the signing path above, which stays held.</p>
 <tr>
 <td>Release authorization</td>
 <td>was that commit reviewed and approved?</td>
-<td><code>check_release_approval</code> (the approval is on the pull request's head; the release commit is the merge commit, so it is mapped first)</td>
+<td><code>zeocore release check-approval</code> (the approval is on the pull request's head; the release commit is the merge commit, so it is mapped first)</td>
 </tr>
 <tr>
 <td>Installed-kit signing</td>
@@ -3021,6 +3021,16 @@ attestation. This is separate from the signing path above, which stays held.</p>
 </table>
 <p>A successful <code>verify-event</code> makes no build eligible.</p>
 <ul>
+<li><strong>Release authorization, the second check.</strong> <code>echo '{"commit": "&lt;40-hex&gt;"}' | zeocore release check-approval</code>
+  finds the ONE distinct pull request (counted by number, over every page of
+  GitHub's list) merged into the default branch whose <code>merge_commit_sha</code> is exactly
+  that commit, reads the council's <code>council/approve</code>
+  status on that pull request's head, and answers <code>approved</code> only if the newest one
+  is a success created by the adopted approver. It reads through <code>gh api</code> and
+  writes nothing. No such pull request (also when the commit given is a branch head
+  and not a merge commit), more than one, a head without the status, a failure, or
+  any read that does not complete is <code>refused</code>: nothing is approved by default. It
+  does not look at the release event, and <code>verify-event</code> does not look at approval.</li>
 <li><strong>What is pinned</strong> (constants of <code>zeo_core.release.signing.event_attestation</code>,
   never read from the event or the bundle; the values were read back from a real
   publish certificate): repository <code>zeroemployeeorg/zeocore</code>; certificate identity
