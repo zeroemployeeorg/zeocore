@@ -847,6 +847,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#the-published-release-event-a-pinned-key-a-private-repository" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The published release event: a pinned key (a private repository)
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2632,6 +2643,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#the-published-release-event-a-pinned-key-a-private-repository" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The published release event: a pinned key (a private repository)
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -3060,6 +3082,59 @@ attestation. This is separate from the signing path above, which stays held.</p>
 <li><strong>Limit:</strong> public repositories only. On the free plan GitHub stores attestations
   for public repositories only, so private gold is not covered; a different trust
   model for it is the Architect's to name.</li>
+</ul>
+<h3 id="the-published-release-event-a-pinned-key-a-private-repository">The published release event: a pinned key (a private repository)<a class="headerlink" href="#the-published-release-event-a-pinned-key-a-private-repository" title="Permanent link">&para;</a></h3>
+<p>A private repository has no attestation on the current plan, so its event is
+signed by the repository's release signer with an Ed25519 key, and the CONSUMER
+pins the public half. Core ships the verifier only; it holds no key and has no
+code that makes one. Install the extra first: <code>pip install 'zeocore[release-keys]'</code>
+(a missing package is <code>held</code> and says so).</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="gp">$ </span><span class="nb">echo</span><span class="w"> </span><span class="err">'</span><span class="o">{</span><span class="s2">"event"</span>:<span class="w"> </span><span class="s2">"release-event.json"</span>,<span class="w"> </span><span class="s2">"mechanism"</span>:<span class="w"> </span><span class="s2">"pinned_key"</span>,
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="go">    "repository": "owner/name", "signature": "release-event.sig.json",</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="go">    "trust": "trust/release-event-trust.json", "tag": "v1.2.3"}' | zeocore release verify-event</span>
+</code></pre></div>
+<ul>
+<li><strong>Who signs.</strong> The signer is the repository owner's own (under a role account no agent can reach). It signs the domain string
+  <code>zeo.release-event-signature/v1\nrelease_event_signing/v1\n</code> followed by the
+  event's canonical payload, and writes <code>release-event.sig.json</code>
+  (<code>zeo.release-event-signature/v1</code>, at most 512 bytes, no key inside).</li>
+<li><strong>The trust file</strong> (<code>zeo.release-trust/v1</code>, at most 4096 bytes) names the one
+  <code>repository</code>, the <code>purpose</code> <code>release_event_signing/v1</code> and at most two keys,
+  each with <code>valid_from</code> and a REQUIRED <code>valid_until</code> at most 90 days later
+  (RFC 3339 UTC with a <code>Z</code>). The request must name the same <code>repository</code> as the
+  event and the trust file. <code>zeroemployeeorg/zeocore</code> is refused: the public
+  repository is authenticated only by attestation, and a failure of one
+  mechanism never falls back to the other.</li>
+<li><strong>The clock</strong> is this machine's own UTC clock. The verb takes no time.</li>
+<li><strong>Outcomes</strong> are the three of the attestation check: <code>authenticated</code>;
+  <code>refused</code> (<code>event_authentication_failed</code>, or a more specific reason such as
+  <code>event_not_expected</code>, <code>expected_release_missing</code>, <code>event_other_repository</code>);
+  <code>held</code> (<code>event_authentication_unavailable</code>: a missing file or package). The
+  answer adds <code>mechanism: pinned_key</code> and the <code>key_id</code> that authenticated. Name
+  the <code>tag</code> or <code>commit</code> you expect: the event has no freshness of its own.</li>
+<li><strong>Where the pin comes from is the consumer's rule, not Core's.</strong> Pass a trust
+  file read from the INSTALLED copy, never from the candidate release. The
+  consumer's binding rule (F1) is that a candidate whose trust file differs from
+  the installed one installs only if ALL FOUR hold, else it is held: (a) it is
+  authenticated against the INSTALLED pin; (b) its approval
+  <code>apr1-&lt;repo id&gt;-&lt;pull number&gt;-&lt;head&gt;</code> is verified at install time, by a reader
+  with access to the private repository, as merged as the event's commit on
+  <code>main</code>; (c) the candidate trust file is byte-equal to the git blob
+  <code>&lt;event commit&gt;:&lt;trust path&gt;</code> read from GitHub, never from the archive or its sidecars; (d) no
+  step replaces every installed key (that is an attended step by the host owner).
+  Bootstrap (the first pin) and a rotation that replaces every key are the host
+  owner's attended steps, not a release's.
+  F1 closes the swap of the PIN. It does not close the swap of ARTIFACTS: see
+  the residual below. Core cannot check F1; it never sees the installed copy.</li>
+<li><strong>No revocation, and a residual.</strong> There is no revocation list and no online
+  check. Whoever holds a leaked signing key can sign any event inside the key's
+  window; <code>authenticated</code> binds the bytes to the key holder, not the artifacts to
+  an approved commit. The 90-day window bounds an honest key, not a thief. When
+  every pinned key is past <code>valid_until</code>, every candidate is refused until the
+  host owner's attended step renews the pin.</li>
+<li><strong>This is not release authorization.</strong> Use <code>release check-approval</code> for that;
+  it reads the public repository only, and nothing here claims a private release
+  is authorized.</li>
 </ul>
 <h2 id="what-verify-checks">What verify checks<a class="headerlink" href="#what-verify-checks" title="Permanent link">&para;</a></h2>
 <p>A valid Apple signature alone is not enough. For every executable:</p>

@@ -2645,7 +2645,7 @@ JSON already, so <code>zeocore help</code> without <code>--json</code> answers t
 <tr>
 <td><code>release sign</code>, <code>release verify</code>, <code>release tree-digest</code>, <code>release verify-event</code>, <code>release check-approval</code></td>
 <td>yes</td>
-<td>the shared signing step, a bundle's tree digest, the GitHub attestation of a published release event, and whether a release commit was approved; see <a href="../../how-to/release-signing/">Sign and verify a release</a></td>
+<td>the shared signing step, a bundle's tree digest, the GitHub attestation of a published release event (or, with <code>mechanism: pinned_key</code>, a private repository's pinned-key signature; needs <code>zeocore[release-keys]</code>), and whether a release commit was approved; see <a href="../../how-to/release-signing/">Sign and verify a release</a></td>
 </tr>
 <tr>
 <td><code>release pypi plan \| admit \| apply \| approve \| reconcile \| verify</code></td>
