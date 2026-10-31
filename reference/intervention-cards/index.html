@@ -2362,6 +2362,34 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#messages-replies-and-approvals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Messages, replies and approvals
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Messages, replies and approvals">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-schema-is-shape-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The schema is shape only
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -2431,6 +2459,14 @@
 <td><code>source_item</code></td>
 <td>a read-only item as its source states it: its own id, the digest of the bytes read, project, label, title, state, next action and the line to copy. No work id, no counter, no action</td>
 </tr>
+<tr>
+<td><code>message</code></td>
+<td>a read-only message to the operator: the sender's id, the digest of the message bytes, who sent it and when, a one-line subject, a plain-text body, optional links, and optionally how a reply renders</td>
+</tr>
+<tr>
+<td><code>approval</code></td>
+<td>a read-only approval request: its own id, the digest of exactly what is approved, the operation, the preview shown, its status and times. The decision stays with the service that owns it</td>
+</tr>
 </tbody>
 </table>
 <h2 id="rules-that-hold-everywhere">Rules that hold everywhere<a class="headerlink" href="#rules-that-hold-everywhere" title="Permanent link">&para;</a></h2>
@@ -2469,6 +2505,17 @@ that read the Core profile.</p>
 <li><strong>Examples:</strong> <code>tests/test_contracts/fixtures/intervention_cards/valid/*.dataref.json</code> holds one valid card for each situation and shape. All data is fake.</li>
 </ul>
 <p>Both files are regenerated from the model; a test fails when they drift.</p>
+<h2 id="messages-replies-and-approvals">Messages, replies and approvals<a class="headerlink" href="#messages-replies-and-approvals" title="Permanent link">&para;</a></h2>
+<p><code>message</code> and <code>approval</code> are read-only like <code>source_item</code>: no work id, no counter, no action.</p>
+<ul>
+<li><strong>Plain text only.</strong> A <code>subject</code> or <code>label</code> is one line of at most 200 code points and refuses <code>&lt;</code>, <code>&gt;</code>, control characters and format characters (bidi, zero-width, line and paragraph separators). A <code>body</code> or an approval <code>preview</code> is plain text of at most 4096 UTF-8 bytes (a preview at most 2000 characters), line feed allowed, and refuses control and format characters. It may hold <code>&lt;</code> and <code>&gt;</code>, because a body or a preview can quote an address in angle brackets; none of it is markup. Nothing is truncated or repaired: an invalid card is refused. A consumer shows every string as text, never as markup, and counts one-line fields by code points and long text by bytes.</li>
+<li><strong>Links are data.</strong> <code>links</code> holds at most 5 entries of a one-line <code>label</code> and an <code>https</code> <code>url</code>; a body cannot carry a link.</li>
+<li><strong>A reply names how an answer renders, not where it goes.</strong> <code>reply</code> is absent when no answer is wanted. <code>mode</code> is <code>text</code> (with <code>max_length</code>, at most 4096) or <code>choice</code> (2 to 4 options with distinct ids); the other mode's keys are refused. <code>answers_digest</code> must equal the message's own <code>source_digest</code>, so an answer to a changed message can be refused by the service that owns the reply slot. The card sends nothing.</li>
+<li><strong>A message id is the sender's own id</strong>, never a work id (<code>wi_</code> and <code>todo_</code> ids are refused). A message does not reply to itself.</li>
+<li><strong>An approval is display only.</strong> <code>approval_id</code> is <code>apr_</code> and a canonical lowercase uuid (groups of 8, 4, 4, 4 and 12 hex digits). <code>request_digest</code> is the digest of exactly what is approved, so the owner can refuse a stale or changed request. <code>decided_at</code> is present exactly when the status is not <code>pending</code>. The card carries no identity of the person and no audit.</li>
+</ul>
+<h3 id="the-schema-is-shape-only">The schema is shape only<a class="headerlink" href="#the-schema-is-shape-only" title="Permanent link">&para;</a></h3>
+<p><code>ui.intervention-card.schema.json</code> describes the shape of a card: keys, types, enums, patterns and sizes in characters. It cannot express the model's other rules, so a consumer that validates with the schema alone accepts a card the models refuse. Those rules are: control and format characters in text, the byte length of long text, <code>wi_</code> and <code>todo_</code> ids in a message, <code>decided_at</code> against <code>status</code>, <code>answers_digest</code> against the message's <code>source_digest</code>, a message that replies to itself, and the cross-field rules of the older situations. Validate with the models, or with a validator that implements the same rules.</p>
 
 
 
