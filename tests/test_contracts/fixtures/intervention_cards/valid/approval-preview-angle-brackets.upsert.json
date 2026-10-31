@@ -1,0 +1,8 @@
+{
+ "type": "widget.upsert",
+ "request_id": "req-approval-preview-angle-brackets",
+ "widget_id": "fake-approval-preview-angle-brackets",
+ "component": "intervention_card",
+ "data_ref": "data-approval-preview-angle-brackets",
+ "revision": 10
+}

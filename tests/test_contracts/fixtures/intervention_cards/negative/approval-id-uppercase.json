@@ -1,0 +1,14 @@
+{
+ "expect": "refused",
+ "why": "the uuid part is lower case",
+ "payload": {
+  "situation": "approval",
+  "approval_id": "apr_0B6F2C1E-3A4D-4E57-9C1A-2F8D5B7E9A10",
+  "request_digest": "sha256:cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34",
+  "operation_id": "example.send",
+  "preview": "Send one fake example message to 3 fake recipients",
+  "status": "pending",
+  "issued_at": "2026-10-31T01:00:00Z",
+  "expires_at": "2026-10-31T01:15:00Z"
+ }
+}

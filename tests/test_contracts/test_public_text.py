@@ -30,6 +30,7 @@ FEATURE_FILES = (
     ROOT / "src" / "zeo_core" / "contracts" / "ui" / "calendar_views.py",
     ROOT / "docs" / "reference" / "calendar-view.md",
     ROOT / "changelog.d" / "calendar-view.md",
+    ROOT / "changelog.d" / "message-approval-cards.md",
 )
 
 #: Never in a fixture and never in feature prose.
