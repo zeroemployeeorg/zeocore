@@ -20,7 +20,13 @@ keywords = [
 ]
 readme = "README.md"
 requires-python = ">=3.12"
-license = { text = "MIT" }
+license = "MIT AND Apache-2.0"  # the rest is MIT; src/zeo_core/voice is derived Apache-2.0 code (PEP 639)
+license-files = [
+    "LICENSE",
+    "src/zeo_core/voice/LICENSE",
+    "src/zeo_core/voice/NOTICE",
+    "tests/test_voice/NOTICE",
+]
 authors = [
     { name = "Rod Rivera", email = "rod@aiproduct.engineer" }
 ]
@@ -52,6 +58,8 @@ dependencies = [
     # RFC 8785 canonical JSON: `zeocore digest` and every Broker request's
     # digest need it, so the zeocore command can't run without it.
     "rfc8785==0.1.4",
+    # zeo_core.voice: the stdlib audioop was removed in Python 3.13 (PSF-2.0 backport, no dependencies).
+    "audioop-lts; python_version >= \"3.13\"",
 ]
 
 [project.scripts]
@@ -334,6 +342,27 @@ ignore = ["UP037", "UP040", "UP042", "UP046", "UP047"]
 "tests/test_integrations/google/drive/mocks/*.py" = ["N803"]  # N803: subclasses/mocks protocols.py's real-API-matching Protocol, and live tests call fileId= as a keyword today -- monorepo RULING-233, ported as-is
 "src/zeo_core/integrations/google/calendar/protocols.py" = ["N803"]  # N803: structurally types the real googleapiclient Calendar v3 Resource object, whose calendarId/eventId keywords we do not control -- same RULING-233 rationale as drive/protocols.py, calendarId/eventId are camelCase in the real API too
 "tests/test_integrations/google/calendar/*.py" = ["N803"]  # N803: mocks call calendarId=/eventId= as keywords, matching the real googleapiclient Resource shape -- same RULING-233 rationale as the drive mocks equivalent
+# Voice router: copied modules and derived tests keep the upstream code byte-identical; ONLY the rules seen in each named file
+# on the first lint run are relieved, per file. No security (S) rule is relieved anywhere. DEBT: these reliefs are removed by 2026-11-30 (a later slice).
+"src/zeo_core/voice/base.py" = ["UP035", "UP045"]  # upstream patterns/voice-vendor-router/voicerouter/base.py blob 31dc91445166
+"src/zeo_core/voice/bench.py" = ["UP006", "UP035", "UP045"]  # upstream patterns/voice-vendor-router/voicerouter/bench.py blob f433bc45ce41
+"src/zeo_core/voice/contract.py" = ["C901", "E501", "UP035"]  # upstream patterns/voice-vendor-router/voicerouter/contract.py blob 66dce0307c9e
+"src/zeo_core/voice/engine.py" = ["A002", "ANN002", "ANN003", "ANN201", "ANN202", "ANN204"]  # upstream patterns/voice-vendor-router/voicerouter/engine.py blob 1a34b6aa3f4d
+"src/zeo_core/voice/failures.py" = ["C901", "UP045"]  # upstream patterns/voice-vendor-router/voicerouter/failures.py blob c36ca23302e9
+"src/zeo_core/voice/health.py" = ["UP045"]  # upstream patterns/voice-vendor-router/voicerouter/health.py blob 138e92142156
+"src/zeo_core/voice/metrics.py" = ["UP006", "UP035", "UP045"]  # upstream patterns/voice-vendor-router/voicerouter/metrics.py blob 53126f7dd598
+"src/zeo_core/voice/profile.py" = ["ANN001", "ANN201", "ANN202", "ANN206", "C901", "E501"]  # upstream patterns/voice-vendor-router/voicerouter/profile.py blob 26cb78c9aaef
+"src/zeo_core/voice/routed_asr.py" = ["A002", "ANN401", "UP006", "UP035", "UP045"]  # upstream patterns/voice-vendor-router/voicerouter/routed_asr.py blob c30711c1d4b7
+"src/zeo_core/voice/routed_tts.py" = ["A002", "ANN401", "C901", "E501", "UP006", "UP035", "UP045"]  # upstream patterns/voice-vendor-router/voicerouter/routed_tts.py blob eb290562ff5f
+"src/zeo_core/voice/utterance.py" = ["UP006", "UP035", "UP045"]  # upstream patterns/voice-vendor-router/voicerouter/utterance.py blob a2077959d600
+"tests/test_voice/test_bench_stats.py" = ["ANN201", "E501"]  # upstream patterns/voice-vendor-router/tests/test_bench.py blob ce7441d2a494
+"tests/test_voice/test_contract_scanner.py" = ["ANN001", "ANN002", "ANN003", "ANN201", "ANN202", "ANN204", "E501"]  # upstream patterns/voice-vendor-router/tests/test_contract_check.py blob fed9bc50492f
+"tests/test_voice/test_engine_contract.py" = ["ANN201"]  # upstream patterns/voice-vendor-router/tests/test_voicerouter.py blob 755bcb08335a
+"tests/test_voice/test_failures.py" = ["ANN001", "ANN201", "ANN204", "E501", "N818"]  # upstream patterns/voice-vendor-router/tests/test_voicerouter.py blob 755bcb08335a
+"tests/test_voice/test_health.py" = ["ANN001", "ANN201", "E501"]  # upstream patterns/voice-vendor-router/tests/test_voicerouter.py blob 755bcb08335a
+"tests/test_voice/test_policy_and_selection.py" = ["ANN001", "ANN201", "ANN202", "E501", "E741"]  # upstream patterns/voice-vendor-router/tests/test_voicerouter.py blob 755bcb08335a
+"tests/test_voice/test_profile.py" = ["ANN001", "ANN201", "ANN202", "E501"]  # upstream patterns/voice-vendor-router/tests/test_shared_profile.py blob 1c6921b7dfdf
+"tests/test_voice/test_utterance_audio.py" = ["ANN001", "ANN201", "ANN202"]  # upstream patterns/voice-vendor-router/tests/test_voicerouter.py blob 755bcb08335a
 
 [tool.black]
 line-length = 88
@@ -375,6 +404,48 @@ strict_optional = true
 # dependency.
 module = ["googleapiclient.*", "google_auth_oauthlib.*"]
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# Voice router: only the codes seen on the first lint run, per module; upstream code byte-identical; removed by 2026-11-30.
+# Upstream blobs:
+#   zeo_core.voice.engine: patterns/voice-vendor-router/voicerouter/engine.py blob 1a34b6aa3f4d
+module = ["zeo_core.voice.engine"]
+disable_error_code = ["attr-defined", "no-untyped-def"]
+
+[[tool.mypy.overrides]]
+# Voice router: only the codes seen on the first lint run, per module; upstream code byte-identical; removed by 2026-11-30.
+# Upstream blobs:
+#   zeo_core.voice.profile: patterns/voice-vendor-router/voicerouter/profile.py blob 26cb78c9aaef
+#   tests.test_voice.test_contract_scanner: patterns/voice-vendor-router/tests/test_contract_check.py blob fed9bc50492f
+#   tests.test_voice.test_engine_contract: patterns/voice-vendor-router/tests/test_voicerouter.py blob 755bcb08335a
+#   tests.test_voice.test_failures: patterns/voice-vendor-router/tests/test_voicerouter.py blob 755bcb08335a
+#   tests.test_voice.test_health: patterns/voice-vendor-router/tests/test_voicerouter.py blob 755bcb08335a
+#   tests.test_voice.test_policy_and_selection: patterns/voice-vendor-router/tests/test_voicerouter.py blob 755bcb08335a
+#   tests.test_voice.test_profile: patterns/voice-vendor-router/tests/test_shared_profile.py blob 1c6921b7dfdf
+#   tests.test_voice.test_utterance_audio: patterns/voice-vendor-router/tests/test_voicerouter.py blob 755bcb08335a
+module = ["zeo_core.voice.profile", "tests.test_voice.test_contract_scanner", "tests.test_voice.test_engine_contract", "tests.test_voice.test_failures", "tests.test_voice.test_health", "tests.test_voice.test_policy_and_selection", "tests.test_voice.test_profile", "tests.test_voice.test_utterance_audio"]
+disable_error_code = ["no-untyped-def"]
+
+[[tool.mypy.overrides]]
+# Voice router: only the codes seen on the first lint run, per module; upstream code byte-identical; removed by 2026-11-30.
+# Upstream blobs:
+#   zeo_core.voice.routed_asr: patterns/voice-vendor-router/voicerouter/routed_asr.py blob c30711c1d4b7
+module = ["zeo_core.voice.routed_asr"]
+disable_error_code = ["var-annotated"]
+
+[[tool.mypy.overrides]]
+# Voice router: only the codes seen on the first lint run, per module; upstream code byte-identical; removed by 2026-11-30.
+# Upstream blobs:
+#   zeo_core.voice.routed_tts: patterns/voice-vendor-router/voicerouter/routed_tts.py blob eb290562ff5f
+module = ["zeo_core.voice.routed_tts"]
+disable_error_code = ["no-any-return", "var-annotated"]
+
+[[tool.mypy.overrides]]
+# Voice router: only the codes seen on the first lint run, per module; upstream code byte-identical; removed by 2026-11-30.
+# Upstream blobs:
+#   tests.test_voice.test_bench_stats: patterns/voice-vendor-router/tests/test_bench.py blob ce7441d2a494
+module = ["tests.test_voice.test_bench_stats"]
+disable_error_code = ["arg-type", "no-untyped-def"]
 
 [tool.coverage.run]
 # Include the real host CLI and other supervised Python children.
