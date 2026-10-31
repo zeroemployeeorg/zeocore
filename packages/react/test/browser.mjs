@@ -74,11 +74,7 @@ try {
   await page.getByRole("button", { name: "approval", exact: true }).click();
   assert.equal(await page.locator(".zc-card button").count(), 0);
   await page.setViewportSize({ width: 390, height: 844 });
-  for (const situation of [
-    "decision",
-    "message",
-    "project checkpoint",
-  ]) {
+  for (const situation of ["decision", "message", "project checkpoint"]) {
     await page.getByRole("button", { name: situation, exact: true }).click();
     assert.equal(
       await page.evaluate(
