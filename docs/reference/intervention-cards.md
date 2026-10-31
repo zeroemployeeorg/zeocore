@@ -14,6 +14,8 @@
 | `outcome` | `verified` (with evidence and the verification ref), `failed` or `cancelled` |
 | `project_checkpoint` | one project: seat answers, last product vs administrative progress, wait, local-only work, per-source freshness |
 | `source_item` | a read-only item as its source states it: its own id, the digest of the bytes read, project, label, title, state, next action and the line to copy. No work id, no counter, no action |
+| `message` | a read-only message to the operator: the sender's id, the digest of the message bytes, who sent it and when, a one-line subject, a plain-text body, optional links, and optionally how a reply renders |
+| `approval` | a read-only approval request: its own id, the digest of exactly what is approved, the operation, the preview shown, its status and times. The decision stays with the service that owns it |
 
 ## Rules that hold everywhere
 
@@ -55,3 +57,17 @@ A front end reads the card as JSON and does not import Python.
 - **Examples:** `tests/test_contracts/fixtures/intervention_cards/valid/*.dataref.json` holds one valid card for each situation and shape. All data is fake.
 
 Both files are regenerated from the model; a test fails when they drift.
+
+## Messages, replies and approvals
+
+`message` and `approval` are read-only like `source_item`: no work id, no counter, no action.
+
+- **Plain text only.** A `subject` or `label` is one line of at most 200 code points and refuses `<`, `>`, control characters and format characters (bidi, zero-width, line and paragraph separators). A `body` or an approval `preview` is plain text of at most 4096 UTF-8 bytes (a preview at most 2000 characters), line feed allowed, and refuses control and format characters. It may hold `<` and `>`, because a body or a preview can quote an address in angle brackets; none of it is markup. Nothing is truncated or repaired: an invalid card is refused. A consumer shows every string as text, never as markup, and counts one-line fields by code points and long text by bytes.
+- **Links are data.** `links` holds at most 5 entries of a one-line `label` and an `https` `url`; a body cannot carry a link.
+- **A reply names how an answer renders, not where it goes.** `reply` is absent when no answer is wanted. `mode` is `text` (with `max_length`, at most 4096) or `choice` (2 to 4 options with distinct ids); the other mode's keys are refused. `answers_digest` must equal the message's own `source_digest`, so an answer to a changed message can be refused by the service that owns the reply slot. The card sends nothing.
+- **A message id is the sender's own id**, never a work id (`wi_` and `todo_` ids are refused). A message does not reply to itself.
+- **An approval is display only.** `approval_id` is `apr_` and a canonical lowercase uuid (groups of 8, 4, 4, 4 and 12 hex digits). `request_digest` is the digest of exactly what is approved, so the owner can refuse a stale or changed request. `decided_at` is present exactly when the status is not `pending`. The card carries no identity of the person and no audit.
+
+### The schema is shape only
+
+`ui.intervention-card.schema.json` describes the shape of a card: keys, types, enums, patterns and sizes in characters. It cannot express the model's other rules, so a consumer that validates with the schema alone accepts a card the models refuse. Those rules are: control and format characters in text, the byte length of long text, `wi_` and `todo_` ids in a message, `decided_at` against `status`, `answers_digest` against the message's `source_digest`, a message that replies to itself, and the cross-field rules of the older situations. Validate with the models, or with a validator that implements the same rules.

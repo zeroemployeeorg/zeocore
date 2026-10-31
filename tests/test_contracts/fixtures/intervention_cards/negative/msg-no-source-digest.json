@@ -1,0 +1,12 @@
+{
+ "expect": "refused",
+ "why": "the digest of the message bytes is required",
+ "payload": {
+  "situation": "message",
+  "message_id": "am-fake-0001",
+  "sent_at": "2026-10-31T01:02:40Z",
+  "from": "fake-seat",
+  "subject": "A fake subject",
+  "body": "Fake body, line one.\nFake body, line two."
+ }
+}

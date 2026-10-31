@@ -1,0 +1,14 @@
+{
+ "expect": "refused",
+ "why": "a link to another message is not a work id",
+ "payload": {
+  "situation": "message",
+  "message_id": "am-fake-0001",
+  "source_digest": "sha256:cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34",
+  "sent_at": "2026-10-31T01:02:40Z",
+  "from": "fake-seat",
+  "subject": "A fake subject",
+  "body": "Fake body, line one.\nFake body, line two.",
+  "in_reply_to": "wi_01J8Z3Q4R5S6T7V8W9X0Y1Z2A3"
+ }
+}

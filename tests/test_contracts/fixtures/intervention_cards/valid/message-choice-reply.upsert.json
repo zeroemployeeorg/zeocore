@@ -1,0 +1,8 @@
+{
+ "type": "widget.upsert",
+ "request_id": "req-message-choice-reply",
+ "widget_id": "fake-message-choice-reply",
+ "component": "intervention_card",
+ "data_ref": "data-message-choice-reply",
+ "revision": 4
+}

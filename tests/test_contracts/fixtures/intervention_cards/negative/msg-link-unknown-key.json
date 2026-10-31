@@ -1,0 +1,20 @@
+{
+ "expect": "refused",
+ "why": "a link is closed",
+ "payload": {
+  "situation": "message",
+  "message_id": "am-fake-0001",
+  "source_digest": "sha256:cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34",
+  "sent_at": "2026-10-31T01:02:40Z",
+  "from": "fake-seat",
+  "subject": "A fake subject",
+  "body": "Fake body, line one.\nFake body, line two.",
+  "links": [
+   {
+    "label": "x",
+    "url": "https://example.invalid/x",
+    "rel": "y"
+   }
+  ]
+ }
+}

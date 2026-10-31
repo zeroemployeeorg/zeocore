@@ -1,0 +1,13 @@
+{
+ "expect": "refused",
+ "why": "no control character other than a line feed",
+ "payload": {
+  "situation": "message",
+  "message_id": "am-fake-0001",
+  "source_digest": "sha256:cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34",
+  "sent_at": "2026-10-31T01:02:40Z",
+  "from": "fake-seat",
+  "subject": "A fake subject",
+  "body": "a\u0007b"
+ }
+}

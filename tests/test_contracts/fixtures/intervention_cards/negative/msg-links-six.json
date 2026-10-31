@@ -1,0 +1,39 @@
+{
+ "expect": "refused",
+ "why": "at most 5 links",
+ "payload": {
+  "situation": "message",
+  "message_id": "am-fake-0001",
+  "source_digest": "sha256:cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34",
+  "sent_at": "2026-10-31T01:02:40Z",
+  "from": "fake-seat",
+  "subject": "A fake subject",
+  "body": "Fake body, line one.\nFake body, line two.",
+  "links": [
+   {
+    "label": "L0",
+    "url": "https://example.invalid/0"
+   },
+   {
+    "label": "L1",
+    "url": "https://example.invalid/1"
+   },
+   {
+    "label": "L2",
+    "url": "https://example.invalid/2"
+   },
+   {
+    "label": "L3",
+    "url": "https://example.invalid/3"
+   },
+   {
+    "label": "L4",
+    "url": "https://example.invalid/4"
+   },
+   {
+    "label": "L5",
+    "url": "https://example.invalid/5"
+   }
+  ]
+ }
+}

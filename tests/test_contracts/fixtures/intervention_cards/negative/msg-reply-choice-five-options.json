@@ -1,0 +1,40 @@
+{
+ "expect": "refused",
+ "why": "a choice has at most 4 options",
+ "payload": {
+  "situation": "message",
+  "message_id": "am-fake-0001",
+  "source_digest": "sha256:cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34",
+  "sent_at": "2026-10-31T01:02:40Z",
+  "from": "fake-seat",
+  "subject": "A fake subject",
+  "body": "Fake body, line one.\nFake body, line two.",
+  "reply": {
+   "reply_ref": "r-am-fake-0002",
+   "mode": "choice",
+   "answers_digest": "sha256:cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34",
+   "options": [
+    {
+     "id": "o0",
+     "label": "O0"
+    },
+    {
+     "id": "o1",
+     "label": "O1"
+    },
+    {
+     "id": "o2",
+     "label": "O2"
+    },
+    {
+     "id": "o3",
+     "label": "O3"
+    },
+    {
+     "id": "o4",
+     "label": "O4"
+    }
+   ]
+  }
+ }
+}

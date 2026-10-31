@@ -1,0 +1,13 @@
+{
+ "expect": "refused",
+ "why": "a digest is lower case hex",
+ "payload": {
+  "situation": "message",
+  "message_id": "am-fake-0001",
+  "source_digest": "sha256:CD34CD34CD34CD34CD34CD34CD34CD34CD34CD34CD34CD34CD34CD34CD34CD34",
+  "sent_at": "2026-10-31T01:02:40Z",
+  "from": "fake-seat",
+  "subject": "A fake subject",
+  "body": "Fake body, line one.\nFake body, line two."
+ }
+}

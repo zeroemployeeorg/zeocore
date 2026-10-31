@@ -1,0 +1,14 @@
+{
+ "expect": "accepted",
+ "why": "a preview may hold < and >: it quotes what the person approves",
+ "payload": {
+  "situation": "approval",
+  "approval_id": "apr_0b6f2c1e-3a4d-4e57-9c1a-2f8d5b7e9a10",
+  "request_digest": "sha256:cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34",
+  "operation_id": "example.send",
+  "preview": "<b>send</b>",
+  "status": "pending",
+  "issued_at": "2026-10-31T01:00:00Z",
+  "expires_at": "2026-10-31T01:15:00Z"
+ }
+}

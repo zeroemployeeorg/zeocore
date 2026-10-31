@@ -1,0 +1,8 @@
+{
+ "type": "widget.upsert",
+ "request_id": "req-message-angle-brackets",
+ "widget_id": "fake-message-angle-brackets",
+ "component": "intervention_card",
+ "data_ref": "data-message-angle-brackets",
+ "revision": 9
+}

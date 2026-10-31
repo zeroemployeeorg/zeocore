@@ -48,11 +48,13 @@ __all__ = [
     "IMAGE_MAX_PIXELS",
     "PAIR_MAX_BYTES",
     "Action",
+    "Approval",
     "Blocker",
     "Checkpoint",
     "Decision",
     "InterventionCard",
     "InterventionCardPayload",
+    "Message",
     "Outcome",
     "ProjectCheckpoint",
     "RequestStatus",
@@ -96,8 +98,24 @@ def _plain(value: str) -> str:
     return value
 
 
+def _plain_long(value: str) -> str:
+    """Long text with no control or format character; ``<`` and ``>`` are fine.
+
+    A body or a preview may quote an address in angle brackets. Nothing here is markup:
+    a consumer shows every string as text.
+    """
+    if _REFUSED.search(value.replace("\n", "")):
+        msg = "text holds a control or format character"
+        raise ValueError(msg)
+    return value
+
+
 DateTime = Annotated[str, Field(max_length=40), AfterValidator(_date_time)]
 Text = Annotated[str, Field(min_length=1, max_length=200), AfterValidator(_plain)]
+#: A message body or an approval preview: S1 ``LongText`` (at most 4096 UTF-8 bytes,
+#: line feed allowed) plus the ``Text`` refusals of control and format characters.
+#: Unlike ``Text`` it allows ``<`` and ``>``.
+PlainLong = Annotated[LongText, Field(min_length=1), AfterValidator(_plain_long)]
 Text120 = Annotated[str, Field(min_length=1, max_length=120), AfterValidator(_plain)]
 Text300 = Annotated[str, Field(min_length=1, max_length=300), AfterValidator(_plain)]
 
@@ -817,6 +835,132 @@ class SourceItem(_Opt):
     )
 
 
+# -- messages and approvals ------------------------------------------------------
+
+Priority = Literal["p0", "p1", "p2"]
+#: The id of an approval request: ``apr_`` and a canonical lowercase uuid (8-4-4-4-12).
+ApprovalId = Annotated[
+    str,
+    Field(
+        pattern=r"^apr_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    ),
+]
+ApprovalStatus = Literal["pending", "approved", "consumed", "refused"]
+
+
+def _not_a_work_id(value: str) -> str:
+    if value.startswith(("wi_", "todo_")):
+        msg = "a message id is the sender's own id, never a work id"
+        raise ValueError(msg)
+    return value
+
+
+MessageId = Annotated[SourceRef, AfterValidator(_not_a_work_id)]
+
+
+class Link(_Closed):
+    """A link travels as data, never inside the plain-text body."""
+
+    label: Text
+    url: Annotated[str, Field(pattern=_HTTPS_URL)]
+
+
+class _ReplyBase(_Opt):
+    """HOW an answer renders. The card never sends it and names no destination."""
+
+    reply_ref: SourceRef  # the open reply slot, owned by the sender's service
+    answers_digest: Digest  # the source_digest of the message being answered
+    closes_at: DateTime | None = None
+
+
+class TextReply(_ReplyBase):
+    mode: Literal["text"]
+    max_length: Annotated[int, Field(ge=1, le=4096)]
+
+
+class ChoiceReply(_ReplyBase):
+    mode: Literal["choice"]
+    options: Annotated[list[Option], Field(min_length=2, max_length=4)]
+
+    @model_validator(mode="after")
+    def _options_are_distinct(self) -> Self:
+        if len({o.id for o in self.options}) != len(self.options):
+            msg = "the options of a reply have distinct ids"
+            raise ValueError(msg)
+        return self
+
+
+Reply = Annotated[TextReply | ChoiceReply, Field(discriminator="mode")]
+
+
+class Message(_Opt):
+    """A message to the operator, read-only. Its identity is the sender's id.
+
+    ``source_digest`` names the exact message bytes, so a reply can say what it
+    answers. The card computes no age and no urgency.
+    """
+
+    situation: Literal["message"]
+    message_id: MessageId
+    source_digest: Digest
+    sent_at: DateTime
+    from_: Annotated[SeatName, Field(alias="from")]  # the sending seat
+    subject: Text
+    body: PlainLong
+    project: Text | None = None
+    in_reply_to: MessageId | None = None  # a link to another message, not a thread
+    priority: Priority | None = None  # the sender's word
+    expires_at: DateTime | None = None
+    links: Annotated[list[Link], Field(max_length=5)] = Field(default_factory=list)
+    freshness: Annotated[list[Freshness], Field(max_length=8)] = Field(
+        default_factory=list
+    )
+    reply: Reply | None = None
+
+    @model_validator(mode="after")
+    def _reply_answers_this_message(self) -> Self:
+        if self.reply is not None and self.reply.answers_digest != self.source_digest:
+            msg = "a reply answers exactly this message: answers_digest is its digest"
+            raise ValueError(msg)
+        return self
+
+    @model_validator(mode="after")
+    def _not_a_reply_to_itself(self) -> Self:
+        if self.in_reply_to == self.message_id:
+            msg = "a message does not reply to itself"
+            raise ValueError(msg)
+        return self
+
+
+class Approval(_Opt):
+    """An approval request, read-only and display only. The owning service decides.
+
+    The card carries what the person is shown and the digest of exactly what is
+    approved. It holds no identity of the person, no audit and no action: a button
+    would be a request that the owning service checks and records, never the decision.
+    """
+
+    situation: Literal["approval"]
+    approval_id: ApprovalId
+    request_digest: Digest
+    operation_id: Text
+    preview: Annotated[PlainLong, Field(max_length=2000)]
+    status: ApprovalStatus
+    issued_at: DateTime
+    expires_at: DateTime
+    decided_at: DateTime | None = None
+    freshness: Annotated[list[Freshness], Field(max_length=8)] = Field(
+        default_factory=list
+    )
+
+    @model_validator(mode="after")
+    def _decided_only_when_decided(self) -> Self:
+        if (self.status == "pending") != (self.decided_at is None):
+            msg = "decided_at is present exactly when the request is no longer pending"
+            raise ValueError(msg)
+        return self
+
+
 InterventionCard = Annotated[
     WorkLocation
     | Checkpoint
@@ -825,7 +969,9 @@ InterventionCard = Annotated[
     | RequestStatus
     | Outcome
     | ProjectCheckpoint
-    | SourceItem,
+    | SourceItem
+    | Message
+    | Approval,
     Field(discriminator="situation"),
 ]
 

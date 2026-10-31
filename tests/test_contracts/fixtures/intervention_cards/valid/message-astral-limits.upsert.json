@@ -1,0 +1,8 @@
+{
+ "type": "widget.upsert",
+ "request_id": "req-message-astral-limits",
+ "widget_id": "fake-message-astral-limits",
+ "component": "intervention_card",
+ "data_ref": "data-message-astral-limits",
+ "revision": 6
+}
