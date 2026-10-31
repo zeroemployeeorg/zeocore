@@ -1,0 +1,8 @@
+{
+ "type": "widget.upsert",
+ "request_id": "req-approval-pending",
+ "widget_id": "fake-approval-pending",
+ "component": "intervention_card",
+ "data_ref": "data-approval-pending",
+ "revision": 7
+}

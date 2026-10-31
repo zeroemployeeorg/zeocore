@@ -1,0 +1,8 @@
+{
+ "type": "widget.upsert",
+ "request_id": "req-approval-refused",
+ "widget_id": "fake-approval-refused",
+ "component": "intervention_card",
+ "data_ref": "data-approval-refused",
+ "revision": 8
+}

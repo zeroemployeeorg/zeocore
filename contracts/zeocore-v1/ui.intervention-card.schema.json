@@ -94,6 +94,85 @@
       "title": "Action",
       "type": "object"
     },
+    "Approval": {
+      "additionalProperties": false,
+      "description": "An approval request, read-only and display only. The owning service decides.\n\nThe card carries what the person is shown and the digest of exactly what is\napproved. It holds no identity of the person, no audit and no action: a button\nwould be a request that the owning service checks and records, never the decision.",
+      "properties": {
+        "approval_id": {
+          "pattern": "^apr_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+          "title": "Approval Id",
+          "type": "string"
+        },
+        "decided_at": {
+          "maxLength": 40,
+          "title": "Decided At",
+          "type": "string"
+        },
+        "expires_at": {
+          "maxLength": 40,
+          "title": "Expires At",
+          "type": "string"
+        },
+        "freshness": {
+          "items": {
+            "$ref": "#/$defs/Freshness"
+          },
+          "maxItems": 8,
+          "title": "Freshness",
+          "type": "array"
+        },
+        "issued_at": {
+          "maxLength": 40,
+          "title": "Issued At",
+          "type": "string"
+        },
+        "operation_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Operation Id",
+          "type": "string"
+        },
+        "preview": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "pattern": "^[^\\u0000-\\u0009\\u000B-\\u001F\\u007F-\\u009F]*$",
+          "title": "Preview",
+          "type": "string"
+        },
+        "request_digest": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Request Digest",
+          "type": "string"
+        },
+        "situation": {
+          "const": "approval",
+          "title": "Situation",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "pending",
+            "approved",
+            "consumed",
+            "refused"
+          ],
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "situation",
+        "approval_id",
+        "request_digest",
+        "operation_id",
+        "preview",
+        "status",
+        "issued_at",
+        "expires_at"
+      ],
+      "title": "Approval",
+      "type": "object"
+    },
     "ArtifactRef": {
       "additionalProperties": false,
       "properties": {
@@ -371,6 +450,48 @@
         "options"
       ],
       "title": "ChoiceAnswer",
+      "type": "object"
+    },
+    "ChoiceReply": {
+      "additionalProperties": false,
+      "properties": {
+        "answers_digest": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Answers Digest",
+          "type": "string"
+        },
+        "closes_at": {
+          "maxLength": 40,
+          "title": "Closes At",
+          "type": "string"
+        },
+        "mode": {
+          "const": "choice",
+          "title": "Mode",
+          "type": "string"
+        },
+        "options": {
+          "items": {
+            "$ref": "#/$defs/Option"
+          },
+          "maxItems": 4,
+          "minItems": 2,
+          "title": "Options",
+          "type": "array"
+        },
+        "reply_ref": {
+          "pattern": "^[A-Za-z0-9._:/#-]{1,128}$",
+          "title": "Reply Ref",
+          "type": "string"
+        }
+      },
+      "required": [
+        "reply_ref",
+        "answers_digest",
+        "mode",
+        "options"
+      ],
+      "title": "ChoiceReply",
       "type": "object"
     },
     "Decision": {
@@ -736,6 +857,29 @@
       "title": "LatestCheckpoint",
       "type": "object"
     },
+    "Link": {
+      "additionalProperties": false,
+      "description": "A link travels as data, never inside the plain-text body.",
+      "properties": {
+        "label": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "url": {
+          "pattern": "^https://[^\\s<>\\x22\\x27]{1,500}$",
+          "title": "Url",
+          "type": "string"
+        }
+      },
+      "required": [
+        "label",
+        "url"
+      ],
+      "title": "Link",
+      "type": "object"
+    },
     "LocalOnly": {
       "additionalProperties": false,
       "properties": {
@@ -764,6 +908,121 @@
         "flag"
       ],
       "title": "LocalOnly",
+      "type": "object"
+    },
+    "Message": {
+      "additionalProperties": false,
+      "description": "A message to the operator, read-only. Its identity is the sender's id.\n\n``source_digest`` names the exact message bytes, so a reply can say what it\nanswers. The card computes no age and no urgency.",
+      "properties": {
+        "body": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "pattern": "^[^\\u0000-\\u0009\\u000B-\\u001F\\u007F-\\u009F]*$",
+          "title": "Body",
+          "type": "string"
+        },
+        "expires_at": {
+          "maxLength": 40,
+          "title": "Expires At",
+          "type": "string"
+        },
+        "freshness": {
+          "items": {
+            "$ref": "#/$defs/Freshness"
+          },
+          "maxItems": 8,
+          "title": "Freshness",
+          "type": "array"
+        },
+        "from": {
+          "maxLength": 64,
+          "pattern": "^[A-Za-z0-9._-]{1,64}$",
+          "title": "From",
+          "type": "string"
+        },
+        "in_reply_to": {
+          "pattern": "^[A-Za-z0-9._:/#-]{1,128}$",
+          "title": "In Reply To",
+          "type": "string"
+        },
+        "links": {
+          "items": {
+            "$ref": "#/$defs/Link"
+          },
+          "maxItems": 5,
+          "title": "Links",
+          "type": "array"
+        },
+        "message_id": {
+          "pattern": "^[A-Za-z0-9._:/#-]{1,128}$",
+          "title": "Message Id",
+          "type": "string"
+        },
+        "priority": {
+          "enum": [
+            "p0",
+            "p1",
+            "p2"
+          ],
+          "title": "Priority",
+          "type": "string"
+        },
+        "project": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Project",
+          "type": "string"
+        },
+        "reply": {
+          "discriminator": {
+            "mapping": {
+              "choice": "#/$defs/ChoiceReply",
+              "text": "#/$defs/TextReply"
+            },
+            "propertyName": "mode"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/TextReply"
+            },
+            {
+              "$ref": "#/$defs/ChoiceReply"
+            }
+          ],
+          "title": "Reply"
+        },
+        "sent_at": {
+          "maxLength": 40,
+          "title": "Sent At",
+          "type": "string"
+        },
+        "situation": {
+          "const": "message",
+          "title": "Situation",
+          "type": "string"
+        },
+        "source_digest": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Source Digest",
+          "type": "string"
+        },
+        "subject": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Subject",
+          "type": "string"
+        }
+      },
+      "required": [
+        "situation",
+        "message_id",
+        "source_digest",
+        "sent_at",
+        "from",
+        "subject",
+        "body"
+      ],
+      "title": "Message",
       "type": "object"
     },
     "Milestone": {
@@ -1580,6 +1839,45 @@
       "title": "SubjectRef",
       "type": "object"
     },
+    "TextReply": {
+      "additionalProperties": false,
+      "properties": {
+        "answers_digest": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Answers Digest",
+          "type": "string"
+        },
+        "closes_at": {
+          "maxLength": 40,
+          "title": "Closes At",
+          "type": "string"
+        },
+        "max_length": {
+          "maximum": 4096,
+          "minimum": 1,
+          "title": "Max Length",
+          "type": "integer"
+        },
+        "mode": {
+          "const": "text",
+          "title": "Mode",
+          "type": "string"
+        },
+        "reply_ref": {
+          "pattern": "^[A-Za-z0-9._:/#-]{1,128}$",
+          "title": "Reply Ref",
+          "type": "string"
+        }
+      },
+      "required": [
+        "reply_ref",
+        "answers_digest",
+        "mode",
+        "max_length"
+      ],
+      "title": "TextReply",
+      "type": "object"
+    },
     "Wait": {
       "additionalProperties": false,
       "properties": {
@@ -1739,9 +2037,11 @@
   "description": "What the widget registry validates: one card, chosen by ``situation``.",
   "discriminator": {
     "mapping": {
+      "approval": "#/$defs/Approval",
       "blocker": "#/$defs/Blocker",
       "checkpoint": "#/$defs/Checkpoint",
       "decision": "#/$defs/Decision",
+      "message": "#/$defs/Message",
       "outcome": "#/$defs/Outcome",
       "project_checkpoint": "#/$defs/ProjectCheckpoint",
       "request_status": "#/$defs/RequestStatus",
@@ -1774,6 +2074,12 @@
     },
     {
       "$ref": "#/$defs/SourceItem"
+    },
+    {
+      "$ref": "#/$defs/Message"
+    },
+    {
+      "$ref": "#/$defs/Approval"
     }
   ],
   "title": "InterventionCardPayload"

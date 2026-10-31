@@ -1,0 +1,19 @@
+{
+ "expect": "refused",
+ "why": "mode is text or choice",
+ "payload": {
+  "situation": "message",
+  "message_id": "am-fake-0001",
+  "source_digest": "sha256:cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34",
+  "sent_at": "2026-10-31T01:02:40Z",
+  "from": "fake-seat",
+  "subject": "A fake subject",
+  "body": "Fake body, line one.\nFake body, line two.",
+  "reply": {
+   "reply_ref": "r-am-fake-0001",
+   "mode": "voice",
+   "max_length": 4096,
+   "answers_digest": "sha256:cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34"
+  }
+ }
+}

@@ -32,15 +32,15 @@ def _load(path: Path) -> dict[str, Any]:
 
 
 def test_the_fixture_sets_are_not_empty() -> None:
-    assert len(VALID) == 17
-    assert len(NEGATIVE) == 217
+    assert len(VALID) == 27
+    assert len(NEGATIVE) == 310
 
 
 @pytest.mark.parametrize("path", VALID, ids=lambda p: p.name.split(".")[0])
 def test_a_valid_card_is_accepted_and_round_trips(path: Path) -> None:
     payload = _load(path)["payload"]
     card = InterventionCardPayload.model_validate(payload)
-    again = json.loads(card.model_dump_json(exclude_none=True))
+    again = json.loads(card.model_dump_json(exclude_none=True, by_alias=True))
     assert InterventionCardPayload.model_validate(again) == card
     assert all(v is not None for v in again.values())  # absent, never null
 
@@ -171,6 +171,8 @@ def test_the_typescript_names_every_situation_and_marks_optional_keys() -> None:
             "Outcome",
             "ProjectCheckpoint",
             "SourceItem",
+            "Message",
+            "Approval",
         ]
     )
     assert "  work_ref?: WorkRef;" in text

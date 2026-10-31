@@ -24,6 +24,7 @@ FEATURE_FILES = (
     ROOT / "src" / "zeo_core" / "cli" / "intervention_card_types.py",
     ROOT / "docs" / "reference" / "intervention-cards.md",
     ROOT / "changelog.d" / "intervention-cards-s1.md",
+    ROOT / "changelog.d" / "message-approval-cards.md",
 )
 
 #: Never in a fixture and never in feature prose.
