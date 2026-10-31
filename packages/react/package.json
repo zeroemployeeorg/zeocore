@@ -1,0 +1,55 @@
+{
+  "name": "@zeocore/react",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Strict, data-only ZEO intervention cards",
+  "license": "MIT",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./validator": {
+      "types": "./dist/validator.d.ts",
+      "import": "./dist/validator.js"
+    },
+    "./styles.css": "./dist/styles.css"
+  },
+  "scripts": {
+    "build": "npm run generate:browser && tsc && cp src/styles.css dist/styles.css",
+    "test": "npm run format:check && npm run build && node --test test/*.test.mjs",
+    "gallery": "vite gallery --host 127.0.0.1",
+    "test:browser": "node test/browser.mjs",
+    "format:check": "prettier --check \"src/*.{ts,tsx,css}\" \"test/*.mjs\" \"gallery/*.{tsx,css,html}\"",
+    "build:gallery": "vite build gallery --base ./",
+    "generate:browser": "node scripts/schema.mjs",
+    "pregallery": "npm run generate:browser",
+    "prebuild:gallery": "npm run generate:browser",
+    "pretest:browser": "npm run generate:browser"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.2",
+    "@types/react-dom": "19.2.2",
+    "axe-core": "4.10.3",
+    "playwright": "1.51.1",
+    "prettier": "3.6.2",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "typescript": "5.9.3",
+    "vite": "7.1.12",
+    "ajv": "8.17.1",
+    "esbuild": "0.25.12"
+  },
+  "dependencies": {
+    "@noble/hashes": "2.0.1"
+  }
+}
