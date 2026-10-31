@@ -14,6 +14,19 @@ export interface Action {
   reason?: string;
 }
 
+export interface Approval {
+  situation: "approval";
+  approval_id: string;
+  request_digest: string;
+  operation_id: string;
+  preview: string;
+  status: "pending" | "approved" | "consumed" | "refused";
+  issued_at: string;
+  expires_at: string;
+  decided_at?: string;
+  freshness?: Freshness[];
+}
+
 export interface ArtifactRef {
   kind: "repo" | "branch" | "commit" | "pr" | "deployment" | "local_only";
   ref: string;
@@ -63,6 +76,14 @@ export interface Checkpoint {
 
 export interface ChoiceAnswer {
   kind: "choice";
+  options: Option[];
+}
+
+export interface ChoiceReply {
+  reply_ref: string;
+  answers_digest: string;
+  closes_at?: string;
+  mode: "choice";
   options: Option[];
 }
 
@@ -125,10 +146,32 @@ export interface LatestCheckpoint {
   run_ref?: string;
 }
 
+export interface Link {
+  label: string;
+  url: string;
+}
+
 export interface LocalOnly {
   flag: "yes" | "no" | "unknown";
   note?: string;
   git_unpushed_count?: number;
+}
+
+export interface Message {
+  situation: "message";
+  message_id: string;
+  source_digest: string;
+  sent_at: string;
+  from: string;
+  subject: string;
+  body: string;
+  project?: string;
+  in_reply_to?: string;
+  priority?: "p0" | "p1" | "p2";
+  expires_at?: string;
+  links?: Link[];
+  freshness?: Freshness[];
+  reply?: TextReply | ChoiceReply;
 }
 
 export interface Milestone {
@@ -277,6 +320,14 @@ export interface SubjectRef {
   actor_id?: string;
 }
 
+export interface TextReply {
+  reply_ref: string;
+  answers_digest: string;
+  closes_at?: string;
+  mode: "text";
+  max_length: number;
+}
+
 export interface Wait {
   owner?: string;
   since?: string;
@@ -305,4 +356,4 @@ export interface WorkRef {
   revision: string;
 }
 
-export type InterventionCard = WorkLocation | Checkpoint | Blocker | Decision | RequestStatus | Outcome | ProjectCheckpoint | SourceItem;
+export type InterventionCard = WorkLocation | Checkpoint | Blocker | Decision | RequestStatus | Outcome | ProjectCheckpoint | SourceItem | Message | Approval;

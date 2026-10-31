@@ -1,0 +1,44 @@
+{
+ "id": "data-message",
+ "source": "fake-app",
+ "fetched_at": "2026-10-31T01:03:30Z",
+ "as_of": "2026-10-31T01:03:00Z",
+ "replay": false,
+ "payload": {
+  "situation": "message",
+  "message_id": "am-fake-0001",
+  "source_digest": "sha256:cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34",
+  "sent_at": "2026-10-31T01:02:40Z",
+  "from": "fake-seat",
+  "subject": "A fake subject",
+  "body": "Fake body, line one.\nFake body, line two.",
+  "project": "Fake project",
+  "in_reply_to": "am-fake-0000",
+  "priority": "p1",
+  "expires_at": "2026-11-02T09:00:00Z",
+  "freshness": [
+   {
+    "source": "fake-feed",
+    "observed_at": "2026-10-31T01:02:00Z",
+    "collected_at": "2026-10-31T01:02:30Z",
+    "state": "healthy"
+   }
+  ],
+  "links": [
+   {
+    "label": "A fake page",
+    "url": "https://example.invalid/fake/page"
+   },
+   {
+    "label": "Another fake page",
+    "url": "https://example.invalid/fake/other"
+   }
+  ],
+  "reply": {
+   "reply_ref": "r-am-fake-0001",
+   "mode": "text",
+   "max_length": 4096,
+   "answers_digest": "sha256:cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34"
+  }
+ }
+}

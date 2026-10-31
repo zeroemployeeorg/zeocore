@@ -1,0 +1,8 @@
+{
+ "type": "widget.upsert",
+ "request_id": "req-message-text-reply",
+ "widget_id": "fake-message-text-reply",
+ "component": "intervention_card",
+ "data_ref": "data-message-text-reply",
+ "revision": 3
+}

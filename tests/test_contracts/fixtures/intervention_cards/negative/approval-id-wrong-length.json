@@ -1,0 +1,14 @@
+{
+ "expect": "refused",
+ "why": "apr_ and 36 characters",
+ "payload": {
+  "situation": "approval",
+  "approval_id": "apr_0b6f2c1e",
+  "request_digest": "sha256:cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34",
+  "operation_id": "example.send",
+  "preview": "Send one fake example message to 3 fake recipients",
+  "status": "pending",
+  "issued_at": "2026-10-31T01:00:00Z",
+  "expires_at": "2026-10-31T01:15:00Z"
+ }
+}

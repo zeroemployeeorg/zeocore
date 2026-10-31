@@ -1,0 +1,8 @@
+{
+ "type": "widget.upsert",
+ "request_id": "req-message",
+ "widget_id": "fake-message",
+ "component": "intervention_card",
+ "data_ref": "data-message",
+ "revision": 1
+}
