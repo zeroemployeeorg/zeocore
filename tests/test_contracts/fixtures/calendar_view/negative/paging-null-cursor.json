@@ -1,0 +1,252 @@
+{
+ "expect": "refused",
+ "why": "absent, never null",
+ "payload": {
+  "scope": "today",
+  "zone": "Europe/London",
+  "start_date": "2026-10-30",
+  "time_precision": "minute",
+  "report": {
+   "schema_name": "zeo-calendar-view/2",
+   "generated_at": "2026-10-30T03:51:00Z",
+   "source_schema": "zeo-commitments/2",
+   "source_observed_at": "2026-10-30T03:46:00Z",
+   "source_sha256_prefix": "2a827f94bb15",
+   "source_items": 37,
+   "snapshot_digest": "sha256:ecab2cceecab2cceecab2cceecab2cceecab2cceecab2cceecab2cceecab2cce"
+  },
+  "counts": {
+   "rows": 55,
+   "live": 52,
+   "finished": 17,
+   "open": 35,
+   "dropped": 2,
+   "conditional_not_activated": 1
+  },
+  "source_coverage": {
+   "owners_covered": [
+    "fake-owner"
+   ],
+   "registered_seats_without_commitments": [
+    "fake-seat-x"
+   ],
+   "source_not_covered": "seats' own dated promises not passed to the reviewer"
+  },
+  "days": [
+   {
+    "date": "2026-10-30",
+    "items": [
+     {
+      "row_key": "ecab2cceecab2cce:1",
+      "item_ref": "fake-item-1",
+      "canonical_identity": "unresolved",
+      "what": "Fake commitment",
+      "accountable_owner": "fake-owner",
+      "status": "open",
+      "original_due_utc": "2026-10-30T19:00:00Z",
+      "forecast_due_utc": "2026-10-30T05:00:00Z",
+      "seconds_vs_original": -54535.2,
+      "seconds_vs_forecast": -4135.2,
+      "past_original_deadline": false,
+      "owner_reports_late": false,
+      "lateness": {
+       "state": "not_late",
+       "policy": "open item past its original deadline or its current forecast, or reported late by its owner; a moved forecast does not clear a missed original deadline"
+      },
+      "revisions": [
+       {
+        "at_utc": "2026-10-29T23:55:00Z",
+        "by": "fake-reviewer",
+        "from_due_utc": "2026-10-30T19:00:00Z",
+        "to_due_utc": "2026-10-30T06:00:00Z",
+        "kind": "earlier",
+        "reason": "Fake reason"
+       }
+      ],
+      "revisions_complete": true,
+      "counted": true
+     },
+     {
+      "row_key": "ecab2cceecab2cce:2",
+      "item_ref": "fake-item-2",
+      "canonical_identity": "unresolved",
+      "what": "Fake commitment",
+      "accountable_owner": "fake-owner",
+      "status": "done",
+      "original_due_utc": "2026-10-31T12:00:00Z",
+      "forecast_due_utc": "2026-10-31T12:00:00Z",
+      "done_at_utc": "2026-10-30T01:40:00Z",
+      "seconds_vs_original": -123600.0,
+      "seconds_vs_forecast": -123600.0,
+      "past_original_deadline": false,
+      "owner_reports_late": false,
+      "lateness": {
+       "state": "not_late",
+       "policy": "open item past its original deadline or its current forecast, or reported late by its owner; a moved forecast does not clear a missed original deadline"
+      },
+      "revisions": [],
+      "revisions_complete": true,
+      "counted": true
+     },
+     {
+      "row_key": "ecab2cceecab2cce:3",
+      "item_ref": "fake-item-3",
+      "canonical_identity": "unresolved",
+      "what": "Fake commitment",
+      "accountable_owner": "fake-owner",
+      "status": "open",
+      "original_due_utc": "2026-10-29T22:45:00Z",
+      "forecast_due_utc": "2026-10-30T14:00:00Z",
+      "seconds_vs_original": 19000.0,
+      "seconds_vs_forecast": -30000.0,
+      "past_original_deadline": true,
+      "owner_reports_late": false,
+      "lateness": {
+       "state": "late",
+       "policy": "open item past its original deadline or its current forecast, or reported late by its owner; a moved forecast does not clear a missed original deadline"
+      },
+      "revisions": [
+       {
+        "at_utc": "2026-10-29T23:55:00Z",
+        "by": "fake-reviewer",
+        "from_due_utc": "2026-10-30T19:00:00Z",
+        "to_due_utc": "2026-10-30T06:00:00Z",
+        "kind": "earlier",
+        "reason": "Fake reason"
+       }
+      ],
+      "revisions_complete": true,
+      "counted": true
+     },
+     {
+      "row_key": "ecab2cceecab2cce:4",
+      "item_ref": "fake-item-4",
+      "canonical_identity": "unresolved",
+      "what": "Fake commitment",
+      "accountable_owner": "fake-owner",
+      "status": "dropped",
+      "original_due_utc": "2026-10-30T12:00:00Z",
+      "lateness": {
+       "state": "not_counted",
+       "policy": "open item past its original deadline or its current forecast, or reported late by its owner; a moved forecast does not clear a missed original deadline"
+      },
+      "revisions": [
+       {
+        "at_utc": "2026-10-29T23:55:00Z",
+        "by": "fake-reviewer",
+        "from_due_utc": "2026-10-30T19:00:00Z",
+        "to_due_utc": "2026-10-30T06:00:00Z",
+        "kind": "earlier",
+        "reason": "Fake reason"
+       }
+      ],
+      "revisions_complete": true,
+      "counted": false
+     },
+     {
+      "row_key": "ecab2cceecab2cce:5",
+      "item_ref": "fake-item-5",
+      "canonical_identity": "unresolved",
+      "what": "Fake commitment",
+      "accountable_owner": "fake-owner",
+      "status": "late",
+      "original_due_utc": "2026-10-30T02:00:00Z",
+      "seconds_vs_original": 6664.8,
+      "past_original_deadline": true,
+      "owner_reports_late": true,
+      "lateness": {
+       "state": "late",
+       "policy": "open item past its original deadline or its current forecast, or reported late by its owner; a moved forecast does not clear a missed original deadline"
+      },
+      "revisions": [
+       {
+        "at_utc": "2026-10-29T23:55:00Z",
+        "by": "fake-reviewer",
+        "from_due_utc": "2026-10-30T19:00:00Z",
+        "to_due_utc": "2026-10-30T06:00:00Z",
+        "kind": "earlier",
+        "reason": "Fake reason"
+       }
+      ],
+      "revisions_complete": true,
+      "counted": true
+     },
+     {
+      "row_key": "ecab2cceecab2cce:7",
+      "item_ref": "fake-item-7",
+      "canonical_identity": "unresolved",
+      "what": "Fake commitment",
+      "accountable_owner": "fake-owner",
+      "status": "provisional",
+      "original_due_utc": "2026-10-30T19:00:00Z",
+      "forecast_due_utc": "2026-10-30T05:00:00Z",
+      "seconds_vs_original": -54535.2,
+      "seconds_vs_forecast": -4135.2,
+      "past_original_deadline": false,
+      "owner_reports_late": false,
+      "lateness": {
+       "state": "not_late",
+       "policy": "open item past its original deadline or its current forecast, or reported late by its owner; a moved forecast does not clear a missed original deadline"
+      },
+      "revisions": [
+       {
+        "at_utc": "2026-10-29T23:55:00Z",
+        "by": "fake-reviewer",
+        "from_due_utc": "2026-10-30T19:00:00Z",
+        "to_due_utc": "2026-10-30T06:00:00Z",
+        "kind": "earlier",
+        "reason": "Fake reason"
+       }
+      ],
+      "revisions_complete": false,
+      "counted": true,
+      "conditional": {
+       "activation": "Fake: only if the renderer is unavailable",
+       "decided_by": "fake-reviewer",
+       "activated_at_utc": "2026-10-30T03:39:00Z"
+      },
+      "next_action": "Fake next action"
+     }
+    ]
+   }
+  ],
+  "undated": [
+   {
+    "row_key": "ecab2cceecab2cce:6",
+    "item_ref": "fake-item-6",
+    "canonical_identity": "unresolved",
+    "what": "Fake commitment",
+    "accountable_owner": "fake-owner",
+    "status": "blocked",
+    "past_original_deadline": false,
+    "owner_reports_late": false,
+    "lateness": {
+     "state": "not_late",
+     "policy": "open item past its original deadline or its current forecast, or reported late by its owner; a moved forecast does not clear a missed original deadline"
+    },
+    "revisions": [],
+    "revisions_complete": true,
+    "counted": true,
+    "dependency": "Fake: waiting for the panel verdict"
+   }
+  ],
+  "sources": [
+   {
+    "source": "commitments",
+    "state": "ok",
+    "observed_at": "2026-10-30T03:46:00Z",
+    "collected_at": "2026-10-30T03:51:00Z"
+   }
+  ],
+  "coverage": "ok",
+  "paging": {
+   "page_size": 64,
+   "offset": 0,
+   "total_source_rows": 37,
+   "eligible_rows": 7,
+   "returned_rows": 7,
+   "undated_rows": 1,
+   "cursor": null
+  }
+ }
+}

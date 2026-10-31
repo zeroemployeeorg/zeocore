@@ -1,0 +1,8 @@
+{
+ "type": "widget.upsert",
+ "request_id": "req-calendar-late-by-forecast",
+ "widget_id": "fake-calendar-late-by-forecast",
+ "component": "calendar_view",
+ "data_ref": "data-calendar-late-by-forecast",
+ "revision": 2
+}

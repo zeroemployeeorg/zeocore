@@ -119,7 +119,7 @@ def upsert(
 
 def test_the_registry_has_the_four_components_and_the_card() -> None:
     assert set(REGISTRY) == set(COMPONENTS)
-    assert set(COMPONENTS) == set(PAYLOADS) | {"intervention_card"}
+    assert set(COMPONENTS) == set(PAYLOADS) | {"intervention_card", "calendar_view"}
     assert set(LOCKED_COMPONENTS) == set(PAYLOADS)
 
 
@@ -775,31 +775,32 @@ def test_the_combinations_that_would_show_two_freshness_lines_or_none_are_refuse
         ).check("market_watchlist")
 
 
-def _card_upsert() -> dict[str, Any]:
-    return upsert().model_dump() | {"component": "intervention_card"}
-
-
-def test_the_locked_schema_refuses_the_intervention_card() -> None:
-    # The card is Core's profile only: a consumer pinned to the locked spec must
-    # never receive it, and the locked schema says so by refusing the name.
-    assert "intervention_card" not in LOCKED_COMPONENTS
+@pytest.mark.parametrize("component", ["intervention_card", "calendar_view"])
+def test_the_locked_schema_refuses_a_component_of_core_s_profile(
+    component: str,
+) -> None:
+    # These components are Core's profile only: a consumer pinned to the locked spec
+    # must never receive one, and the locked schema says so by refusing the name.
+    assert component not in LOCKED_COMPONENTS
+    event = upsert().model_dump() | {"component": component}
     with pytest.raises(jsonschema.ValidationError):
-        jsonschema.validate(_card_upsert(), load("widget-upsert"))
-    assert WidgetUpsert(**_card_upsert()).component == "intervention_card"
+        jsonschema.validate(event, load("widget-upsert"))
+    assert WidgetUpsert(**event).component == component
 
 
 def test_check_still_refuses_an_unregistered_component_and_a_wrong_payload() -> None:
     with pytest.raises(WidgetRefused) as unknown:
         ref("flight_status").check("iframe")
     assert unknown.value.code == "unknown_component"
-    with pytest.raises(WidgetRefused) as wrong:
-        ref("flight_status").check("intervention_card")
-    assert wrong.value.code == "payload_does_not_match_component"
+    for component in ("intervention_card", "calendar_view"):
+        with pytest.raises(WidgetRefused) as wrong:
+            ref("flight_status").check(component)
+        assert wrong.value.code == "payload_does_not_match_component"
 
 
-def test_no_briefing_source_can_emit_the_intervention_card() -> None:
-    # The briefing route feeds consumers pinned to the locked four; the card is
-    # Core's profile only. A source module that names it fails here.
+def test_no_briefing_source_can_emit_a_component_of_core_s_profile() -> None:
+    # The briefing route feeds consumers pinned to the locked four; the card and the
+    # calendar are Core's profile only. A source module that names one fails here.
     import zeo_core.integrations.briefing_sources as sources
 
     root = Path(sources.__file__).parent
@@ -809,3 +810,5 @@ def test_no_briefing_source_can_emit_the_intervention_card() -> None:
         text = path.read_text(encoding="utf-8")
         assert "intervention_card" not in text, path.name
         assert "intervention_cards" not in text, path.name
+        assert "calendar_view" not in text, path.name
+        assert "calendar_views" not in text, path.name

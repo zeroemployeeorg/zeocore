@@ -1,4 +1,4 @@
-"""TypeScript types for the ``intervention_card`` payload.
+"""TypeScript types for a published card payload schema.
 
 The types are rendered from the published JSON Schema, so a front end that only reads
 ``contracts/zeocore-v1/ui.intervention-card.d.ts`` sees exactly what the registry
@@ -52,20 +52,23 @@ def _interface(name: str, node: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
-def render_typescript() -> str:
-    """The exact committed bytes of ``ui.intervention-card.d.ts``."""
-    schema = render_schema(SCHEMA_NAME)
+def render_typescript(name: str = SCHEMA_NAME) -> str:
+    """The exact committed bytes of ``<name>.d.ts``."""
+    schema = render_schema(name)
     header = "\n".join(
         [
-            "// Generated from ui.intervention-card.schema.json. Do not edit by hand.",
+            f"// Generated from {name}.schema.json. Do not edit by hand.",
             f"// Schema: {schema['$id']}",
             "// Rules that tie fields together (for example intervention_ref equal to",
             "// work_ref.work_id) are enforced by the validator, not by these types.",
         ]
     )
     blocks = [header]
-    for name, node in sorted(schema["$defs"].items()):
-        blocks.append(_interface(name, node))
-    cards = " | ".join(part["$ref"].rsplit("/", 1)[-1] for part in schema["oneOf"])
-    blocks.append(f"export type InterventionCard = {cards};")
+    for def_name, node in sorted(schema["$defs"].items()):
+        blocks.append(_interface(def_name, node))
+    if "oneOf" in schema:
+        cards = " | ".join(part["$ref"].rsplit("/", 1)[-1] for part in schema["oneOf"])
+        blocks.append(f"export type InterventionCard = {cards};")
+    else:
+        blocks.append(_interface(schema["title"], schema))
     return "\n\n".join(blocks) + "\n"

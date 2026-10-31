@@ -1,0 +1,631 @@
+{
+  "$defs": {
+    "CalendarDay": {
+      "additionalProperties": false,
+      "properties": {
+        "date": {
+          "maxLength": 10,
+          "minLength": 10,
+          "title": "Date",
+          "type": "string"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/$defs/CommitmentItem"
+          },
+          "maxItems": 64,
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "required": [
+        "date"
+      ],
+      "title": "CalendarDay",
+      "type": "object"
+    },
+    "CalendarSource": {
+      "additionalProperties": false,
+      "properties": {
+        "collected_at": {
+          "maxLength": 40,
+          "title": "Collected At",
+          "type": "string"
+        },
+        "observed_at": {
+          "maxLength": 40,
+          "title": "Observed At",
+          "type": "string"
+        },
+        "reason": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Reason",
+          "type": "string"
+        },
+        "source": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Source",
+          "type": "string"
+        },
+        "state": {
+          "enum": [
+            "ok",
+            "partial",
+            "unavailable",
+            "stale",
+            "unknown"
+          ],
+          "title": "State",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source",
+        "state"
+      ],
+      "title": "CalendarSource",
+      "type": "object"
+    },
+    "CommitmentItem": {
+      "additionalProperties": false,
+      "description": "One commitment, as the feed publishes it.",
+      "properties": {
+        "accountable_owner": {
+          "maxLength": 64,
+          "pattern": "^[A-Za-z0-9._-]{1,64}$",
+          "title": "Accountable Owner",
+          "type": "string"
+        },
+        "canonical_identity": {
+          "enum": [
+            "resolved",
+            "unresolved"
+          ],
+          "title": "Canonical Identity",
+          "type": "string"
+        },
+        "conditional": {
+          "$ref": "#/$defs/ConditionalActivation"
+        },
+        "counted": {
+          "title": "Counted",
+          "type": "boolean"
+        },
+        "dependency": {
+          "maxLength": 300,
+          "minLength": 1,
+          "title": "Dependency",
+          "type": "string"
+        },
+        "done_at_utc": {
+          "maxLength": 40,
+          "title": "Done At Utc",
+          "type": "string"
+        },
+        "forecast_due_utc": {
+          "maxLength": 40,
+          "title": "Forecast Due Utc",
+          "type": "string"
+        },
+        "item_ref": {
+          "pattern": "^[A-Za-z0-9._:/#-]{1,128}$",
+          "title": "Item Ref",
+          "type": "string"
+        },
+        "lateness": {
+          "$ref": "#/$defs/Lateness"
+        },
+        "next_action": {
+          "maxLength": 300,
+          "minLength": 1,
+          "title": "Next Action",
+          "type": "string"
+        },
+        "original_due_utc": {
+          "maxLength": 40,
+          "title": "Original Due Utc",
+          "type": "string"
+        },
+        "owner_reports_late": {
+          "title": "Owner Reports Late",
+          "type": "boolean"
+        },
+        "past_forecast": {
+          "title": "Past Forecast",
+          "type": "boolean"
+        },
+        "past_original_deadline": {
+          "title": "Past Original Deadline",
+          "type": "boolean"
+        },
+        "revisions": {
+          "items": {
+            "$ref": "#/$defs/DateRevision"
+          },
+          "maxItems": 16,
+          "title": "Revisions",
+          "type": "array"
+        },
+        "revisions_complete": {
+          "title": "Revisions Complete",
+          "type": "boolean"
+        },
+        "row_key": {
+          "pattern": "^[A-Za-z0-9._:/-]{1,160}$",
+          "title": "Row Key",
+          "type": "string"
+        },
+        "seconds_vs_forecast": {
+          "title": "Seconds Vs Forecast",
+          "type": "number"
+        },
+        "seconds_vs_original": {
+          "title": "Seconds Vs Original",
+          "type": "number"
+        },
+        "status": {
+          "enum": [
+            "open",
+            "late",
+            "blocked",
+            "provisional",
+            "done",
+            "dropped"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "what": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "What",
+          "type": "string"
+        },
+        "work_ref": {
+          "$ref": "#/$defs/WorkRef"
+        }
+      },
+      "required": [
+        "row_key",
+        "item_ref",
+        "canonical_identity",
+        "what",
+        "accountable_owner",
+        "status",
+        "lateness",
+        "revisions_complete",
+        "counted"
+      ],
+      "title": "CommitmentItem",
+      "type": "object"
+    },
+    "ConditionalActivation": {
+      "additionalProperties": false,
+      "properties": {
+        "activated_at_utc": {
+          "maxLength": 40,
+          "title": "Activated At Utc",
+          "type": "string"
+        },
+        "activation": {
+          "maxLength": 300,
+          "minLength": 1,
+          "title": "Activation",
+          "type": "string"
+        },
+        "decided_by": {
+          "maxLength": 64,
+          "pattern": "^[A-Za-z0-9._-]{1,64}$",
+          "title": "Decided By",
+          "type": "string"
+        }
+      },
+      "required": [
+        "activation",
+        "decided_by"
+      ],
+      "title": "ConditionalActivation",
+      "type": "object"
+    },
+    "Counts": {
+      "additionalProperties": false,
+      "description": "Published aggregates, source-wide. Filtered counts are the viewer's own.",
+      "properties": {
+        "conditional_not_activated": {
+          "minimum": 0,
+          "title": "Conditional Not Activated",
+          "type": "integer"
+        },
+        "dropped": {
+          "minimum": 0,
+          "title": "Dropped",
+          "type": "integer"
+        },
+        "finished": {
+          "minimum": 0,
+          "title": "Finished",
+          "type": "integer"
+        },
+        "live": {
+          "minimum": 0,
+          "title": "Live",
+          "type": "integer"
+        },
+        "open": {
+          "minimum": 0,
+          "title": "Open",
+          "type": "integer"
+        },
+        "rows": {
+          "minimum": 0,
+          "title": "Rows",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "rows",
+        "live",
+        "finished",
+        "open",
+        "dropped",
+        "conditional_not_activated"
+      ],
+      "title": "Counts",
+      "type": "object"
+    },
+    "DateRevision": {
+      "additionalProperties": false,
+      "description": "One change of a due date as published.\n\n``revisions_complete`` false on the item means earlier changes are NOT in the\nlist: never infer none.",
+      "properties": {
+        "at_utc": {
+          "maxLength": 40,
+          "title": "At Utc",
+          "type": "string"
+        },
+        "by": {
+          "maxLength": 64,
+          "pattern": "^[A-Za-z0-9._-]{1,64}$",
+          "title": "By",
+          "type": "string"
+        },
+        "from_due_utc": {
+          "maxLength": 40,
+          "title": "From Due Utc",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "earlier",
+            "postponement",
+            "correction",
+            "scope change"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "reason": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Reason",
+          "type": "string"
+        },
+        "to_due_utc": {
+          "maxLength": 40,
+          "title": "To Due Utc",
+          "type": "string"
+        }
+      },
+      "required": [
+        "at_utc",
+        "by",
+        "kind"
+      ],
+      "title": "DateRevision",
+      "type": "object"
+    },
+    "Lateness": {
+      "additionalProperties": false,
+      "description": "The owner's lateness object, passed through with its policy text verbatim.",
+      "properties": {
+        "policy": {
+          "maxLength": 400,
+          "minLength": 1,
+          "title": "Policy",
+          "type": "string"
+        },
+        "reason": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Reason",
+          "type": "string"
+        },
+        "state": {
+          "enum": [
+            "late",
+            "not_late",
+            "not_counted"
+          ],
+          "title": "State",
+          "type": "string"
+        }
+      },
+      "required": [
+        "state",
+        "policy"
+      ],
+      "title": "Lateness",
+      "type": "object"
+    },
+    "Paging": {
+      "additionalProperties": false,
+      "description": "Where this page sits in the snapshot. The owner supplies every count.",
+      "properties": {
+        "cursor": {
+          "pattern": "^[A-Za-z0-9._:/-]{1,128}$",
+          "title": "Cursor",
+          "type": "string"
+        },
+        "eligible_rows": {
+          "minimum": 0,
+          "title": "Eligible Rows",
+          "type": "integer"
+        },
+        "next_cursor": {
+          "pattern": "^[A-Za-z0-9._:/-]{1,128}$",
+          "title": "Next Cursor",
+          "type": "string"
+        },
+        "offset": {
+          "minimum": 0,
+          "title": "Offset",
+          "type": "integer"
+        },
+        "page_size": {
+          "maximum": 64,
+          "minimum": 1,
+          "title": "Page Size",
+          "type": "integer"
+        },
+        "returned_rows": {
+          "minimum": 0,
+          "title": "Returned Rows",
+          "type": "integer"
+        },
+        "total_source_rows": {
+          "minimum": 0,
+          "title": "Total Source Rows",
+          "type": "integer"
+        },
+        "undated_rows": {
+          "minimum": 0,
+          "title": "Undated Rows",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "page_size",
+        "offset",
+        "total_source_rows",
+        "eligible_rows",
+        "returned_rows",
+        "undated_rows"
+      ],
+      "title": "Paging",
+      "type": "object"
+    },
+    "SnapshotRef": {
+      "additionalProperties": false,
+      "description": "The immutable snapshot every page of a view is cut from.",
+      "properties": {
+        "generated_at": {
+          "maxLength": 40,
+          "title": "Generated At",
+          "type": "string"
+        },
+        "schema_name": {
+          "const": "zeo-calendar-view/2",
+          "title": "Schema Name",
+          "type": "string"
+        },
+        "snapshot_digest": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Snapshot Digest",
+          "type": "string"
+        },
+        "source_items": {
+          "minimum": 0,
+          "title": "Source Items",
+          "type": "integer"
+        },
+        "source_observed_at": {
+          "maxLength": 40,
+          "title": "Source Observed At",
+          "type": "string"
+        },
+        "source_schema": {
+          "const": "zeo-commitments/2",
+          "title": "Source Schema",
+          "type": "string"
+        },
+        "source_sha256_prefix": {
+          "pattern": "^[0-9a-f]{12}$",
+          "title": "Source Sha256 Prefix",
+          "type": "string"
+        }
+      },
+      "required": [
+        "schema_name",
+        "generated_at",
+        "source_schema",
+        "source_observed_at",
+        "source_sha256_prefix",
+        "source_items",
+        "snapshot_digest"
+      ],
+      "title": "SnapshotRef",
+      "type": "object"
+    },
+    "SourceCoverage": {
+      "additionalProperties": false,
+      "properties": {
+        "owners_covered": {
+          "items": {
+            "maxLength": 64,
+            "pattern": "^[A-Za-z0-9._-]{1,64}$",
+            "type": "string"
+          },
+          "maxItems": 64,
+          "title": "Owners Covered",
+          "type": "array"
+        },
+        "registered_seats_without_commitments": {
+          "items": {
+            "maxLength": 64,
+            "pattern": "^[A-Za-z0-9._-]{1,64}$",
+            "type": "string"
+          },
+          "maxItems": 128,
+          "title": "Registered Seats Without Commitments",
+          "type": "array"
+        },
+        "source_not_covered": {
+          "maxLength": 300,
+          "minLength": 1,
+          "title": "Source Not Covered",
+          "type": "string"
+        }
+      },
+      "required": [
+        "owners_covered",
+        "registered_seats_without_commitments"
+      ],
+      "title": "SourceCoverage",
+      "type": "object"
+    },
+    "WorkRef": {
+      "additionalProperties": false,
+      "description": "One id for a work item on every view; ``intervention_ref`` is the SAME id.",
+      "properties": {
+        "revision": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Revision",
+          "type": "string"
+        },
+        "source_ref": {
+          "pattern": "^[A-Za-z0-9._:/#-]{1,128}$",
+          "title": "Source Ref",
+          "type": "string"
+        },
+        "work_id": {
+          "pattern": "^[A-Za-z0-9._:/#-]{1,128}$",
+          "title": "Work Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "work_id",
+        "source_ref",
+        "revision"
+      ],
+      "title": "WorkRef",
+      "type": "object"
+    }
+  },
+  "$id": "https://zeocore.zeo.ac/contracts/zeocore-v1/ui.calendar-view.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "The payload of ``calendar_view``: a Today or seven-day civil window.",
+  "properties": {
+    "counts": {
+      "$ref": "#/$defs/Counts"
+    },
+    "coverage": {
+      "enum": [
+        "ok",
+        "partial",
+        "unavailable",
+        "stale",
+        "unknown"
+      ],
+      "title": "Coverage",
+      "type": "string"
+    },
+    "days": {
+      "items": {
+        "$ref": "#/$defs/CalendarDay"
+      },
+      "maxItems": 7,
+      "title": "Days",
+      "type": "array"
+    },
+    "paging": {
+      "$ref": "#/$defs/Paging"
+    },
+    "report": {
+      "$ref": "#/$defs/SnapshotRef"
+    },
+    "scope": {
+      "enum": [
+        "today",
+        "seven_day"
+      ],
+      "title": "Scope",
+      "type": "string"
+    },
+    "source_coverage": {
+      "$ref": "#/$defs/SourceCoverage"
+    },
+    "sources": {
+      "items": {
+        "$ref": "#/$defs/CalendarSource"
+      },
+      "maxItems": 12,
+      "minItems": 1,
+      "title": "Sources",
+      "type": "array"
+    },
+    "start_date": {
+      "maxLength": 10,
+      "minLength": 10,
+      "title": "Start Date",
+      "type": "string"
+    },
+    "time_precision": {
+      "enum": [
+        "second",
+        "minute"
+      ],
+      "title": "Time Precision",
+      "type": "string"
+    },
+    "undated": {
+      "items": {
+        "$ref": "#/$defs/CommitmentItem"
+      },
+      "maxItems": 64,
+      "title": "Undated",
+      "type": "array"
+    },
+    "zone": {
+      "maxLength": 64,
+      "pattern": "^[A-Za-z]+(?:/[A-Za-z0-9_+-]+){0,2}$",
+      "title": "Zone",
+      "type": "string"
+    }
+  },
+  "required": [
+    "scope",
+    "zone",
+    "start_date",
+    "time_precision",
+    "report",
+    "paging",
+    "days",
+    "sources",
+    "coverage"
+  ],
+  "title": "CalendarView",
+  "type": "object"
+}
