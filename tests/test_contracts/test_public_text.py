@@ -16,7 +16,10 @@ import pytest
 ROOT = Path(__file__).parents[2]
 
 #: A new fixture folder with data copied from real work is checked by adding it here.
-FIXTURE_DIRS = (Path(__file__).parent / "fixtures" / "intervention_cards",)
+FIXTURE_DIRS = (
+    Path(__file__).parent / "fixtures" / "intervention_cards",
+    Path(__file__).parent / "fixtures" / "calendar_view",
+)
 
 #: Files written for one feature whose prose is checked for the weaker rules.
 FEATURE_FILES = (
@@ -24,6 +27,9 @@ FEATURE_FILES = (
     ROOT / "src" / "zeo_core" / "cli" / "intervention_card_types.py",
     ROOT / "docs" / "reference" / "intervention-cards.md",
     ROOT / "changelog.d" / "intervention-cards-s1.md",
+    ROOT / "src" / "zeo_core" / "contracts" / "ui" / "calendar_views.py",
+    ROOT / "docs" / "reference" / "calendar-view.md",
+    ROOT / "changelog.d" / "calendar-view.md",
     ROOT / "changelog.d" / "message-approval-cards.md",
 )
 

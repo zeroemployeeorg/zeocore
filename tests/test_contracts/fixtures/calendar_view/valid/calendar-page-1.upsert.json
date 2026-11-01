@@ -1,0 +1,8 @@
+{
+ "type": "widget.upsert",
+ "request_id": "req-calendar-page-1",
+ "widget_id": "fake-calendar-page-1",
+ "component": "calendar_view",
+ "data_ref": "data-calendar-page-1",
+ "revision": 5
+}

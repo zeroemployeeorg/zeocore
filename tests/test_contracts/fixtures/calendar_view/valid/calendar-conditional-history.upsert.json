@@ -1,0 +1,8 @@
+{
+ "type": "widget.upsert",
+ "request_id": "req-calendar-conditional-history",
+ "widget_id": "fake-calendar-conditional-history",
+ "component": "calendar_view",
+ "data_ref": "data-calendar-conditional-history",
+ "revision": 4
+}
