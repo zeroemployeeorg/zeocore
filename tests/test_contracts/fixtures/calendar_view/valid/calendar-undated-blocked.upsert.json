@@ -1,0 +1,8 @@
+{
+ "type": "widget.upsert",
+ "request_id": "req-calendar-undated-blocked",
+ "widget_id": "fake-calendar-undated-blocked",
+ "component": "calendar_view",
+ "data_ref": "data-calendar-undated-blocked",
+ "revision": 3
+}
