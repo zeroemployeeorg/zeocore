@@ -1,0 +1,200 @@
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: var(--zc-bg);
+  font-family: var(--zc-font);
+  color: var(--zc-text);
+}
+aside {
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: 238px;
+  padding: 34px 24px;
+  background: #e9eee8;
+  border-right: 1px solid #d7ded8;
+}
+.wordmark {
+  font-size: 29px;
+  letter-spacing: -2px;
+  font-weight: 800;
+}
+.wordmark span {
+  font-weight: 400;
+}
+aside > p {
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  color: #58665f;
+  margin: 12px 0 36px;
+}
+nav {
+  display: grid;
+  gap: 4px;
+}
+nav button {
+  display: flex;
+  justify-content: space-between;
+  text-align: left;
+  border: 0;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font: 13px system-ui;
+  text-transform: capitalize;
+  background: transparent;
+  color: #46554a;
+  cursor: pointer;
+}
+nav button[aria-current] {
+  background: #d4e1d4;
+  color: #155038;
+  font-weight: 650;
+}
+aside > small {
+  display: block;
+  font-size: 11px;
+  line-height: 1.7;
+  margin-top: 40px;
+  color: #58665f;
+}
+main {
+  margin-left: 238px;
+  padding: 28px 42px 80px;
+  max-width: 1800px;
+}
+.top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: #65736a;
+  border-bottom: 1px solid #d7ded8;
+  padding-bottom: 24px;
+}
+.tag {
+  color: #35483b;
+  background: #e0e7dd;
+  padding: 6px 10px;
+  border-radius: 5px;
+  font-size: 9px;
+}
+.intro {
+  padding: 42px 0 30px;
+  max-width: 690px;
+}
+.kicker {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: #17694b;
+  font-weight: 600;
+}
+h1 {
+  font-size: 52px;
+  letter-spacing: -2.5px;
+  line-height: 1.08;
+  font-weight: 500;
+  margin: 16px 0 20px;
+}
+h1 em {
+  font-family: Georgia, serif;
+  font-weight: 400;
+  color: #17694b;
+}
+.intro > p:last-child {
+  max-width: 510px;
+  color: #65736a;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  border-top: 1px solid #d7ded8;
+  padding: 20px 0;
+}
+.toolbar h2 {
+  font-size: 17px;
+  font-weight: 500;
+  text-transform: capitalize;
+  margin-right: auto;
+}
+.toolbar label,
+.toolbar > span {
+  font-size: 11px;
+  color: #58665f;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  align-items: start;
+}
+.fixture-label {
+  font:
+    10px/1.5 ui-monospace,
+    monospace;
+  color: #65736a;
+  margin-bottom: 8px;
+  overflow-wrap: anywhere;
+}
+.intent {
+  display: block;
+  background: #d4e1d4;
+  padding: 15px;
+  margin-bottom: 20px;
+  border-radius: 10px;
+}
+.intent button {
+  float: right;
+}
+:focus-visible {
+  outline: 3px solid #206cdb;
+  outline-offset: 3px;
+}
+@media (min-width: 1500px) {
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 850px) {
+  aside {
+    position: static;
+    width: auto;
+    padding: 20px;
+  }
+  aside > p,
+  aside > small {
+    display: none;
+  }
+  nav {
+    display: flex;
+    overflow: auto;
+    margin-top: 16px;
+  }
+  nav button {
+    white-space: nowrap;
+  }
+  main {
+    margin: 0;
+    padding: 24px;
+  }
+  .intro {
+    padding-top: 25px;
+  }
+  h1 {
+    font-size: 40px;
+  }
+  .grid {
+    grid-template-columns: 1fr;
+  }
+  .top {
+    font-size: 8px;
+  }
+  .toolbar {
+    gap: 12px;
+  }
+}

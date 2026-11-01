@@ -31,6 +31,9 @@ FEATURE_FILES = (
     ROOT / "docs" / "reference" / "calendar-view.md",
     ROOT / "changelog.d" / "calendar-view.md",
     ROOT / "changelog.d" / "message-approval-cards.md",
+    ROOT / "changelog.d" / "react-cards.md",
+    ROOT / "scripts" / "generate_react_contract.py",
+    ROOT / "packages" / "react" / "README.md",
 )
 
 #: Never in a fixture and never in feature prose.

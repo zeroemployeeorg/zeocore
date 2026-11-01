@@ -1,0 +1,231 @@
+:root {
+  --zc-bg: #f3f4f1;
+  --zc-surface: #fff;
+  --zc-text: #202824;
+  --zc-muted: #58665f;
+  --zc-border: #d7ded8;
+  --zc-accent: #17694b;
+  --zc-radius: 18px;
+  --zc-font: ui-sans-serif, system-ui, sans-serif;
+  --zc-focus: #206cdb;
+}
+.zc-card {
+  font: 15px/1.55 var(--zc-font);
+  color: var(--zc-text);
+  background: var(--zc-surface);
+  border: 1px solid var(--zc-border);
+  border-radius: var(--zc-radius);
+  padding: 24px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  box-shadow: 0 4px 20px #14251b05;
+  color-scheme: light;
+}
+.zc-card * {
+  box-sizing: border-box;
+}
+.zc-card header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.zc-eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 750;
+  color: var(--zc-accent);
+}
+.zc-muted,
+.zc-card small {
+  color: var(--zc-muted);
+  font-size: 13px;
+}
+.zc-card h3 {
+  font-size: 21px;
+  line-height: 1.25;
+  letter-spacing: -0.025em;
+  margin: 16px 0 12px;
+}
+.zc-card p {
+  margin: 10px 0;
+}
+.zc-card a {
+  display: block;
+  color: var(--zc-accent);
+  text-underline-offset: 3px;
+}
+.zc-body,
+.zc-card pre {
+  white-space: pre-wrap;
+}
+.zc-card pre {
+  background: var(--zc-bg);
+  padding: 12px;
+  border-radius: 8px;
+}
+.zc-card code {
+  font-size: 12px;
+  word-break: break-all;
+}
+.zc-card dl {
+  margin: 12px 0;
+}
+.zc-row {
+  display: grid;
+  grid-template-columns: minmax(70px, 1fr) minmax(0, 2fr);
+  gap: 12px;
+  margin: 6px 0;
+}
+.zc-row dt {
+  color: var(--zc-muted);
+  font-size: 13px;
+}
+.zc-row dd {
+  margin: 0;
+}
+.zc-card time {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.zc-card details {
+  border-top: 1px solid var(--zc-border);
+  padding: 12px 0;
+  font-size: 13px;
+}
+.zc-card summary {
+  cursor: pointer;
+  min-height: 28px;
+}
+.zc-card footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 12px;
+}
+.zc-card button {
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  min-height: 44px;
+  border: 1px solid var(--zc-border);
+  border-radius: 9px;
+  padding: 8px 14px;
+  background: var(--zc-surface);
+  color: var(--zc-accent);
+  cursor: pointer;
+}
+.zc-card button:disabled {
+  color: var(--zc-muted);
+  cursor: not-allowed;
+  background: var(--zc-bg);
+}
+.zc-card button[aria-pressed="true"] {
+  background: var(--zc-accent);
+  color: white;
+}
+.zc-card :focus-visible {
+  outline: 3px solid var(--zc-focus);
+  outline-offset: 3px;
+}
+.zc-card label {
+  display: block;
+  margin: 8px 0;
+}
+.zc-option {
+  display: flex !important;
+  gap: 10px;
+  align-items: center;
+  min-height: 44px;
+}
+.zc-card input[type="radio"] {
+  accent-color: var(--zc-accent);
+  width: 18px;
+  height: 18px;
+}
+.zc-card textarea,
+.zc-card input[type="number"] {
+  font: inherit;
+  color: inherit;
+  background: var(--zc-surface);
+  border: 1px solid var(--zc-border);
+  border-radius: 8px;
+  padding: 10px;
+  width: 100%;
+}
+.zc-card textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+.zc-card fieldset {
+  border: 1px solid var(--zc-border);
+  border-radius: 10px;
+  margin: 16px 0;
+  padding: 12px;
+}
+.zc-card legend {
+  font-size: 13px;
+  padding: 0 6px;
+}
+.zc-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.zc-card form > button {
+  margin-top: 12px;
+}
+.zc-card small {
+  display: block;
+}
+.zc-badge {
+  display: inline-block;
+  background: var(--zc-bg);
+  border-radius: 6px;
+  padding: 4px 9px;
+  font-size: 12px;
+}
+.zc-agenda {
+  list-style: none;
+  padding: 0;
+}
+.zc-agenda li {
+  border-left: 3px solid var(--zc-accent);
+  padding: 4px 0 4px 14px;
+  margin: 16px 0;
+}
+.zc-checklist {
+  list-style: none;
+  padding: 0;
+}
+.zc-unavailable {
+  border-style: dashed;
+}
+.zc-card ul {
+  padding-left: 20px;
+}
+.zc-card li {
+  margin: 8px 0;
+}
+@media (max-width: 480px) {
+  .zc-card {
+    padding: 18px;
+  }
+  .zc-card h3 {
+    font-size: 19px;
+  }
+  .zc-card footer button {
+    width: 100%;
+  }
+  .zc-card footer > span {
+    width: 100%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .zc-card * {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
