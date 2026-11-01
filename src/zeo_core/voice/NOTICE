@@ -32,6 +32,8 @@ D4 engine.py, base.py, routed_asr.py, routed_tts.py, profile.py: the default nam
 D5 engine.py, base.py: the required_env_vars check and env_present (environment lookups) are removed.
 D6 audio.py is unchanged in code; audioop is the standard library on Python 3.12 and audioop-lts on 3.13+.
 D7 contract.py: the scanner takes an explicit source root; the rasa import used to find one is removed.
+D8 routed_tts.py, routed_asr.py: a provider that fails after it connected (start_response, a write, a finish, a read, set_language)
+   is closed, bounded by 5 s, before the router stops tracking it; upstream dropped it from the cleanup ledger unclosed.
 N1-N3 routed_asr.py, routed_tts.py: three inline noqa comments (S110 twice, S311 once), each with a one-line
    reason, on lines whose code is unchanged (each is reviewable in the diff).
 Other: __init__.py has a new docstring; _provider_registry.py keeps only the factory contract (the vendor
@@ -49,8 +51,8 @@ patterns/voice-vendor-router/voicerouter/failures.py | c36ca23302e95af9d74ed64f5
 patterns/voice-vendor-router/voicerouter/health.py | 138e92142156dec69481176ed48bc98b323d7b6d | src/zeo_core/voice/health.py | d6685ef82c56ba0f6ceeef02addba6a63d1a116afe36f742e21cdd4b72340483 | modified
 patterns/voice-vendor-router/voicerouter/metrics.py | 53126f7dd598e9b80dd3a61a4260c6d5b34a6e7d | src/zeo_core/voice/metrics.py | 36953a33b1ec4930babbda9c2e1d7c9bedd65947305128a6bb1ec24558f2a904 | modified
 patterns/voice-vendor-router/voicerouter/profile.py | 26cb78c9aaef7e3b1e30fc02b263ce223b08d0f7 | src/zeo_core/voice/profile.py | e6e3f26fe3be736ea7343c3c0cc8a40b2eded5899e73b4fc5fac56b9203fcc8e | modified
-patterns/voice-vendor-router/voicerouter/routed_asr.py | c30711c1d4b7abab8695f9c8cabe96f4ed4dd36b | src/zeo_core/voice/routed_asr.py | 7af647bc54bea335319a5f1adc32700f3eab16c3eb3343776ee9a60985faed12 | modified
-patterns/voice-vendor-router/voicerouter/routed_tts.py | eb290562ff5f7eae49954f6f432fc87f71923def | src/zeo_core/voice/routed_tts.py | 0623e0717320f5f83bc882f39325843cf9a41b2c1e98d31625323109023e7bac | modified
+patterns/voice-vendor-router/voicerouter/routed_asr.py | c30711c1d4b7abab8695f9c8cabe96f4ed4dd36b | src/zeo_core/voice/routed_asr.py | 31491e5427f7ff484827704d7e412ae327b1d0abfd74f58e3dc70a634b8c013e | modified
+patterns/voice-vendor-router/voicerouter/routed_tts.py | eb290562ff5f7eae49954f6f432fc87f71923def | src/zeo_core/voice/routed_tts.py | 7f9f786c19dd9acc2c38ac01a0ce01104abb01c57d7086d5f7798ff2bd8b6f1b | modified
 patterns/voice-vendor-router/voicerouter/utterance.py | a2077959d6005d90ccb8c2110eb9324b2acab7f5 | src/zeo_core/voice/utterance.py | 49282847c4190caa7cdfd5c2a6a0ee444eb701b5fca966337a89cc6c41d2d1d9 | modified
 patterns/voice-vendor-router/voicerouter/_provider_registry.py | 69fc671d52d418117793f87c19a4b275c6f8fc66 | src/zeo_core/voice/_provider_registry.py | 9b2af23cd9dd1d43b2ebf3f982dad8273e16215ae2005bb1aab8eb1c55b6a65b | rewritten (neutral part only); vendor alias table not copied
 (none) | - | src/zeo_core/voice/_log.py | 9cdad1f41bbafa3fb27cd5dd4723475dd8f8542eaecc201bae470efe2b2287f6 | new, Core-written (D3 shim)

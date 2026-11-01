@@ -1,4 +1,4 @@
-"""One control per deviation D1 to D7 from the upstream voice router.
+"""One control per deviation D1 to D8 from the upstream voice router.
 
 Each class names the deviation it pins. These are Core-written tests, held to Core's
 own lint and type rules.
@@ -10,7 +10,7 @@ import logging
 import os
 import tempfile
 import unittest
-from collections.abc import Iterator, Mapping
+from collections.abc import AsyncIterator, Iterator, Mapping
 from pathlib import Path
 from typing import Any
 from unittest import mock
@@ -29,6 +29,7 @@ from zeo_core.voice.engine import (
 )
 from zeo_core.voice.profile import VoiceProfile
 from zeo_core.voice.routed_asr import RoutedASR
+from zeo_core.voice.routed_tts import RoutedTTS
 
 
 class _Tripwire(dict[str, str]):
@@ -196,3 +197,139 @@ class TestD7ExplicitScannerRoot(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class _FakeResponse:
+    """A streamed response that fails where it is told to."""
+
+    response_id = "fake-response"
+
+    def __init__(self, fail_on: str | None) -> None:
+        self._fail_on = fail_on
+
+    async def write(self, text: str) -> None:
+        if self._fail_on == "write":
+            raise RuntimeError("write failed")
+
+    async def finish(self) -> None:
+        if self._fail_on == "finish":
+            raise RuntimeError("finish failed")
+
+    async def __aiter__(self) -> AsyncIterator[bytes]:
+        if self._fail_on == "read":
+            raise RuntimeError("read failed")
+        yield b"audio"
+
+
+class _CountingEngine:
+    """A fake TTS engine that counts connects and closes."""
+
+    streaming_input = True
+
+    def __init__(
+        self,
+        *,
+        fail_start: bool = False,
+        fail_on: str | None = None,
+        fail_language: bool = False,
+        close_error: bool = False,
+    ) -> None:
+        self.fail_start = fail_start
+        self.fail_on = fail_on
+        self.fail_language = fail_language
+        self.close_error = close_error
+        self.connects = 0
+        self.closes = 0
+
+    async def connect(self, config: object = None) -> None:
+        self.connects += 1
+
+    async def close_connection(self) -> None:
+        self.closes += 1
+        if self.close_error:
+            raise RuntimeError("close failed")
+
+    async def start_response(self, streaming_config: object = None) -> _FakeResponse:
+        if self.fail_start:
+            raise RuntimeError("start failed")
+        return _FakeResponse(self.fail_on)
+
+    async def set_language(self, language: str) -> bool:
+        if self.fail_language:
+            raise RuntimeError("language failed")
+        return True
+
+
+def _two_provider_router(first: _CountingEngine, second: _CountingEngine) -> RoutedTTS:
+    pending = [first, second]
+
+    def build(
+        config: Mapping[str, Any],
+        audio_format: AudioFormat,
+        language: str,
+        additional: list[str] | None,
+    ) -> _CountingEngine:
+        return pending.pop(0)  # the providers are built in their configured order
+
+    return RoutedTTS.from_config_dict(
+        {
+            "providers": [
+                {"name": "fake-tts", "label": "a"},
+                {"name": "fake-tts", "label": "b"},
+            ],
+            "policy": {"health_scope": "call"},
+        },
+        L16_24KHZ,
+        "en",
+        factory=factory_from_map({"tts": {"fake-tts": build}}),
+    )
+
+
+class TestD8FailedConnectionsAreClosed(unittest.IsolatedAsyncioTestCase):
+    """D8 routed_tts.py, routed_asr.py: a provider that fails after it connected is
+    closed, bounded, before the router stops tracking it, so leaving the router's
+    context cannot leak its socket or reader task."""
+
+    async def test_a_start_response_failure_closes_that_provider(self) -> None:
+        first, second = _CountingEngine(fail_start=True), _CountingEngine()
+        router = _two_provider_router(first, second)
+        async with router:
+            response = await router.start_response()
+            self.assertEqual(response.response_id, "fake-response")
+            self.assertEqual((first.closes, second.closes), (1, 0))
+        self.assertEqual((first.closes, second.closes), (1, 1))
+        self.assertEqual((first.connects, second.connects), (1, 1))
+
+    async def test_a_close_error_does_not_mask_the_failover(self) -> None:
+        first = _CountingEngine(fail_start=True, close_error=True)
+        second = _CountingEngine()
+        router = _two_provider_router(first, second)
+        async with router:
+            await router.start_response()
+        self.assertEqual((first.closes, second.closes), (1, 1))
+
+    async def test_a_streamed_failure_closes_the_provider(self) -> None:
+        for where in ("write", "finish", "read"):
+            with self.subTest(where=where):
+                first, second = _CountingEngine(fail_on=where), _CountingEngine()
+                router = _two_provider_router(first, second)
+                async with router:
+                    response = await router.start_response()
+                    with self.assertRaises(RuntimeError):
+                        if where == "write":
+                            await response.write("text")
+                        elif where == "finish":
+                            await response.finish()
+                        else:
+                            async for _ in response:
+                                pass
+                    self.assertEqual(first.closes, 1)
+                self.assertEqual(first.closes, 1)
+
+    async def test_a_set_language_failure_closes_the_provider(self) -> None:
+        first, second = _CountingEngine(fail_language=True), _CountingEngine()
+        router = _two_provider_router(first, second)
+        async with router:
+            self.assertTrue(await router.set_language("en"))
+            self.assertEqual(first.closes, 1)
+        self.assertEqual(first.closes, 1)

@@ -53,6 +53,9 @@ from zeo_core.voice.utterance import UtterancePolicy
 #: says "come back in seven seconds" is telling you to route around it.
 MAX_SAME_PROVIDER_WAIT_S = 1.0
 
+#: Longest the router waits for a failed provider to close its connection (D8).
+CLOSE_TIMEOUT_S = 5.0
+
 logger = get_logger(__name__)
 
 
@@ -310,6 +313,28 @@ class RoutedTTS:
         await self._providers[index].engine.connect()
         self._connected.add(index)
 
+    async def _release(self, index: int) -> None:
+        """Close a connected provider that just failed, then stop tracking it (D8).
+
+        A provider that raised from `start_response`, a write, a finish, a read or
+        `set_language` has not necessarily closed its own socket and reader task, so
+        the router closes it, bounded, before it forgets it. A close error never
+        masks the failure that brought us here.
+        """
+        if index not in self._connected:
+            return
+        try:
+            await asyncio.wait_for(
+                self._providers[index].engine.close_connection(), CLOSE_TIMEOUT_S
+            )
+        except Exception as exc:  # noqa: BLE001
+            logger.debug(
+                "voicerouter.tts.close_failed",
+                provider=self._providers[index].spec.label,
+                error=str(exc),
+            )
+        self._connected.discard(index)
+
     # ---- lifecycle ----------------------------------------------------------
 
     async def connect(self, config: Optional[Any] = None) -> None:
@@ -491,7 +516,7 @@ class RoutedTTS:
             except Exception as exc:  # noqa: BLE001 - any vendor failure routes
                 verdict = self._health.get(label).record_failure(exc)
                 self._metrics.record_failure(label, verdict.kind.value)
-                self._connected.discard(index)
+                await self._release(index)
                 logger.warning(
                     "voicerouter.tts.start_response_failed",
                     provider=label,
@@ -523,7 +548,6 @@ class RoutedTTS:
         label = self._providers[index].spec.label
         verdict = self._health.get(label).record_failure(exc)
         self._metrics.record_failure(label, verdict.kind.value)
-        self._connected.discard(index)
         logger.error(
             "voicerouter.tts.streamed_response_failed",
             provider=label,
@@ -561,7 +585,7 @@ class RoutedTTS:
                 results.append(bool(await provider.engine.set_language(rasa_language)))
             except Exception as exc:  # noqa: BLE001
                 self._health.get(provider.spec.label).record_failure(exc)
-                self._connected.discard(index)
+                await self._release(index)
                 logger.warning(
                     "voicerouter.tts.set_language_failed",
                     provider=provider.spec.label,
@@ -593,23 +617,24 @@ class _ObservedResponse:
     def response_id(self) -> str:
         return self._response.response_id
 
-    def _fail(self, exc: BaseException) -> None:
+    async def _fail(self, exc: BaseException) -> None:
         if not self._failed:
             self._failed = True
             self._router._streamed_failure(self._index, exc, self._emitted)
+            await self._router._release(self._index)
 
     async def write(self, text: str) -> None:
         try:
             await self._response.write(text)
         except Exception as exc:  # noqa: BLE001
-            self._fail(exc)
+            await self._fail(exc)
             raise
 
     async def finish(self) -> None:
         try:
             await self._response.finish()
         except Exception as exc:  # noqa: BLE001
-            self._fail(exc)
+            await self._fail(exc)
             raise
 
     def interrupt(self) -> Any:
@@ -629,7 +654,7 @@ class _ObservedResponse:
                     self._router._streamed_audio(self._index)
                 yield chunk
         except Exception as exc:  # noqa: BLE001
-            self._fail(exc)
+            await self._fail(exc)
             raise
 
     def __getattr__(self, name: str) -> Any:

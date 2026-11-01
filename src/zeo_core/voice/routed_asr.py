@@ -25,6 +25,7 @@ pretending the turn was clean.
 
 from __future__ import annotations
 
+import asyncio
 from typing import Any, AsyncIterator, List, Optional
 
 from zeo_core.voice._log import get_logger
@@ -354,6 +355,15 @@ class RoutedASR:
                 results.append(await provider.engine.set_language(rasa_language))
             except Exception as exc:  # noqa: BLE001
                 self._health.get(provider.spec.label).record_failure(exc)
+                if index in self._connected:
+                    try:
+                        await asyncio.wait_for(provider.engine.close_connection(), 5.0)
+                    except Exception as close_exc:  # noqa: BLE001
+                        logger.debug(
+                            "voicerouter.asr.close_failed",
+                            provider=provider.spec.label,
+                            error=str(close_exc),
+                        )
                 self._connected.discard(index)
                 logger.warning(
                     "voicerouter.asr.set_language_failed",
