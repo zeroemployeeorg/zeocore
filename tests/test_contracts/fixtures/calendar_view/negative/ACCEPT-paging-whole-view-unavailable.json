@@ -1,0 +1,46 @@
+{
+ "expect": "accepted",
+ "why": "an unavailable whole view has no days, no undated and zero counts",
+ "payload": {
+  "scope": "today",
+  "zone": "Europe/London",
+  "start_date": "2026-10-30",
+  "time_precision": "minute",
+  "report": {
+   "schema_name": "zeo-calendar-view/2",
+   "generated_at": "2026-10-30T03:51:00Z",
+   "source_schema": "zeo-commitments/2",
+   "source_observed_at": "2026-10-30T03:46:00Z",
+   "source_sha256_prefix": "2a827f94bb15",
+   "source_items": 0,
+   "snapshot_digest": "sha256:ecab2cceecab2cceecab2cceecab2cceecab2cceecab2cceecab2cceecab2cce"
+  },
+  "source_coverage": {
+   "owners_covered": [
+    "fake-owner"
+   ],
+   "registered_seats_without_commitments": [
+    "fake-seat-x"
+   ],
+   "source_not_covered": "seats' own dated promises not passed to the reviewer"
+  },
+  "days": [],
+  "undated": [],
+  "sources": [
+   {
+    "source": "fake-feed",
+    "state": "unavailable",
+    "reason": "fake: the feed did not answer"
+   }
+  ],
+  "coverage": "unavailable",
+  "paging": {
+   "page_size": 64,
+   "offset": 0,
+   "total_source_rows": 0,
+   "eligible_rows": 0,
+   "returned_rows": 0,
+   "undated_rows": 0
+  }
+ }
+}

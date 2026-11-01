@@ -1,0 +1,117 @@
+{
+ "id": "data-calendar-page-2",
+ "source": "fake-app",
+ "fetched_at": "2026-10-30T03:52:30Z",
+ "as_of": "2026-10-30T03:52:00Z",
+ "replay": false,
+ "payload": {
+  "scope": "today",
+  "zone": "Europe/London",
+  "start_date": "2026-10-30",
+  "time_precision": "minute",
+  "report": {
+   "schema_name": "zeo-calendar-view/2",
+   "generated_at": "2026-10-30T03:51:00Z",
+   "source_schema": "zeo-commitments/2",
+   "source_observed_at": "2026-10-30T03:46:00Z",
+   "source_sha256_prefix": "2a827f94bb15",
+   "source_items": 9,
+   "snapshot_digest": "sha256:ecab2cceecab2cceecab2cceecab2cceecab2cceecab2cceecab2cceecab2cce"
+  },
+  "counts": {
+   "rows": 55,
+   "live": 52,
+   "finished": 17,
+   "open": 35,
+   "dropped": 2,
+   "conditional_not_activated": 1
+  },
+  "source_coverage": {
+   "owners_covered": [
+    "fake-owner"
+   ],
+   "registered_seats_without_commitments": [
+    "fake-seat-x"
+   ],
+   "source_not_covered": "seats' own dated promises not passed to the reviewer"
+  },
+  "days": [
+   {
+    "date": "2026-10-30",
+    "items": [
+     {
+      "row_key": "ecab2cceecab2cce:8",
+      "item_ref": "fake-item-p2-0",
+      "canonical_identity": "unresolved",
+      "what": "Fake commitment",
+      "accountable_owner": "fake-owner",
+      "status": "open",
+      "original_due_utc": "2026-10-30T19:00:00Z",
+      "forecast_due_utc": "2026-10-30T05:00:00Z",
+      "seconds_vs_original": -54535.2,
+      "seconds_vs_forecast": -4135.2,
+      "past_original_deadline": false,
+      "owner_reports_late": false,
+      "lateness": {
+       "state": "not_late",
+       "policy": "open item past its original deadline or its current forecast, or reported late by its owner; a moved forecast does not clear a missed original deadline"
+      },
+      "revisions": [
+       {
+        "at_utc": "2026-10-29T23:55:00Z",
+        "by": "fake-reviewer",
+        "from_due_utc": "2026-10-30T19:00:00Z",
+        "to_due_utc": "2026-10-30T06:00:00Z",
+        "kind": "earlier",
+        "reason": "Fake reason"
+       }
+      ],
+      "revisions_complete": true,
+      "counted": true
+     },
+     {
+      "row_key": "ecab2cceecab2cce:9",
+      "item_ref": "fake-item-p2-1",
+      "canonical_identity": "unresolved",
+      "what": "Fake commitment",
+      "accountable_owner": "fake-owner",
+      "status": "done",
+      "original_due_utc": "2026-10-31T12:00:00Z",
+      "forecast_due_utc": "2026-10-31T12:00:00Z",
+      "done_at_utc": "2026-10-30T01:40:00Z",
+      "seconds_vs_original": -123600.0,
+      "seconds_vs_forecast": -123600.0,
+      "past_original_deadline": false,
+      "owner_reports_late": false,
+      "lateness": {
+       "state": "not_late",
+       "policy": "open item past its original deadline or its current forecast, or reported late by its owner; a moved forecast does not clear a missed original deadline"
+      },
+      "revisions": [],
+      "revisions_complete": true,
+      "counted": true
+     }
+    ]
+   }
+  ],
+  "undated": [],
+  "sources": [
+   {
+    "source": "commitments",
+    "state": "ok",
+    "observed_at": "2026-10-30T03:46:00Z",
+    "collected_at": "2026-10-30T03:51:00Z"
+   }
+  ],
+  "coverage": "ok",
+  "paging": {
+   "page_size": 64,
+   "offset": 7,
+   "total_source_rows": 9,
+   "eligible_rows": 9,
+   "returned_rows": 2,
+   "undated_rows": 1,
+   "cursor": "cur-page-2"
+  }
+ }
+}

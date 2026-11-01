@@ -30,6 +30,7 @@ from pydantic import (
     model_validator,
 )
 
+from zeo_core.contracts.ui.calendar_views import CalendarView
 from zeo_core.contracts.ui.intervention_cards import InterventionCardPayload
 
 #: The four components of the locked v1 widget specification: byte-compatible, never
@@ -40,15 +41,17 @@ LOCKED_COMPONENTS: Final = (
     "arrival_timeline",
     "market_watchlist",
 )
-#: Core's own profile: the locked four plus the operator-situation card. The locked
-#: schema refuses ``intervention_card``; Core's published v1 schema allows it.
-COMPONENTS: Final = (*LOCKED_COMPONENTS, "intervention_card")
+#: Core's own profile: the locked four plus the operator-situation card and the
+#: commitment calendar. The locked schema refuses both; Core's published v1 schema
+#: allows them.
+COMPONENTS: Final = (*LOCKED_COMPONENTS, "intervention_card", "calendar_view")
 Component = Literal[
     "flight_status",
     "weather_hourly",
     "arrival_timeline",
     "market_watchlist",
     "intervention_card",
+    "calendar_view",
 ]
 
 _DATE_TIME: Final = re.compile(
@@ -249,6 +252,7 @@ REGISTRY: Final = _Registry(
         "arrival_timeline": ArrivalTimelinePayload,
         "market_watchlist": MarketWatchlistPayload,
         "intervention_card": InterventionCardPayload,
+        "calendar_view": CalendarView,
     }
 )
 

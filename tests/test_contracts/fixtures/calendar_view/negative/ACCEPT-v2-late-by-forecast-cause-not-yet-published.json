@@ -1,0 +1,91 @@
+{
+ "expect": "accepted",
+ "why": "past_forecast not published yet: a late verdict may rest on the forecast clause; the signed forecast difference is the only trace",
+ "payload": {
+  "scope": "today",
+  "zone": "Europe/London",
+  "start_date": "2026-10-30",
+  "time_precision": "minute",
+  "report": {
+   "schema_name": "zeo-calendar-view/2",
+   "generated_at": "2026-10-30T03:51:00Z",
+   "source_schema": "zeo-commitments/2",
+   "source_observed_at": "2026-10-30T03:46:00Z",
+   "source_sha256_prefix": "2a827f94bb15",
+   "source_items": 37,
+   "snapshot_digest": "sha256:ecab2cceecab2cceecab2cceecab2cceecab2cceecab2cceecab2cceecab2cce"
+  },
+  "counts": {
+   "rows": 7,
+   "live": 6,
+   "finished": 1,
+   "open": 5,
+   "dropped": 1,
+   "conditional_not_activated": 0
+  },
+  "source_coverage": {
+   "owners_covered": [
+    "fake-owner"
+   ],
+   "registered_seats_without_commitments": [
+    "fake-seat-x"
+   ],
+   "source_not_covered": "seats' own dated promises not passed to the reviewer"
+  },
+  "days": [
+   {
+    "date": "2026-10-30",
+    "items": [
+     {
+      "row_key": "ecab2cceecab2cce:1",
+      "item_ref": "fake-item-1",
+      "canonical_identity": "unresolved",
+      "what": "Fake commitment",
+      "accountable_owner": "fake-owner",
+      "status": "open",
+      "original_due_utc": "2026-10-30T19:00:00Z",
+      "forecast_due_utc": "2026-10-30T05:00:00Z",
+      "seconds_vs_original": -54535.2,
+      "seconds_vs_forecast": 1800.0,
+      "past_original_deadline": false,
+      "owner_reports_late": false,
+      "lateness": {
+       "state": "late",
+       "policy": "open item past its original deadline or its current forecast, or reported late by its owner; a moved forecast does not clear a missed original deadline"
+      },
+      "revisions": [
+       {
+        "at_utc": "2026-10-29T23:55:00Z",
+        "by": "fake-reviewer",
+        "from_due_utc": "2026-10-30T19:00:00Z",
+        "to_due_utc": "2026-10-30T06:00:00Z",
+        "kind": "earlier",
+        "reason": "Fake reason"
+       }
+      ],
+      "revisions_complete": true,
+      "counted": true
+     }
+    ]
+   }
+  ],
+  "undated": [],
+  "sources": [
+   {
+    "source": "commitments",
+    "state": "ok",
+    "observed_at": "2026-10-30T03:46:00Z",
+    "collected_at": "2026-10-30T03:51:00Z"
+   }
+  ],
+  "coverage": "ok",
+  "paging": {
+   "page_size": 64,
+   "offset": 0,
+   "total_source_rows": 37,
+   "eligible_rows": 1,
+   "returned_rows": 1,
+   "undated_rows": 0
+  }
+ }
+}
