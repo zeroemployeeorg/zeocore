@@ -51,6 +51,7 @@ SCHEMAS: Final[dict[str, str]] = {
     "ui.intervention-card": (
         "zeo_core.contracts.ui.intervention_cards:InterventionCardPayload"
     ),
+    "ui.calendar-view": "zeo_core.contracts.ui.calendar_views:CalendarView",
     "proof.report": "zeo_core.contracts.proof.report:ProofReport",
     "revolut.account": "zeo_core.integrations.revolut.models:Account",
     # TransactionQuery waits for its wire alias ("from", contract §6): its
@@ -105,7 +106,7 @@ class _AbsentOnly(GenerateJsonSchema):
 
 
 #: Schemas whose models refuse ``null`` for every optional key (published absent-only).
-ABSENT_ONLY: Final = frozenset({"ui.intervention-card"})
+ABSENT_ONLY: Final = frozenset({"ui.intervention-card", "ui.calendar-view"})
 
 
 def render_schema(name: str) -> dict[str, Any]:
