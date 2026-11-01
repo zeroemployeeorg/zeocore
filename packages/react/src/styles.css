@@ -208,6 +208,51 @@
 .zc-card li {
   margin: 8px 0;
 }
+.zc-cal header {
+  display: block;
+}
+.zc-cal h2 {
+  font-size: 24px;
+  line-height: 1.25;
+  letter-spacing: -0.025em;
+  margin: 8px 0;
+}
+.zc-cal-day h3 {
+  font-size: 18px;
+  margin: 20px 0 8px;
+}
+.zc-card .zc-cal-items {
+  list-style: none;
+  padding: 0;
+}
+.zc-cal-item {
+  border: 1px solid var(--zc-border);
+  border-radius: 12px;
+  padding: 16px;
+  margin: 12px 0;
+}
+.zc-cal-item h4 {
+  margin: 0 0 8px;
+  font-size: 16px;
+  line-height: 1.35;
+}
+.zc-cal-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0;
+}
+.zc-cal-badge {
+  background: var(--zc-bg);
+  border-radius: 6px;
+  padding: 4px 9px;
+  font-size: 12px;
+}
+.zc-cal-counts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0 16px;
+}
 @media (max-width: 480px) {
   .zc-card {
     padding: 18px;

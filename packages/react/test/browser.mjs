@@ -43,7 +43,7 @@ try {
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("http://127.0.0.1:5189");
   await page.waitForSelector(".zc-card");
-  assert.equal(await page.locator(".zc-card").count(), 25);
+  assert.equal(await page.locator(".zc-card").count(), 27);
   await page.addScriptTag({ path: root + "/node_modules/axe-core/axe.min.js" });
   const report = await page.evaluate(async () =>
     window.axe.run(document, {
@@ -84,6 +84,30 @@ try {
       situation,
     );
   }
+  await page
+    .getByRole("button", { name: "calendar view", exact: true })
+    .click();
+  assert.equal(await page.locator(".zc-cal:not(.zc-unavailable)").count(), 6);
+  assert.equal(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth > innerWidth,
+    ),
+    false,
+    "calendar view",
+  );
+  const calendarReport = await page.evaluate(async () =>
+    window.axe.run(document, {
+      runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21aa"] },
+    }),
+  );
+  assert.deepEqual(
+    calendarReport.violations.map((v) => ({
+      id: v.id,
+      impact: v.impact,
+      targets: v.nodes.map((n) => n.target),
+    })),
+    [],
+  );
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.keyboard.press("Tab");
   assert.notEqual(
@@ -106,7 +130,7 @@ try {
   });
   await locked.goto("http://127.0.0.1:5189");
   await locked.waitForSelector(".zc-card");
-  assert.equal(await locked.locator(".zc-card").count(), 25);
+  assert.equal(await locked.locator(".zc-card").count(), 27);
   await locked.close();
   if (process.env.ZEO_UI_SCREENSHOTS) {
     await mkdir(process.env.ZEO_UI_SCREENSHOTS, { recursive: true });
@@ -126,7 +150,7 @@ try {
     });
   }
   console.log(
-    "Browser passed: 25 fixtures, WCAG A/AA scan, reply intent, display-only approvals, phone overflow, keyboard focus, reduced motion, no page errors.",
+    "Browser passed: 27 fixtures, 6 calendar views, WCAG A/AA scan, reply intent, display-only approvals, phone overflow, keyboard focus, reduced motion, no page errors.",
   );
 } finally {
   await browser?.close();
