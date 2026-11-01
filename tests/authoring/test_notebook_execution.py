@@ -145,8 +145,14 @@ print(dict(os.environ))
     [
         ("print('done')", {}),
         ("raise RuntimeError('fail')", {}),
-        ("import time; time.sleep(10)", {"cell_timeout_seconds": 1}),
-        ("import time; time.sleep(10)", {"timeout_seconds": 2}),
+        # A timeout must fire while the cell still sleeps, after the kernel has started
+        # and written its pid files. Seconds of margin, not one or two, so a busy
+        # machine does not turn a slow kernel start into a missing file.
+        ("import time; time.sleep(60)", {"cell_timeout_seconds": 5}),
+        (
+            "import time; time.sleep(60)",
+            {"timeout_seconds": 12, "cell_timeout_seconds": 30},
+        ),
         ("os._exit(23)", {}),
     ],
 )
