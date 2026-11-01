@@ -10,7 +10,8 @@
         "weather_hourly",
         "arrival_timeline",
         "market_watchlist",
-        "intervention_card"
+        "intervention_card",
+        "calendar_view"
       ],
       "title": "Component",
       "type": "string"

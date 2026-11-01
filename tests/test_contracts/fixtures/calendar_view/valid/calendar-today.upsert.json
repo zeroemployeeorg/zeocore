@@ -1,0 +1,8 @@
+{
+ "type": "widget.upsert",
+ "request_id": "req-calendar-today",
+ "widget_id": "fake-calendar-today",
+ "component": "calendar_view",
+ "data_ref": "data-calendar-today",
+ "revision": 1
+}

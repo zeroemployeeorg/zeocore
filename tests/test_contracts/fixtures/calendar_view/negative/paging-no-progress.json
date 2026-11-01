@@ -1,0 +1,61 @@
+{
+ "expect": "refused",
+ "why": "a page that says more rows exist returns at least one",
+ "payload": {
+  "scope": "today",
+  "zone": "Europe/London",
+  "start_date": "2026-10-30",
+  "time_precision": "minute",
+  "report": {
+   "schema_name": "zeo-calendar-view/2",
+   "generated_at": "2026-10-30T03:51:00Z",
+   "source_schema": "zeo-commitments/2",
+   "source_observed_at": "2026-10-30T03:46:00Z",
+   "source_sha256_prefix": "2a827f94bb15",
+   "source_items": 5,
+   "snapshot_digest": "sha256:ecab2cceecab2cceecab2cceecab2cceecab2cceecab2cceecab2cceecab2cce"
+  },
+  "counts": {
+   "rows": 55,
+   "live": 52,
+   "finished": 17,
+   "open": 35,
+   "dropped": 2,
+   "conditional_not_activated": 1
+  },
+  "source_coverage": {
+   "owners_covered": [
+    "fake-owner"
+   ],
+   "registered_seats_without_commitments": [
+    "fake-seat-x"
+   ],
+   "source_not_covered": "seats' own dated promises not passed to the reviewer"
+  },
+  "days": [
+   {
+    "date": "2026-10-30",
+    "items": []
+   }
+  ],
+  "undated": [],
+  "sources": [
+   {
+    "source": "commitments",
+    "state": "ok",
+    "observed_at": "2026-10-30T03:46:00Z",
+    "collected_at": "2026-10-30T03:51:00Z"
+   }
+  ],
+  "coverage": "ok",
+  "paging": {
+   "page_size": 64,
+   "offset": 0,
+   "total_source_rows": 5,
+   "eligible_rows": 5,
+   "returned_rows": 0,
+   "undated_rows": 0,
+   "next_cursor": "cur-next"
+  }
+ }
+}

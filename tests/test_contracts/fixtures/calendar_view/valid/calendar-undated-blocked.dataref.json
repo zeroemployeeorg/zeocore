@@ -1,0 +1,81 @@
+{
+ "id": "data-calendar-undated-blocked",
+ "source": "fake-app",
+ "fetched_at": "2026-10-30T03:52:30Z",
+ "as_of": "2026-10-30T03:52:00Z",
+ "replay": false,
+ "payload": {
+  "scope": "today",
+  "zone": "Europe/London",
+  "start_date": "2026-10-30",
+  "time_precision": "minute",
+  "report": {
+   "schema_name": "zeo-calendar-view/2",
+   "generated_at": "2026-10-30T03:51:00Z",
+   "source_schema": "zeo-commitments/2",
+   "source_observed_at": "2026-10-30T03:46:00Z",
+   "source_sha256_prefix": "2a827f94bb15",
+   "source_items": 37,
+   "snapshot_digest": "sha256:ecab2cceecab2cceecab2cceecab2cceecab2cceecab2cceecab2cceecab2cce"
+  },
+  "counts": {
+   "rows": 7,
+   "live": 6,
+   "finished": 1,
+   "open": 5,
+   "dropped": 1,
+   "conditional_not_activated": 0
+  },
+  "source_coverage": {
+   "owners_covered": [
+    "fake-owner"
+   ],
+   "registered_seats_without_commitments": [
+    "fake-seat-x"
+   ],
+   "source_not_covered": "seats' own dated promises not passed to the reviewer"
+  },
+  "days": [
+   {
+    "date": "2026-10-30"
+   }
+  ],
+  "undated": [
+   {
+    "row_key": "ecab2cceecab2cce:6",
+    "item_ref": "fake-item-6",
+    "canonical_identity": "unresolved",
+    "what": "Fake commitment",
+    "accountable_owner": "fake-owner",
+    "status": "blocked",
+    "past_original_deadline": false,
+    "owner_reports_late": false,
+    "lateness": {
+     "state": "not_late",
+     "policy": "open item past its original deadline or its current forecast, or reported late by its owner; a moved forecast does not clear a missed original deadline"
+    },
+    "revisions": [],
+    "revisions_complete": true,
+    "counted": true,
+    "dependency": "Fake: waiting for the panel verdict"
+   }
+  ],
+  "sources": [
+   {
+    "source": "commitments",
+    "state": "ok",
+    "observed_at": "2026-10-30T03:46:00Z",
+    "collected_at": "2026-10-30T03:51:00Z"
+   }
+  ],
+  "coverage": "ok",
+  "paging": {
+   "page_size": 64,
+   "offset": 0,
+   "total_source_rows": 37,
+   "eligible_rows": 1,
+   "returned_rows": 1,
+   "undated_rows": 1
+  }
+ }
+}
