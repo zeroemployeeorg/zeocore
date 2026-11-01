@@ -2373,6 +2373,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#the-react-renderer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The React renderer
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -2417,6 +2428,9 @@
 <p>A snapshot can hold more rows than a page. A page is a stable, source-ordered cut of one immutable snapshot, and <code>paging</code> says exactly where it sits: <code>report.snapshot_digest</code> names the snapshot (the same on every page), <code>total_source_rows</code> the whole snapshot, <code>eligible_rows</code> the rows in the selected window plus the undated rows, <code>offset</code> where this page starts, <code>returned_rows</code> how many it holds, <code>undated_rows</code> the undated rows in the whole snapshot, <code>cursor</code> this page (absent on the first) and <code>next_cursor</code> the next (absent on the last). The model checks the arithmetic: a page with rows after it returns at least one row (it must make progress), the undated rows shown are within <code>undated_rows</code>, and <code>returned_rows</code> is the number of items on the page. A changed snapshot is a new first page; a cursor of another snapshot is the owner's to refuse. The owner supplies every count; a viewer derives none.</p>
 <h2 id="text-and-the-schema">Text and the schema<a class="headerlink" href="#text-and-the-schema" title="Permanent link">&para;</a></h2>
 <p>Every string is plain text and refuses control and format characters and <code>&lt;</code> and <code>&gt;</code>; a viewer shows each one as text, never as markup. The published schema, <code>contracts/zeocore-v1/ui.calendar-view.schema.json</code>, describes shape only and has no <code>null</code> branch; the model rules above (lateness against its causes, counts, page arithmetic, consecutive dates, identity) are not in it, so validate with the models or a validator that implements the same rules. <code>contracts/zeocore-v1/ui.calendar-view.d.ts</code> holds the TypeScript types generated from the schema.</p>
+<h2 id="the-react-renderer">The React renderer<a class="headerlink" href="#the-react-renderer" title="Permanent link">&para;</a></h2>
+<p><code>packages/react</code> also renders this component: <code>CommitmentCalendar</code> takes a payload, validates it and shows it read only; <code>parseCalendar</code> and <code>validateCalendar</code> are the byte and object ingress, the same strict checks as for cards (duplicate keys, byte order marks, invalid UTF-8, trailing data, floats where the contract has an integer, lone surrogates and integers beyond the safe range are refused). The schema and the rules above are generated into the package by <code>scripts/generate_react_contract.py</code>, with a drift test, and the model rules that the schema cannot express (lateness against its causes, counts, page arithmetic, consecutive dates, item identity, revision order by instant) are implemented in the validator and tested against every fixture, valid and negative.</p>
+<p>The renderer computes nothing. It shows the original due time, the current forecast and the finish time as three separate facts, each exactly as published; a missing time reads "Not published" and a done item without a finish time says so; signed differences are shown as published seconds; the owner's lateness verdict is shown with its policy text; the date changes are listed with a note when the history is incomplete; the source id is labelled as the owner's id and the canonical work identity as unresolved unless a work reference is present; and the page line says which rows of how many are shown and whether a next page exists. A payload that does not validate renders as unavailable, never as partial content.</p>
 
 
 
