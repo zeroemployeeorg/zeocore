@@ -1,0 +1,13 @@
+{
+  "expect": "refused",
+  "why": "new message bad time",
+  "payload": {
+    "situation": "message",
+    "message_id": "am-fake-0001",
+    "source_digest": "sha256:cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34",
+    "sent_at": "2026-02-30T12:00:00Z",
+    "from": "fake-seat",
+    "subject": "A fake subject",
+    "body": "Fake body, line one.\nFake body, line two."
+  }
+}

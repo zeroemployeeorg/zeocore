@@ -71,3 +71,14 @@ Both files are regenerated from the model; a test fails when they drift.
 ### The schema is shape only
 
 `ui.intervention-card.schema.json` describes the shape of a card: keys, types, enums, patterns and sizes in characters. It cannot express the model's other rules, so a consumer that validates with the schema alone accepts a card the models refuse. Those rules are: control and format characters in text, the byte length of long text, `wi_` and `todo_` ids in a message, `decided_at` against `status`, `answers_digest` against the message's `source_digest`, a message that replies to itself, and the cross-field rules of the older situations. Validate with the models, or with a validator that implements the same rules.
+- **An approval is display only.** `approval_id` is `apr_` and a lowercase uuid. `request_digest` is the digest of exactly what is approved, so the owner can refuse a stale or changed request. `decided_at` is present exactly when the status is not `pending`. The card carries no identity of the person and no audit.
+
+## The React package
+
+`packages/react` is a data-only React library that renders every situation above. It is built and tested by `make verify-ui` (a locked `npm ci` and `npm test`), which `make verify-full` runs after the Python gate. It is not published to a registry.
+
+- **Strict ingress.** `parseCard` takes the bytes of a card and refuses a duplicate key, a byte order mark, invalid UTF-8, trailing data, a number written as a float where the contract has an integer, input over 1 MiB and nesting deeper than 32. `validateCard` takes an already parsed object. Both check the published schema and then the rules the schema cannot express (the cross-field rules and the text and date rules of the models), and return a frozen copy. Use `parseCard` at ingress: a parsed value has already lost duplicate keys and number tokens.
+- **No schema compiler in the browser.** The schema is compiled to static JavaScript when the package is built, so a page needs neither a runtime schema compiler nor `unsafe-eval`.
+- **Generated, not copied.** The TypeScript types and the browser rules are generated from the Python models by `scripts/generate_react_contract.py`; a test fails if they drift.
+- **Local intents only.** A reply or a result is handed to the host as an intent. The service that owns the work checks identity, expiry, digest, policy and idempotency before any effect; an enabled control grants no authority. An approval renders no control at all.
+- **A card that does not validate** renders as unavailable, never as partial content.

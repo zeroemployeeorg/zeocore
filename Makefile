@@ -308,6 +308,7 @@ verify-full: ## verify, preceded by clean caches + fresh editable install (slow,
 	@$(MAKE) --no-print-directory sync
 	@$(MAKE) --no-print-directory verify
 	@echo ""
+	@$(MAKE) --no-print-directory verify-ui
 	@echo "${GREEN}✓ verify-full complete: system is healthy on a clean install${RESET}"
 
 # --- Individual gate steps ---------------------------------
@@ -469,3 +470,8 @@ structure-tree: ## Directory tree (filtered)
 
 # Tier-1 grep-ban gate targets
 include hygiene-grepbans.mk
+
+.PHONY: verify-ui
+verify-ui: ## Locked React build, shared-corpus parity and renderer checks
+	npm ci --prefix packages/react --ignore-scripts
+	npm test --prefix packages/react
