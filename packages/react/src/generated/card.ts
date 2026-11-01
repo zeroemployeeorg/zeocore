@@ -299,6 +299,7 @@ export interface SourceItem {
   state: string;
   next_action?: string;
   copy_line?: string;
+  commands?: string[];
   owner?: string;
   deadline?: string;
   source_url?: string;
