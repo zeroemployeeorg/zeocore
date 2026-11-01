@@ -125,7 +125,7 @@ def test_the_digests_are_recorded_before_the_upload() -> None:
 
 
 def _run_digest_step(
-    tmp_path: Path, tools: tuple[str, ...], *, files: bool = True
+    tmp_path: Path, tools: tuple[str, ...], *, files: bool = True, sdist: bool = True
 ) -> subprocess.CompletedProcess[bytes]:
     """Run the workflow's digest step with only `tools` (plus sort) on PATH."""
     bin_dir = tmp_path / "bin"
@@ -139,7 +139,8 @@ def _run_digest_step(
     dist.mkdir(exist_ok=True)
     if files:
         (dist / "demo-1.2.4-py3-none-any.whl").write_bytes(b"wheel")
-        (dist / "demo-1.2.4.tar.gz").write_bytes(b"sdist")
+        if sdist:
+            (dist / "demo-1.2.4.tar.gz").write_bytes(b"sdist")
     bash = shutil.which("bash")
     assert bash is not None
     return subprocess.run(  # noqa: S603 - the workflow's own step
@@ -184,6 +185,20 @@ def test_the_digest_step_fails_when_there_is_nothing_to_record(
     tool = "sha256sum" if shutil.which("sha256sum") else "shasum"
     done = _run_digest_step(tmp_path, (tool,), files=False)
     assert done.returncode != 0
+
+
+def test_the_digest_step_fails_on_a_partial_build(tmp_path: Path) -> None:
+    """A wheel with no sdist leaves a non-empty manifest; only `pipefail` fails it."""
+    tool = "sha256sum" if shutil.which("sha256sum") else "shasum"
+    done = _run_digest_step(tmp_path, (tool,), sdist=False)
+    assert done.returncode != 0, done.stderr
+    # The wheel's line was written: `test -s` alone would have passed this.
+    assert (
+        (tmp_path / "built.sha256")
+        .read_text()
+        .strip()
+        .endswith("demo-1.2.4-py3-none-any.whl")
+    )
 
 
 @pytest.mark.parametrize("tampered,status", [(False, 0), (True, 1)])
