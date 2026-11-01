@@ -2390,6 +2390,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#the-react-package" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The React package
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -2515,7 +2526,17 @@ that read the Core profile.</p>
 <li><strong>An approval is display only.</strong> <code>approval_id</code> is <code>apr_</code> and a canonical lowercase uuid (groups of 8, 4, 4, 4 and 12 hex digits). <code>request_digest</code> is the digest of exactly what is approved, so the owner can refuse a stale or changed request. <code>decided_at</code> is present exactly when the status is not <code>pending</code>. The card carries no identity of the person and no audit.</li>
 </ul>
 <h3 id="the-schema-is-shape-only">The schema is shape only<a class="headerlink" href="#the-schema-is-shape-only" title="Permanent link">&para;</a></h3>
-<p><code>ui.intervention-card.schema.json</code> describes the shape of a card: keys, types, enums, patterns and sizes in characters. It cannot express the model's other rules, so a consumer that validates with the schema alone accepts a card the models refuse. Those rules are: control and format characters in text, the byte length of long text, <code>wi_</code> and <code>todo_</code> ids in a message, <code>decided_at</code> against <code>status</code>, <code>answers_digest</code> against the message's <code>source_digest</code>, a message that replies to itself, and the cross-field rules of the older situations. Validate with the models, or with a validator that implements the same rules.</p>
+<p><code>ui.intervention-card.schema.json</code> describes the shape of a card: keys, types, enums, patterns and sizes in characters. It cannot express the model's other rules, so a consumer that validates with the schema alone accepts a card the models refuse. Those rules are: control and format characters in text, the byte length of long text, <code>wi_</code> and <code>todo_</code> ids in a message, <code>decided_at</code> against <code>status</code>, <code>answers_digest</code> against the message's <code>source_digest</code>, a message that replies to itself, and the cross-field rules of the older situations. Validate with the models, or with a validator that implements the same rules.
+- <strong>An approval is display only.</strong> <code>approval_id</code> is <code>apr_</code> and a lowercase uuid. <code>request_digest</code> is the digest of exactly what is approved, so the owner can refuse a stale or changed request. <code>decided_at</code> is present exactly when the status is not <code>pending</code>. The card carries no identity of the person and no audit.</p>
+<h2 id="the-react-package">The React package<a class="headerlink" href="#the-react-package" title="Permanent link">&para;</a></h2>
+<p><code>packages/react</code> is a data-only React library that renders every situation above. It is built and tested by <code>make verify-ui</code> (a locked <code>npm ci</code> and <code>npm test</code>), which <code>make verify-full</code> runs after the Python gate. It is not published to a registry.</p>
+<ul>
+<li><strong>Strict ingress.</strong> <code>parseCard</code> takes the bytes of a card and refuses a duplicate key, a byte order mark, invalid UTF-8, trailing data, a number written as a float where the contract has an integer, input over 1 MiB and nesting deeper than 32. <code>validateCard</code> takes an already parsed object. Both check the published schema and then the rules the schema cannot express (the cross-field rules and the text and date rules of the models), and return a frozen copy. Use <code>parseCard</code> at ingress: a parsed value has already lost duplicate keys and number tokens.</li>
+<li><strong>No schema compiler in the browser.</strong> The schema is compiled to static JavaScript when the package is built, so a page needs neither a runtime schema compiler nor <code>unsafe-eval</code>.</li>
+<li><strong>Generated, not copied.</strong> The TypeScript types and the browser rules are generated from the Python models by <code>scripts/generate_react_contract.py</code>; a test fails if they drift.</li>
+<li><strong>Local intents only.</strong> A reply or a result is handed to the host as an intent. The service that owns the work checks identity, expiry, digest, policy and idempotency before any effect; an enabled control grants no authority. An approval renders no control at all.</li>
+<li><strong>A card that does not validate</strong> renders as unavailable, never as partial content.</li>
+</ul>
 
 
 
