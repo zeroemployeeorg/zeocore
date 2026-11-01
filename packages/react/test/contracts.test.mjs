@@ -89,6 +89,22 @@ test("wire integers do not accept floating-point JSON tokens", () => {
     assert.equal(parseCard(changed).ok, false);
   }
 });
+test("a lone surrogate is refused in any string or key, a pair is kept", () => {
+  const reply = (extra) => ({ ...base, ...extra });
+  assert.equal(validateCard(reply({ subject: "x\ud800y" })).ok, false);
+  assert.equal(validateCard(reply({ subject: "x\udc00" })).ok, false);
+  assert.equal(validateCard(reply({ "k\ud800": 1 })).ok, false);
+  assert.equal(validateCard(reply({ subject: "ok \ud83d\ude00" })).ok, true);
+});
+test("an integer beyond the safe range is refused", () => {
+  const card = load(
+    new URL("project-checkpoint.dataref.json", validDir),
+  ).payload;
+  assert.equal(validateCard(card).ok, true);
+  const big = structuredClone(card);
+  big.local_only.git_unpushed_count = 1e300;
+  assert.equal(validateCard(big).ok, false);
+});
 test("structured task results enforce field, row and aggregate limits", async () => {
   const { validResults } = await import("../dist/results.js");
   const card = load(

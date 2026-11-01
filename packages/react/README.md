@@ -1,6 +1,6 @@
 # @zeocore/react
 
-Data-only React components for ZeoApp and custom Mantle front ends. Ten closed
+Data-only React components for a host application and custom Mantle front ends. Ten closed
 situations share the Python contract; no credentials, transport, approval engine,
 model invocation, durable store or automatic URL fetch is included.
 
@@ -15,7 +15,7 @@ npm run gallery --prefix packages/react
 ```
 
 Build a local, versioned consumer artifact with `npm pack` inside this directory.
-Install the resulting tarball in ZeoApp and pin its integrity in the consumer lock.
+Install the resulting tarball in the host application and pin its integrity in the consumer lock.
 This package is marked private to prevent accidental registry publication. It is
 not released by the Python publisher; npm publication requires its own reviewed
 release workflow. No package has been published by this change.
@@ -61,7 +61,7 @@ links navigate only after the user clicks, with no referrer or opener.
 
 The host owns a current snapshot and renders a card for each stable source/widget
 identity. Remove it when the source ends the situation, update it when the source
-changes. Durable records stay with Agenda, Runtime, Messenger or ZEOconnect.
+changes. Durable records stay with Agenda, Runtime, Messenger or the service that owns the decision.
 Use the existing Python `WidgetBoard` for tool-turn replacement and stale revision
 handling. Do not create a second browser database or infer completion from a reply.
 `zeo.ui-result/v1` remains the bounded read-only tool-result envelope; it is not

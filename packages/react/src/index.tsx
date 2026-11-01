@@ -367,7 +367,7 @@ function Content({
             </Row>
           </dl>
           <p className="zc-muted">
-            Display only. Decisions belong to ZEOconnect.
+            Display only. Decisions belong to the service that owns them.
           </p>
         </>
       );

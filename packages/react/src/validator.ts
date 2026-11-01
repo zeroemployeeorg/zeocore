@@ -232,7 +232,10 @@ function walk(
   path = "",
   floats = new Set<string>(),
 ): void {
-  if (schema.type === "integer") assert(!floats.has(path));
+  if (schema.type === "integer") {
+    assert(!floats.has(path));
+    assert(Number.isSafeInteger(v));
+  }
   if (schema.$ref) {
     const name = schema.$ref.split("/").at(-1)!;
     const node = defs[name];
@@ -268,11 +271,16 @@ function walk(
     );
 }
 
+const LONE_SURROGATE = /\p{Surrogate}/u;
+
 // Validate plain JSON objects only, without invoking accessors or serialisation hooks.
 function snapshot(value: unknown, depth = 0, seen = new Set<object>()): any {
   assert(depth <= 32);
-  if (value === null || typeof value === "boolean" || typeof value === "string")
+  if (typeof value === "string") {
+    assert(!LONE_SURROGATE.test(value));
     return value;
+  }
+  if (value === null || typeof value === "boolean") return value;
   if (typeof value === "number") {
     assert(Number.isFinite(value));
     return value;
@@ -289,7 +297,7 @@ function snapshot(value: unknown, depth = 0, seen = new Set<object>()): any {
   const out: any = Array.isArray(obj) ? [] : Object.create(null);
   for (const key of Reflect.ownKeys(obj)) {
     if (Array.isArray(obj) && key === "length") continue;
-    assert(typeof key === "string");
+    assert(typeof key === "string" && !LONE_SURROGATE.test(key));
     const d = Object.getOwnPropertyDescriptor(obj, key)!;
     assert("value" in d && d.enumerable);
     out[key] = snapshot(d.value, depth + 1, seen);
