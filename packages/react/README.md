@@ -34,6 +34,19 @@ already-decoded plain JSON data, enforces the schema plus Python cross-field
 rules, and returns a detached, recursively frozen snapshot. It cannot detect
 keys lost by somebody else's JSON parser. No input value is included in errors.
 
+## The commitment calendar
+
+`CommitmentCalendar` renders the read-only `calendar_view` payload. It has no controls and no intents:
+
+```tsx
+import {CommitmentCalendar, parseCalendar} from '@zeocore/react';
+
+const checked = parseCalendar(receivedBytes);
+return <CommitmentCalendar value={checked.ok ? checked.view : undefined} />;
+```
+
+It computes no lateness, countdown, sort or zone arithmetic: every time is shown as the owner published it, and a payload that fails `validateCalendar` renders as unavailable.
+
 ## Interaction is an intent, never authority
 
 All controls are disabled by default. To enable them, the host must explicitly

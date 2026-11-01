@@ -85,3 +85,4 @@ google_client_secret.json
 node_modules/
 packages/react/gallery/dist/
 packages/react/src/generated/shape.js
+packages/react/src/generated/calendar-shape.js

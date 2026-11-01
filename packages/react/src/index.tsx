@@ -9,6 +9,15 @@ import type {
 import { Results, validResults, type ResultValues } from "./results.js";
 export type * from "./generated/card.js";
 export { validateCard, parseCard } from "./validator.js";
+export {
+  CommitmentCalendar,
+  type CommitmentCalendarProps,
+} from "./calendar.js";
+export { validateCalendar, parseCalendar } from "./calendar-validator.js";
+export type {
+  CalendarView as CalendarViewPayload,
+  CommitmentItem,
+} from "./generated/calendar.js";
 
 /** Local intent only. The host must authenticate, re-read and authorize before any effect. */
 export type CardIntent =
