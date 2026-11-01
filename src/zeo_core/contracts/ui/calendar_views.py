@@ -21,7 +21,7 @@ This module imports only the standard library, pydantic and its sibling contract
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
 from typing import Annotated, Literal, Self
 
 from pydantic import AfterValidator, Field, StrictBool, model_validator
@@ -174,7 +174,8 @@ class CommitmentItem(_Opt):
         if (self.canonical_identity == "resolved") != (self.work_ref is not None):
             msg = "canonical identity is resolved exactly when a work_ref is supplied"
             raise ValueError(msg)
-        times = [r.at_utc for r in self.revisions]
+        # compare the instants, not the published strings: offsets and fractions differ
+        times = [datetime.fromisoformat(r.at_utc) for r in self.revisions]
         if times != sorted(times):
             msg = "revisions are in time order"
             raise ValueError(msg)

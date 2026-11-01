@@ -143,3 +143,27 @@ def test_a_cut_is_never_silent() -> None:
     page["paging"].pop("next_cursor")
     with pytest.raises(ValidationError):
         CalendarView.model_validate(page)
+
+
+@pytest.mark.parametrize(
+    ("times", "accepted"),
+    [
+        (["2026-10-29T23:55:00Z", "2026-10-29T23:55:00.1Z"], True),
+        (["2026-10-29T23:55:00.1Z", "2026-10-29T23:55:00Z"], False),
+        (["2026-10-30T00:30:00+01:00", "2026-10-29T23:55:00Z"], True),
+        (["2026-10-29T23:55:00Z", "2026-10-30T00:30:00+01:00"], False),
+        (["2026-10-30T00:55:00+01:00", "2026-10-29T23:55:00Z"], True),
+        (["2026-10-29T23:55:00Z", "2026-10-30T00:55:00+01:00"], True),
+    ],
+)
+def test_revisions_are_ordered_by_instant_not_by_string(
+    times: list[str], accepted: bool
+) -> None:
+    payload = _load(FIXTURES / "valid" / "calendar-today.dataref.json")["payload"]
+    item = payload["days"][0]["items"][0]
+    item["revisions"] = [dict(item["revisions"][0], at_utc=t) for t in times]
+    if accepted:
+        CalendarView.model_validate(payload)
+    else:
+        with pytest.raises(ValidationError):
+            CalendarView.model_validate(payload)
