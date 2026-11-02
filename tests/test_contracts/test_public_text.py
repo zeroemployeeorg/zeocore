@@ -32,6 +32,7 @@ FEATURE_FILES = (
     ROOT / "changelog.d" / "calendar-view.md",
     ROOT / "changelog.d" / "message-approval-cards.md",
     ROOT / "changelog.d" / "react-cards.md",
+    ROOT / "changelog.d" / "calendar-react.md",
     ROOT / "scripts" / "generate_react_contract.py",
     ROOT / "packages" / "react" / "README.md",
 )

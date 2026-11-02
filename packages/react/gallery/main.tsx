@@ -1,6 +1,12 @@
 import React, { useState } from "react";
 import { createRoot } from "react-dom/client";
-import { Card, supportedSituations, type CardIntent } from "../src/index";
+import {
+  Card,
+  CommitmentCalendar,
+  supportedSituations,
+  validateCalendar,
+  type CardIntent,
+} from "../src/index";
 import { validateCard } from "../src/validator";
 import "../src/styles.css";
 import "./style.css";
@@ -16,16 +22,33 @@ const fixtures = Object.entries(files)
     negative: name.includes("/negative/"),
     expected: value.expect ?? "accepted",
   }));
+const calendarFiles = import.meta.glob(
+  "../../../tests/test_contracts/fixtures/calendar_view/{valid,negative}/*.json",
+  { eager: true, import: "default" },
+) as Record<string, any>;
+const calendars = Object.entries(calendarFiles)
+  .filter(([name]) => !name.endsWith(".upsert.json"))
+  .map(([name, value]) => ({
+    name: name.split("/").at(-1)!,
+    value: value.payload,
+    negative: name.includes("/negative/"),
+  }));
 function Gallery() {
   const [filter, setFilter] = useState("all"),
     [negative, setNegative] = useState(false),
     [intent, setIntent] = useState<CardIntent>(),
     [demo, setDemo] = useState(false);
-  const rows = fixtures.filter(
-    (f) =>
-      f.negative === negative &&
-      (filter === "all" || f.value.situation === filter),
-  );
+  const calendar = filter === "calendar_view";
+  const rows = calendar
+    ? []
+    : fixtures.filter(
+        (f) =>
+          f.negative === negative &&
+          (filter === "all" || f.value.situation === filter),
+      );
+  const views = calendar
+    ? calendars.filter((f) => f.negative === negative)
+    : [];
   return (
     <>
       <aside>
@@ -49,6 +72,12 @@ function Gallery() {
               {s.replaceAll("_", " ")}
             </button>
           ))}
+          <button
+            aria-current={calendar ? "page" : undefined}
+            onClick={() => setFilter("calendar_view")}
+          >
+            calendar view
+          </button>
         </nav>
         <small>
           Data-only components.
@@ -93,7 +122,7 @@ function Gallery() {
             />{" "}
             Local intent demo
           </label>
-          <span>{rows.length} fixtures</span>
+          <span>{rows.length + views.length} fixtures</span>
         </div>
         {intent && (
           <output className="intent" aria-live="polite">
@@ -103,6 +132,15 @@ function Gallery() {
           </output>
         )}
         <div className="grid">
+          {views.map((f) => (
+            <section key={f.name}>
+              <div className="fixture-label">
+                {f.name.replace(".dataref.json", "").replace(".json", "")} ·{" "}
+                {validateCalendar(f.value).ok ? "accepted" : "refused"}
+              </div>
+              <CommitmentCalendar value={f.value} />
+            </section>
+          ))}
           {rows.map((f) => (
             <section key={f.name}>
               <div className="fixture-label">
