@@ -1,0 +1,13 @@
+{
+  "expect": "refused",
+  "why": "new message minimal null sent_at",
+  "payload": {
+    "situation": "message",
+    "message_id": "am-fake-0001",
+    "source_digest": "sha256:cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34",
+    "sent_at": null,
+    "from": "fake-seat",
+    "subject": "A fake subject",
+    "body": "Fake body, line one.\nFake body, line two."
+  }
+}

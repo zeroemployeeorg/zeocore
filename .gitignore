@@ -80,3 +80,9 @@ google_client_secret.json
 
 # A maintainer's machine-local Claude Code entrypoint (imports a private checkout); never tracked.
 /CLAUDE.local.md
+
+# TypeScript package development
+node_modules/
+packages/react/gallery/dist/
+packages/react/src/generated/shape.js
+packages/react/src/generated/calendar-shape.js
