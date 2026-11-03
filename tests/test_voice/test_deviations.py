@@ -338,19 +338,26 @@ class TestD8FailedConnectionsAreClosed(unittest.IsolatedAsyncioTestCase):
 class _CountingASR:
     """A fake ASR engine that counts connects and closes and refuses one language."""
 
-    def __init__(self, *, refuse: type[Exception] | None = None) -> None:
+    def __init__(
+        self, *, refuse: type[Exception] | None = None, socket_gone: bool = False
+    ) -> None:
         self.refuse = refuse
+        self.socket_gone = socket_gone
+        self.asr_socket: object | None = None
         self.connects = 0
         self.closes = 0
 
     async def connect(self, config: object = None) -> None:
         self.connects += 1
+        self.asr_socket = object()
 
     async def close_connection(self) -> None:
         self.closes += 1
 
     async def set_language(self, language: str) -> bool:
         if self.refuse is not None:
+            if self.socket_gone:
+                self.asr_socket = None  # the engine closed it, then failed to reopen
             raise self.refuse("no provider language mapping")
         return True
 
@@ -385,6 +392,15 @@ class TestD8AsrSetLanguage(unittest.IsolatedAsyncioTestCase):
 
     async def test_a_failure_after_the_socket_closes_the_provider(self) -> None:
         engine_ = _CountingASR(refuse=RuntimeError)
+        router = await self._router(engine_)
+        async with router:
+            self.assertFalse(await router.set_language("en"))
+            self.assertEqual(engine_.closes, 1)
+
+    async def test_a_value_error_after_the_socket_is_gone_closes_the_provider(
+        self,
+    ) -> None:
+        engine_ = _CountingASR(refuse=ValueError, socket_gone=True)
         router = await self._router(engine_)
         async with router:
             self.assertFalse(await router.set_language("en"))

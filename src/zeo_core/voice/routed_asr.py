@@ -355,9 +355,15 @@ class RoutedASR:
                 results.append(await provider.engine.set_language(rasa_language))
             except Exception as exc:  # noqa: BLE001
                 self._health.get(provider.spec.label).record_failure(exc)
-                # A ValueError is the engine refusing the language (no mapping) before
-                # it touched its socket: the connection is healthy and stays open.
-                if index in self._connected and not isinstance(exc, ValueError):
+                # A ValueError with the socket still open is the engine refusing the
+                # language (no mapping) before it touched the connection: the
+                # connection is healthy and stays open. Any other failure, or a socket
+                # that is gone, leaves a dead provider that must be closed and dropped.
+                kept = (
+                    isinstance(exc, ValueError)
+                    and getattr(provider.engine, "asr_socket", None) is not None
+                )
+                if index in self._connected and not kept:
                     try:
                         await asyncio.wait_for(provider.engine.close_connection(), 5.0)
                     except Exception as close_exc:  # noqa: BLE001
@@ -366,7 +372,7 @@ class RoutedASR:
                             provider=provider.spec.label,
                             error=str(close_exc),
                         )
-                if not isinstance(exc, ValueError):
+                if not kept:
                     self._connected.discard(index)
                 logger.warning(
                     "voicerouter.asr.set_language_failed",
