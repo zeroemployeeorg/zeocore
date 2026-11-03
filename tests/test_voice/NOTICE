@@ -1,0 +1,65 @@
+tests/test_voice (zeocore)
+
+Licence: the files listed below are derived from RasaHQ/rasa-community-resources and are
+licensed under the Apache License, Version 2.0. The text is src/zeo_core/voice/LICENSE, byte-identical to the
+upstream repository-root LICENSE (git blob 261eeb9e9f8b2b4b0d119366dda99c6fd7d35c64). The rest of the zeocore repository is MIT
+(see the repository LICENSE). The derived files are NOT relicensed.
+
+Source: RasaHQ/rasa-community-resources, commit 9f85e2be9398f23dc06b30f4b8f1f53964627251,
+directory patterns/voice-vendor-router/ (81 files), plus the repository-root LICENSE (blob 261eeb9e9f8b2b4b0d119366dda99c6fd7d35c64) and
+docs/VOICE_ROUTER.md (blob 800c807c5fd75e8b15615ed8d72e605809500e6e; recorded as provenance, NOT copied).
+
+Copyright: the upstream repository has no NOTICE file and none of the source files carries a copyright or
+licence header. No copyright line is stated or invented here.
+
+Modifications (Apache-2.0 section 4(b)): every file listed as modified was changed from its source. Each
+carries a header comment naming this commit and its source path. The changes are (a) the mechanical
+module-name rewrite (voicerouter.X to zeo_core.voice.X, import statements only), ruff import order and
+line wrapping, and (b) the numbered changes below, each with its own test in tests/test_voice/.
+
+Names: "Rasa" and "Mantle" appear only to identify provenance and compatibility. No endorsement by, or
+affiliation with, the upstream owner is claimed.
+
+Third-party: no third-party or vendored code was found in the copied files. audioop-lts (PSF-2.0) is a
+declared dependency for Python 3.13 and later; it is not distributed here.
+
+Changes to the derived tests
+T1 test_failures.py, test_health.py, test_policy_and_selection.py: aiohttp is not a zeocore dependency, so
+   http_error() builds a stand-in exception with the same status, headers and text form instead of
+   aiohttp.ClientResponseError. The classifier reads those attributes; the assertions are unchanged.
+T2 the sys.path insertions are removed (the package is installed); the module names are rewritten.
+T3 test_profile.py: an inline neutral profile replaces the tutorial JSON file that the upstream test read.
+T4 test_engine_contract.py: contract.check takes an explicit source root; an empty root checks the lifecycle floor.
+T5 test_failures.py: botocore is not a zeocore dependency; a stand-in ClientError carries the same response mapping.
+T6 test_contract_scanner.py: the pure-scanner tests leave the installed-Rasa skip decorator.
+Not copied (owned elsewhere): the tests for vendor sockets, the vendor catalogue, native NeuTTS, Rime, the Rasa
+engine protocol and the installed-Rasa contract. See tests/test_voice/fixtures/audio/manifest.json for the fixtures.
+
+Fixture provenance
+The seven files under tests/test_voice/fixtures/audio/ are byte-identical to the upstream blobs listed below.
+Upstream commit 739f447a (2026-09-02, "Regenerate fixture corpus with espeak-ng; correct the licence claims")
+replaced them with speech synthesised by espeak-ng from the sentences in manifest.json, replacing an earlier
+corpus made with macOS "say". The upstream generator, scripts/make_fixtures.py, is not carried into Core (its header explains the licence
+reasoning). They are synthetic: no recorded human speech and no third-party speech corpus. Their licence is
+Apache-2.0, as the rest of the derived files; this was checked in review.
+
+Per-file table
+upstream path | upstream blob | zeocore path | zeocore sha256 | change
+patterns/voice-vendor-router/tests/test_voicerouter.py | 755bcb08335adb337037260d7b0c46c7675fb1ae | tests/test_voice/test_failures.py | 925921a354855b3e0ddebbce69dcb459c48e8bade566105725aecacf85a4c9e5 | derived: selected functions per the manifest, T1-T6
+patterns/voice-vendor-router/tests/test_voicerouter.py | 755bcb08335adb337037260d7b0c46c7675fb1ae | tests/test_voice/test_health.py | 3c9c34fbb4f896c453278302348d19ae9b5791a83079d3e6c58ab36858420605 | derived: selected functions per the manifest, T1-T6
+patterns/voice-vendor-router/tests/test_voicerouter.py | 755bcb08335adb337037260d7b0c46c7675fb1ae | tests/test_voice/test_policy_and_selection.py | 57b53508c2319f0987758d95461b06ba3a8107f49b991a4b6d977079453e854b | derived: selected functions per the manifest, T1-T6
+patterns/voice-vendor-router/tests/test_voicerouter.py | 755bcb08335adb337037260d7b0c46c7675fb1ae | tests/test_voice/test_utterance_audio.py | 7e5b9c25ead73c4b9ae23a1415b3467f2112c17a5dda4827cf2f919a0975c4a4 | derived: selected functions per the manifest, T1-T6
+patterns/voice-vendor-router/tests/test_voicerouter.py | 755bcb08335adb337037260d7b0c46c7675fb1ae | tests/test_voice/test_engine_contract.py | 05e48fc086b869223185436ac067214fefc87c00b99f826b1559b2f3f59bbfe2 | derived: selected functions per the manifest, T1-T6
+patterns/voice-vendor-router/tests/test_bench.py | ce7441d2a494c44efd2c739bf9438c5c2376a188 | tests/test_voice/test_bench_stats.py | 6d0da1ea194d9cad5e3fd5dd3f01652300119ca5a9ae84932defa78ab789a08f | derived: selected functions per the manifest, T1-T6
+patterns/voice-vendor-router/tests/test_contract_check.py | fed9bc50492fbe89084f555356c9c16064c0efec | tests/test_voice/test_contract_scanner.py | f60e7fd42d891ba7508c0dfb3632ace7f3f3d4959726e69a1a103f7940623933 | derived: selected functions per the manifest, T1-T6
+patterns/voice-vendor-router/tests/test_shared_profile.py | 1c6921b7dfdffaf853c0b0293358b4fdf470a12b | tests/test_voice/test_profile.py | 9dfb60a87d97990a9c90632450a204db01b3f677c16405eb614258dd37269c0d | derived: selected functions per the manifest, T1-T6
+patterns/voice-vendor-router/tests/__init__.py | e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 | tests/test_voice/__init__.py | e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 | byte-identical (empty)
+(none) | - | tests/test_voice/test_deviations.py | 76d2b8cc385f6b6ff6369bf4579e14ad5714685f7cd832b8795aacbf3c80929e | new, Core-written (MIT, part of the zeocore repository)
+(none) | - | tests/test_voice/test_bare_import.py | 4706b5c7b57ab4f9c61ca2e7724ea6db0f141a854d8e28bfb9360f103a924f67 | new, Core-written (MIT, part of the zeocore repository)
+patterns/voice-vendor-router/tests/fixtures/audio/balance.wav | fecd7ec240deb80d44770afd191d64c459da2041 | tests/test_voice/fixtures/audio/balance.wav | fd2f80ecedb2a99655a6cbecb0c9bead31047acb960e7b6dd0a2ab4b9dda87fc | byte-identical
+patterns/voice-vendor-router/tests/fixtures/audio/cancel.wav | 8a14ed55f65ca38ac4d40d20cacadb4ab5471efd | tests/test_voice/fixtures/audio/cancel.wav | fc4fc507324f59143044c8c26f3a4aee0bd0fff9ecd36d2c27e2f9af01d6815d | byte-identical
+patterns/voice-vendor-router/tests/fixtures/audio/confirm.wav | a94a896d517e80f8fa3af16b4c5b6e03230002e3 | tests/test_voice/fixtures/audio/confirm.wav | 46599ab32730b44e9049b7785bf6df72e8c1c7fe317fca3684dea72d9de9d02f | byte-identical
+patterns/voice-vendor-router/tests/fixtures/audio/digits.wav | aaeebb8da5eb62190b4bf0d6982795e24d7020b0 | tests/test_voice/fixtures/audio/digits.wav | 9eb7f96ce46edae69acba9582ad1b6ea45d40c6a7aa4d0989e045c0435a00670 | byte-identical
+patterns/voice-vendor-router/tests/fixtures/audio/manifest.json | 03b8a6ea93c290d35dc395017ab4cb6c34e3fc2c | tests/test_voice/fixtures/audio/manifest.json | a0857cf3124f2bd99875bfb463a50131f244b04f1abeefdebf14f9cbe608820b | byte-identical
+patterns/voice-vendor-router/tests/fixtures/audio/reference.wav | aff21b3dae3a827d7bab7d3052b6198d0c658a25 | tests/test_voice/fixtures/audio/reference.wav | a5fd064170e39ce3151378e643373ad5f2445149cd9edaaaca2f7dd65f4926d8 | byte-identical
+patterns/voice-vendor-router/tests/fixtures/audio/transfer.wav | 2bd59f860fad46a779cf2db5e45331b0997b4ab1 | tests/test_voice/fixtures/audio/transfer.wav | e3fee6983dcffe745958d96cbaacac664b13b5546a72fb0fa017a01262606047 | byte-identical

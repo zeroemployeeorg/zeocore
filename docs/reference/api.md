@@ -24,6 +24,7 @@ back here when you need to look something up.
 | `zeo_core.integrations.hosted.ServiceResolver` | [Native profiles](../tutorials/zeoconnect-hosted-profile.md), explicit requirements and typed resolution results. |
 | `zeo_core.integrations.gemini.ImageGenerationService` | [Reference image generation](../integrations/gemini-images.md) through admitted connections and durable effects. |
 | `zeo_core.integrations.notebook.execute_notebook` | [Fresh-kernel execution](../integrations/notebook-execution.md) with bounded output and cleanup. |
+| `zeo_core.voice` | [Speech routing](voice.md): ASR/TTS routing with a required injected engine factory and no ambient credentials. |
 
 For conversion contracts and filesystem staging, use the
 [authoring reference](../integrations/authoring-reference.md), which links the
