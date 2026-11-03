@@ -1664,7 +1664,7 @@
       "properties": {
         "commands": {
           "items": {
-            "maxLength": 4096,
+            "maxLength": 8192,
             "minLength": 1,
             "pattern": "^[^\\u0000-\\u0009\\u000B-\\u001F\\u007F-\\u009F]*$",
             "type": "string"
@@ -1675,7 +1675,7 @@
           "type": "array"
         },
         "copy_line": {
-          "maxLength": 4096,
+          "maxLength": 8192,
           "pattern": "^[^\\u0000-\\u0009\\u000B-\\u001F\\u007F-\\u009F]*$",
           "title": "Copy Line",
           "type": "string"
