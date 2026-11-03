@@ -1662,6 +1662,18 @@
       "additionalProperties": false,
       "description": "A read-only item shown as its source states it. Its identity is the source's id.\n\nIt has no work id, no revision counter and no action: a front end shows it and\noffers to copy it. The digest names the exact source bytes it was read from.",
       "properties": {
+        "commands": {
+          "items": {
+            "maxLength": 4096,
+            "minLength": 1,
+            "pattern": "^[^\\u0000-\\u0009\\u000B-\\u001F\\u007F-\\u009F]*$",
+            "type": "string"
+          },
+          "maxItems": 12,
+          "minItems": 1,
+          "title": "Commands",
+          "type": "array"
+        },
         "copy_line": {
           "maxLength": 4096,
           "pattern": "^[^\\u0000-\\u0009\\u000B-\\u001F\\u007F-\\u009F]*$",

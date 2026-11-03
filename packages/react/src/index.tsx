@@ -489,7 +489,17 @@ function Content({
               Due <Time value={card.deadline} />
             </p>
           )}
-          {card.copy_line && <pre>{card.copy_line}</pre>}
+          {card.commands ? (
+            <ol className="zc-commands">
+              {card.commands.map((command, i) => (
+                <li key={i}>
+                  <pre>{command}</pre>
+                </li>
+              ))}
+            </ol>
+          ) : (
+            card.copy_line && <pre>{card.copy_line}</pre>
+          )}
           {card.source_url && (
             <a
               href={card.source_url}

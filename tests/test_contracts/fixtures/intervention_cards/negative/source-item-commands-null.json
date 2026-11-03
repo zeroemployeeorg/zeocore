@@ -1,0 +1,15 @@
+{
+ "expect": "refused",
+ "why": "an optional key is absent, never null",
+ "payload": {
+  "situation": "source_item",
+  "source_id": "do-fake-0001",
+  "source_digest": "sha256:ab12ab12ab12ab12ab12ab12ab12ab12ab12ab12ab12ab12ab12ab12ab12ab12",
+  "observed_at": "2026-10-30T21:42:09Z",
+  "project": "Fake newsletter",
+  "label": "Do 1",
+  "title": "Check the fake newsletter, two minutes",
+  "state": "open",
+  "commands": null
+ }
+}

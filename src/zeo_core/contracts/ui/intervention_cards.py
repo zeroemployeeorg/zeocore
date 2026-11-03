@@ -46,6 +46,7 @@ __all__ = [
     "IMAGE_MAX_BYTES",
     "IMAGE_MAX_DIMENSION",
     "IMAGE_MAX_PIXELS",
+    "MAX_COMMANDS",
     "PAIR_MAX_BYTES",
     "Action",
     "Approval",
@@ -227,6 +228,8 @@ CHECKPOINT_ACTIONS: Final[tuple[ActionType, ...]] = (
 #: profile; it enforces authority, bytes, digest and frame validation).
 IMAGE_MAX_BYTES: Final = 8 * 1024 * 1024
 PAIR_MAX_BYTES: Final = 16 * 1024 * 1024
+#: The most commands one source item carries.
+MAX_COMMANDS: Final = 12
 IMAGE_MAX_DIMENSION: Final = 4096
 IMAGE_MAX_PIXELS: Final = 16_777_216
 
@@ -827,12 +830,34 @@ class SourceItem(_Opt):
     state: Text  # the source's own word; the contract does not list its values
     next_action: LongText | None = None
     copy_line: LongText | None = None
+    #: Every command of the task, in order, each one literal copy block. Never sorted,
+    #: de-duplicated, trimmed or split. A task with more than ``MAX_COMMANDS`` is
+    #: refused by its producer, not cut. ``copy_line`` stays for a one-line task.
+    commands: (
+        Annotated[
+            list[Annotated[LongText, Field(min_length=1)]],
+            Field(min_length=1, max_length=MAX_COMMANDS),
+        ]
+        | None
+    ) = None
     owner: LongText | None = None
     deadline: DateTime | None = None
     source_url: Annotated[str, Field(pattern=_HTTPS_URL)] | None = None
     freshness: Annotated[list[Freshness], Field(max_length=8)] = Field(
         default_factory=list
     )
+
+    @model_validator(mode="after")
+    def _copy_line_is_the_first_command(self) -> SourceItem:
+        # A multiline first command has no copy_line; when both are there they agree.
+        if (
+            self.copy_line is not None
+            and self.commands is not None
+            and self.copy_line != self.commands[0]
+        ):
+            msg = "copy_line is the first command when both are present"
+            raise ValueError(msg)
+        return self
 
 
 # -- messages and approvals ------------------------------------------------------
