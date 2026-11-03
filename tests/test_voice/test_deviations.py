@@ -333,3 +333,59 @@ class TestD8FailedConnectionsAreClosed(unittest.IsolatedAsyncioTestCase):
             self.assertTrue(await router.set_language("en"))
             self.assertEqual(first.closes, 1)
         self.assertEqual(first.closes, 1)
+
+
+class _CountingASR:
+    """A fake ASR engine that counts connects and closes and refuses one language."""
+
+    def __init__(self, *, refuse: type[Exception] | None = None) -> None:
+        self.refuse = refuse
+        self.connects = 0
+        self.closes = 0
+
+    async def connect(self, config: object = None) -> None:
+        self.connects += 1
+
+    async def close_connection(self) -> None:
+        self.closes += 1
+
+    async def set_language(self, language: str) -> bool:
+        if self.refuse is not None:
+            raise self.refuse("no provider language mapping")
+        return True
+
+
+class TestD8AsrSetLanguage(unittest.IsolatedAsyncioTestCase):
+    """D8, ASR half: a language the engine refuses before touching its socket leaves
+    the healthy connection open; a failure after the socket was touched closes it."""
+
+    async def _router(self, engine_: _CountingASR) -> RoutedASR:
+        def build(
+            config: Mapping[str, Any],
+            audio_format: AudioFormat,
+            language: str,
+            additional: list[str] | None,
+        ) -> _CountingASR:
+            return engine_
+
+        return RoutedASR.from_config_dict(
+            {"providers": [{"name": "fake-asr", "label": "a"}]},
+            L16_24KHZ,
+            "en",
+            factory=factory_from_map({"asr": {"fake-asr": build}}),
+        )
+
+    async def test_an_unmapped_language_does_not_close_the_connection(self) -> None:
+        engine_ = _CountingASR(refuse=ValueError)
+        router = await self._router(engine_)
+        async with router:
+            self.assertFalse(await router.set_language("xx"))
+            self.assertEqual(engine_.closes, 0)
+        self.assertEqual(engine_.closes, 1)  # only on leaving the router
+
+    async def test_a_failure_after_the_socket_closes_the_provider(self) -> None:
+        engine_ = _CountingASR(refuse=RuntimeError)
+        router = await self._router(engine_)
+        async with router:
+            self.assertFalse(await router.set_language("en"))
+            self.assertEqual(engine_.closes, 1)

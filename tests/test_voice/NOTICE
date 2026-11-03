@@ -39,7 +39,7 @@ Fixture provenance
 The seven files under tests/test_voice/fixtures/audio/ are byte-identical to the upstream blobs listed below.
 Upstream commit 739f447a (2026-09-02, "Regenerate fixture corpus with espeak-ng; correct the licence claims")
 replaced them with speech synthesised by espeak-ng from the sentences in manifest.json, replacing an earlier
-corpus made with macOS "say". The generator is scripts/make_fixtures.py (its header explains the licence
+corpus made with macOS "say". The upstream generator, scripts/make_fixtures.py, is not carried into Core (its header explains the licence
 reasoning). They are synthetic: no recorded human speech and no third-party speech corpus. Their licence is
 Apache-2.0, as the rest of the derived files; this was checked in review.
 

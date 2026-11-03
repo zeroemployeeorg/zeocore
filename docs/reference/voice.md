@@ -56,6 +56,7 @@ order and line wrapping, the changes are numbered, and each has its own test in
 | D5 | The `required_env_vars` check and `env_present` leave Core; the vendor engines own that policy. |
 | D6 | `audioop` is the standard library on Python 3.12 and the `audioop-lts` package on 3.13 and later. |
 | D7 | The contract scanner takes an explicit source root and imports nothing to find one. |
+| D8 | A provider that fails after it connected is closed, bounded to five seconds, before the router stops tracking it. A language the engine refuses before touching its socket leaves the connection open. |
 
 The tests in `tests/test_voice/` are derived from the upstream tests by function. The
 differences (stand-in HTTP and AWS errors, an inline profile, an explicit scanner root)
