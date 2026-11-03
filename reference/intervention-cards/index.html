@@ -2468,7 +2468,7 @@
 </tr>
 <tr>
 <td><code>source_item</code></td>
-<td>a read-only item as its source states it: its own id, the digest of the bytes read, project, label, title, state, next action and the line to copy. No work id, no counter, no action</td>
+<td>a read-only item as its source states it: its own id, the digest of the bytes read, project, label, title, state, next action and the line to copy, or an ordered list of up to twelve commands (<code>commands</code>, each one literal copy block, never sorted, de-duplicated or cut; <code>copy_line</code>, when present with it, is the first). No work id, no counter, no action</td>
 </tr>
 <tr>
 <td><code>message</code></td>
