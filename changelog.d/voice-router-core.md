@@ -1,0 +1,2 @@
+bump: minor
+**`zeo_core.voice`: vendor-neutral speech routing.** ASR/TTS routing, provider health and cool-down, failure classification, utterance policy, audio conversion and benchmark statistics, ported from the Apache-2.0 `voicerouter` pattern (`RasaHQ/rasa-community-resources@9f85e2be`) with numbered deviations D1 to D8. Engines are built only through a required, caller-supplied `EngineFactory`; Core loads no engine by name or path and reads no credential. Offline contract only: no vendor route yet. `audioop-lts` (PSF-2.0) is added for Python 3.13 and later.
