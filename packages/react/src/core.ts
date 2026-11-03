@@ -145,6 +145,12 @@ export function makeValidator<T>(spec: Spec) {
     } else fail(); // Newly added Python rule must get an explicit browser implementation.
   }
 
+  // A rule on a list field is the rule of each entry, as in the Python models.
+  function fieldRules(v: Obj, key: string, rs: string[]): void {
+    for (const item of Array.isArray(v[key]) ? v[key] : [v[key]])
+      for (const r of rs) fieldRule(item, r);
+  }
+
   function walk(
     schema: Obj,
     v: any,
@@ -159,7 +165,7 @@ export function makeValidator<T>(spec: Spec) {
       const name = schema.$ref.split("/").at(-1)!;
       const node = defs[name];
       for (const [key, rs] of Object.entries(rules[name] ?? {}))
-        if (has(v, key)) for (const r of rs) fieldRule(v[key], r);
+        if (has(v, key)) fieldRules(v, key, rs);
       spec.semantic(name, v);
       walk(node, v, path, floats);
       return;
@@ -195,7 +201,7 @@ export function makeValidator<T>(spec: Spec) {
     const top = contract.schema;
     if (top.$ref || top.oneOf || top.anyOf) return;
     for (const [key, rs] of Object.entries(rules[top.title] ?? {}))
-      if (has(doc, key)) for (const r of rs) fieldRule(doc[key], r);
+      if (has(doc, key)) fieldRules(doc, key, rs);
     spec.semantic(top.title, doc);
   }
 

@@ -51,6 +51,13 @@ function semantic(name: string, v: Obj): void {
           (v.recommended >= v.minimum && v.recommended <= v.maximum),
       );
       break;
+    case "SourceItem":
+      assert(
+        !has(v, "copy_line") ||
+          !has(v, "commands") ||
+          v.copy_line === v.commands[0],
+      );
+      break;
     case "ReviewImage":
       assert(v.width * v.height <= 16777216);
       break;
