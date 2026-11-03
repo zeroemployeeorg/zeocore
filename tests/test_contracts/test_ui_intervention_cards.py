@@ -33,7 +33,7 @@ def _load(path: Path) -> dict[str, Any]:
 
 def test_the_fixture_sets_are_not_empty() -> None:
     assert len(VALID) == 27
-    assert len(NEGATIVE) == 387
+    assert len(NEGATIVE) == 403
 
 
 @pytest.mark.parametrize("path", VALID, ids=lambda p: p.name.split(".")[0])

@@ -1,0 +1,28 @@
+{
+ "expect": "accepted",
+ "why": "twelve commands is the bound",
+ "payload": {
+  "situation": "source_item",
+  "source_id": "do-fake-0001",
+  "source_digest": "sha256:ab12ab12ab12ab12ab12ab12ab12ab12ab12ab12ab12ab12ab12ab12ab12ab12",
+  "observed_at": "2026-10-30T21:42:09Z",
+  "project": "Fake newsletter",
+  "label": "Do 1",
+  "title": "Check the fake newsletter, two minutes",
+  "state": "open",
+  "commands": [
+   "step 0",
+   "step 1",
+   "step 2",
+   "step 3",
+   "step 4",
+   "step 5",
+   "step 6",
+   "step 7",
+   "step 8",
+   "step 9",
+   "step 10",
+   "step 11"
+  ]
+ }
+}
