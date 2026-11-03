@@ -40,12 +40,13 @@ from pydantic import (
     model_validator,
 )
 
-from zeo_core.contracts.ui.card import LongText
+from zeo_core.contracts.ui.card import _PATTERN_L, LongText, _bounded
 
 __all__ = [
     "IMAGE_MAX_BYTES",
     "IMAGE_MAX_DIMENSION",
     "IMAGE_MAX_PIXELS",
+    "COPY_MAX_BYTES",
     "MAX_COMMANDS",
     "PAIR_MAX_BYTES",
     "Action",
@@ -117,6 +118,23 @@ Text = Annotated[str, Field(min_length=1, max_length=200), AfterValidator(_plain
 #: line feed allowed) plus the ``Text`` refusals of control and format characters.
 #: Unlike ``Text`` it allows ``<`` and ``>``.
 PlainLong = Annotated[LongText, Field(min_length=1), AfterValidator(_plain_long)]
+
+
+#: The most UTF-8 bytes of one copy block (``copy_line`` or one command).
+COPY_MAX_BYTES: Final = 8192
+
+
+def _copy_text(value: str) -> str:
+    """Long text (line feed allowed) up to ``COPY_MAX_BYTES``, for a copy block."""
+    return _bounded(value, COPY_MAX_BYTES, lf=True, ignorable=True)
+
+
+#: One literal copy block: the ``LongText`` rules with an 8192-byte limit.
+CopyText = Annotated[
+    str,
+    Field(max_length=COPY_MAX_BYTES, pattern=_PATTERN_L),
+    AfterValidator(_copy_text),
+]
 Text120 = Annotated[str, Field(min_length=1, max_length=120), AfterValidator(_plain)]
 Text300 = Annotated[str, Field(min_length=1, max_length=300), AfterValidator(_plain)]
 
@@ -829,13 +847,13 @@ class SourceItem(_Opt):
     title: Text
     state: Text  # the source's own word; the contract does not list its values
     next_action: LongText | None = None
-    copy_line: LongText | None = None
+    copy_line: CopyText | None = None
     #: Every command of the task, in order, each one literal copy block. Never sorted,
     #: de-duplicated, trimmed or split. A task with more than ``MAX_COMMANDS`` is
     #: refused by its producer, not cut. ``copy_line`` stays for a one-line task.
     commands: (
         Annotated[
-            list[Annotated[LongText, Field(min_length=1)]],
+            list[Annotated[CopyText, Field(min_length=1)]],
             Field(min_length=1, max_length=MAX_COMMANDS),
         ]
         | None

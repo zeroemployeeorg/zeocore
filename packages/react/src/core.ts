@@ -132,8 +132,10 @@ export function makeValidator<T>(spec: Spec) {
       );
     else if (rule === "_not_a_work_id")
       assert(!value.startsWith("wi_") && !value.startsWith("todo_"));
-    else if (rule === "_class_l") {
-      assert(encoder.encode(value).length <= 4096);
+    else if (rule === "_class_l" || rule === "_copy_text") {
+      assert(
+        encoder.encode(value).length <= (rule === "_copy_text" ? 8192 : 4096),
+      );
       for (const ch of value) {
         const cp = ch.codePointAt(0)!;
         assert(
