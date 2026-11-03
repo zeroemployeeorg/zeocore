@@ -13,7 +13,7 @@
 | `request_status` | delivery, response, outcome and an explicit deadline |
 | `outcome` | `verified` (with evidence and the verification ref), `failed` or `cancelled` |
 | `project_checkpoint` | one project: seat answers, last product vs administrative progress, wait, local-only work, per-source freshness |
-| `source_item` | a read-only item as its source states it: its own id, the digest of the bytes read, project, label, title, state, next action and the line to copy, or an ordered list of up to twelve commands (`commands`, each one literal copy block, never sorted, de-duplicated or cut; `copy_line`, when present with it, is the first). No work id, no counter, no action |
+| `source_item` | a read-only item as its source states it: its own id, the digest of the bytes read, project, label, title, state, next action and the line to copy, or an ordered list of up to twelve commands (`commands`, each at most 8192 UTF-8 bytes like `copy_line`, each one literal copy block, never sorted, de-duplicated or cut; `copy_line`, when present with it, is the first). No work id, no counter, no action |
 | `message` | a read-only message to the operator: the sender's id, the digest of the message bytes, who sent it and when, a one-line subject, a plain-text body, optional links, and optionally how a reply renders |
 | `approval` | a read-only approval request: its own id, the digest of exactly what is approved, the operation, the preview shown, its status and times. The decision stays with the service that owns it |
 
