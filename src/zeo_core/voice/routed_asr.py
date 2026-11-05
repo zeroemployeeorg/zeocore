@@ -1,6 +1,6 @@
 # Modified from RasaHQ/rasa-community-resources@9f85e2be
 # patterns/voice-vendor-router/voicerouter/routed_asr.py
-# Apache-2.0, see LICENSE and NOTICE
+# Apache-2.0, see src/zeo_core/voice/LICENSE and NOTICE
 """An ASR engine that is really N ASR engines with a failover policy.
 
     asr:

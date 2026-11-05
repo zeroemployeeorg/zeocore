@@ -41,19 +41,19 @@ alias table leaves Core).
 
 Per-file table
 upstream path | upstream blob | zeocore path | zeocore sha256 | change
-patterns/voice-vendor-router/voicerouter/__init__.py | caf43064a7a00b29095145070146efaff3495d3e | src/zeo_core/voice/__init__.py | f2eef149881d8eba8a92dd488cca76601a8e7516fe9e477008e1f9f57ad08488 | modified
-patterns/voice-vendor-router/voicerouter/audio.py | 1df67e066c4d9e3fb49fd5ada540dd43e6d13b47 | src/zeo_core/voice/audio.py | aebfe061c09c79fa5b8ad5947d69fd456322475ac33e944f0ba01606c547dd76 | modified
-patterns/voice-vendor-router/voicerouter/base.py | 31dc91445166e3da0c9254ec316cd6ff31804531 | src/zeo_core/voice/base.py | b9e9bae6216267f2a17fd52f8e2e63b08d176e1e620ac8cca23e542001250643 | modified
-patterns/voice-vendor-router/voicerouter/bench.py | f433bc45ce4108d78ab1e69f1e083c9654f06f02 | src/zeo_core/voice/bench.py | e2c1e9dfe99a4f71a8f9d8fb484a8f73b51f49391cf3cc406a0a56bee8697525 | modified
-patterns/voice-vendor-router/voicerouter/contract.py | 66dce0307c9e1d52701e9bd7f88f41a051cd2f49 | src/zeo_core/voice/contract.py | 18abc71228630225fdafaf80ce1f6b156b5ce83e87792367534aa5e9cec24803 | modified
-patterns/voice-vendor-router/voicerouter/engine.py | 1a34b6aa3f4d4fae9a1a4e9f5756d6db6ab6767c | src/zeo_core/voice/engine.py | 66e49d1adbc278bd2c7c06a1132b5071a67ebe007f69b25c62aedac6a959d4e0 | modified
-patterns/voice-vendor-router/voicerouter/failures.py | c36ca23302e95af9d74ed64f5ca38c4e192bacfe | src/zeo_core/voice/failures.py | 4d187d6f56feb5ba40a0528c853be5e60bfb2653b36e9c070c4a39023086b843 | modified
-patterns/voice-vendor-router/voicerouter/health.py | 138e92142156dec69481176ed48bc98b323d7b6d | src/zeo_core/voice/health.py | d6685ef82c56ba0f6ceeef02addba6a63d1a116afe36f742e21cdd4b72340483 | modified
-patterns/voice-vendor-router/voicerouter/metrics.py | 53126f7dd598e9b80dd3a61a4260c6d5b34a6e7d | src/zeo_core/voice/metrics.py | 36953a33b1ec4930babbda9c2e1d7c9bedd65947305128a6bb1ec24558f2a904 | modified
-patterns/voice-vendor-router/voicerouter/profile.py | 26cb78c9aaef7e3b1e30fc02b263ce223b08d0f7 | src/zeo_core/voice/profile.py | e6e3f26fe3be736ea7343c3c0cc8a40b2eded5899e73b4fc5fac56b9203fcc8e | modified
-patterns/voice-vendor-router/voicerouter/routed_asr.py | c30711c1d4b7abab8695f9c8cabe96f4ed4dd36b | src/zeo_core/voice/routed_asr.py | 3e5c7f0a3921333d0329dee68fcdb1103b029c2826ca3ff07c89becd8ae85e5d | modified
-patterns/voice-vendor-router/voicerouter/routed_tts.py | eb290562ff5f7eae49954f6f432fc87f71923def | src/zeo_core/voice/routed_tts.py | 7f9f786c19dd9acc2c38ac01a0ce01104abb01c57d7086d5f7798ff2bd8b6f1b | modified
-patterns/voice-vendor-router/voicerouter/utterance.py | a2077959d6005d90ccb8c2110eb9324b2acab7f5 | src/zeo_core/voice/utterance.py | 49282847c4190caa7cdfd5c2a6a0ee444eb701b5fca966337a89cc6c41d2d1d9 | modified
-patterns/voice-vendor-router/voicerouter/_provider_registry.py | 69fc671d52d418117793f87c19a4b275c6f8fc66 | src/zeo_core/voice/_provider_registry.py | 9b2af23cd9dd1d43b2ebf3f982dad8273e16215ae2005bb1aab8eb1c55b6a65b | rewritten (neutral part only); vendor alias table not copied
+patterns/voice-vendor-router/voicerouter/__init__.py | caf43064a7a00b29095145070146efaff3495d3e | src/zeo_core/voice/__init__.py | 57aa8442c3adc8ecb4ce766d2562aaea6738f80731c2c927aab152f36f14fb8e | modified
+patterns/voice-vendor-router/voicerouter/audio.py | 1df67e066c4d9e3fb49fd5ada540dd43e6d13b47 | src/zeo_core/voice/audio.py | 5c8e5916cfcdd43635c613d7acf45931f98e3be360ab4d2df880eaaf17e3557a | modified
+patterns/voice-vendor-router/voicerouter/base.py | 31dc91445166e3da0c9254ec316cd6ff31804531 | src/zeo_core/voice/base.py | 9eb302ffc2b511cecd3fdbfb4b0c96c4a603808080ae7c6d686fcfa8d0c8099a | modified
+patterns/voice-vendor-router/voicerouter/bench.py | f433bc45ce4108d78ab1e69f1e083c9654f06f02 | src/zeo_core/voice/bench.py | 10236dd962194b7d11fbd21887a3fc2a5e0d71a77156edfc572c4942bbade13f | modified
+patterns/voice-vendor-router/voicerouter/contract.py | 66dce0307c9e1d52701e9bd7f88f41a051cd2f49 | src/zeo_core/voice/contract.py | 1edf9008f586f405e27c81d04ff38b4e652944ae19be98a640ad48ba512e9215 | modified
+patterns/voice-vendor-router/voicerouter/engine.py | 1a34b6aa3f4d4fae9a1a4e9f5756d6db6ab6767c | src/zeo_core/voice/engine.py | da592f11d180634a7d5879520aa66eec79416d0fa31053827250fe932b68c8b6 | modified
+patterns/voice-vendor-router/voicerouter/failures.py | c36ca23302e95af9d74ed64f5ca38c4e192bacfe | src/zeo_core/voice/failures.py | 273ea5c926e682f9d56cbf6950cdf172e2709c020b683e1a3271064b62ceb09f | modified
+patterns/voice-vendor-router/voicerouter/health.py | 138e92142156dec69481176ed48bc98b323d7b6d | src/zeo_core/voice/health.py | fc7cefef4f3e1a83eda1bdb25026c30b52ecc4819315e638579f6853b60611cd | modified
+patterns/voice-vendor-router/voicerouter/metrics.py | 53126f7dd598e9b80dd3a61a4260c6d5b34a6e7d | src/zeo_core/voice/metrics.py | 2886e013742b53e9aa82f320622259a32075d6a086c179fc7f334aae8d4a829f | modified
+patterns/voice-vendor-router/voicerouter/profile.py | 26cb78c9aaef7e3b1e30fc02b263ce223b08d0f7 | src/zeo_core/voice/profile.py | dfce5b23ef6e45b7f3d2aa7d0ab4f77c014b2a971a82b40baf7829d27d66f9b7 | modified
+patterns/voice-vendor-router/voicerouter/routed_asr.py | c30711c1d4b7abab8695f9c8cabe96f4ed4dd36b | src/zeo_core/voice/routed_asr.py | 7027c77e353d26576166bc16d449ba66831b1eea967f760c2e877d7e8bc63e33 | modified
+patterns/voice-vendor-router/voicerouter/routed_tts.py | eb290562ff5f7eae49954f6f432fc87f71923def | src/zeo_core/voice/routed_tts.py | 688a5bc647fe76682aa9a807a6cd1ef15a41fb1170a75348f92a96d81b71372a | modified
+patterns/voice-vendor-router/voicerouter/utterance.py | a2077959d6005d90ccb8c2110eb9324b2acab7f5 | src/zeo_core/voice/utterance.py | f4b600530693664d63f655daebcf57d041f56a2cc3b67ee5e131ac18f8f25227 | modified
+patterns/voice-vendor-router/voicerouter/_provider_registry.py | 69fc671d52d418117793f87c19a4b275c6f8fc66 | src/zeo_core/voice/_provider_registry.py | 3cd4935cc277686612ff2dd82d65afc1b3bf9d7edde2c892a0b5a2ffcb39523b | rewritten (neutral part only); vendor alias table not copied
 (none) | - | src/zeo_core/voice/_log.py | 9cdad1f41bbafa3fb27cd5dd4723475dd8f8542eaecc201bae470efe2b2287f6 | new, Core-written (D3 shim)
 LICENSE | 261eeb9e9f8b2b4b0d119366dda99c6fd7d35c64 | src/zeo_core/voice/LICENSE | c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4 | byte-identical

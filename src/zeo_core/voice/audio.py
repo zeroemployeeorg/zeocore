@@ -1,6 +1,6 @@
 # Modified from RasaHQ/rasa-community-resources@9f85e2be
 # patterns/voice-vendor-router/voicerouter/audio.py
-# Apache-2.0, see LICENSE and NOTICE
+# Apache-2.0, see src/zeo_core/voice/LICENSE and NOTICE
 """Turning whatever a vendor returns into what Rasa's channel expects.
 
 Rasa asks for one of three formats — 24 kHz or 48 kHz linear PCM16, or 8 kHz

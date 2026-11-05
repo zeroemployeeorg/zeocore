@@ -1,6 +1,6 @@
 # Modified from RasaHQ/rasa-community-resources@9f85e2be
 # patterns/voice-vendor-router/voicerouter/engine.py
-# Apache-2.0, see LICENSE and NOTICE
+# Apache-2.0, see src/zeo_core/voice/LICENSE and NOTICE
 """Provider transport boundary: standalone engine types for speech routing.
 
 Core's voice types are always these small standalone interfaces (deviation D1); the

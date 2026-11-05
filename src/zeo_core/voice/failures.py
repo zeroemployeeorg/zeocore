@@ -1,6 +1,6 @@
 # Modified from RasaHQ/rasa-community-resources@9f85e2be
 # patterns/voice-vendor-router/voicerouter/failures.py
-# Apache-2.0, see LICENSE and NOTICE
+# Apache-2.0, see src/zeo_core/voice/LICENSE and NOTICE
 """Deciding what a vendor failure *means*, so re-routing can be sensible.
 
 A wrapper treats every exception the same: something broke, wait a bit, try

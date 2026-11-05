@@ -1,6 +1,6 @@
 # Modified from RasaHQ/rasa-community-resources@9f85e2be
 # patterns/voice-vendor-router/voicerouter/metrics.py
-# Apache-2.0, see LICENSE and NOTICE
+# Apache-2.0, see src/zeo_core/voice/LICENSE and NOTICE
 """What the router knows about how its providers are actually performing.
 
 Two jobs, and they are the same data:
