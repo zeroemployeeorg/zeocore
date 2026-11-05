@@ -1,6 +1,6 @@
 # Modified from RasaHQ/rasa-community-resources@9f85e2be
 # patterns/voice-vendor-router/voicerouter/bench.py
-# Apache-2.0, see LICENSE and NOTICE
+# Apache-2.0, see src/zeo_core/voice/LICENSE and NOTICE
 """Measuring ASR vendors against each other on one corpus.
 
 Rasa's ASR events carry no confidence: `NewTranscript` has exactly one field,

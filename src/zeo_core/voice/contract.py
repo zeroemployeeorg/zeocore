@@ -1,6 +1,6 @@
 # Modified from RasaHQ/rasa-community-resources@9f85e2be
 # patterns/voice-vendor-router/voicerouter/contract.py
-# Apache-2.0, see LICENSE and NOTICE
+# Apache-2.0, see src/zeo_core/voice/LICENSE and NOTICE
 """Check that the router still covers everything Rasa uses on an engine.
 
 The router is not a `TTSEngine` / `ASREngine` subclass — Rasa resolves engines

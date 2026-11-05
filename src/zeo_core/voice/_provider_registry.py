@@ -1,3 +1,6 @@
+# Modified from RasaHQ/rasa-community-resources@9f85e2be
+# patterns/voice-vendor-router/voicerouter/_provider_registry.py
+# Apache-2.0, see src/zeo_core/voice/LICENSE and NOTICE
 """The neutral part of the provider registry: an injected engine factory (deviation D4).
 
 Upstream, this module held a table of vendor short names to dotted paths, and the engine
