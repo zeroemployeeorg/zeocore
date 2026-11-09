@@ -837,6 +837,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#convert-a-non-email-plain-text-source" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Convert a non-email plain-text source
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#convert-html-to-markdown" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2501,6 +2512,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#convert-a-non-email-plain-text-source" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Convert a non-email plain-text source
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#convert-html-to-markdown" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2647,13 +2669,62 @@ not: a message has one per signing domain); a <code>dmarc</code> clause with any
 <code>header.from</code> is <code>ambiguous</code>; <code>dmarc_header_from</code> is set only for a single <code>dmarc</code>
 result with exactly one <code>header.from</code>.
 <code>list_unsubscribe</code> is kept as text for the record and is never an action.</p>
-<h2 id="convert-html-to-markdown">Convert HTML to Markdown<a class="headerlink" href="#convert-html-to-markdown" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">zeo_core.integrations.pandoc.newsletter</span><span class="w"> </span><span class="kn">import</span> <span class="n">convert_newsletter</span>
+<h2 id="convert-a-non-email-plain-text-source">Convert a non-email plain-text source<a class="headerlink" href="#convert-a-non-email-plain-text-source" title="Permanent link">&para;</a></h2>
+<p>The public API also exposes an explicit source entry:</p>
+<table>
+<thead>
+<tr>
+<th>Entry</th>
+<th>Input and result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>convert_plain_text</code></td>
+<td>Literal non-email text plus source kind, attribution and time; returns <code>ConvertedTextItem</code></td>
+</tr>
+</tbody>
+</table>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">zeo_core.integrations.pandoc</span><span class="w"> </span><span class="kn">import</span> <span class="n">convert_plain_text</span>
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="n">item</span> <span class="o">=</span> <span class="n">convert_newsletter</span><span class="p">(</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="n">html</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="s2">"gmail:abc"</span><span class="p">,</span> <span class="n">sender</span><span class="o">=</span><span class="s2">"News &lt;news@example.org&gt;"</span><span class="p">,</span> <span class="n">date</span><span class="o">=</span><span class="s2">"2026-10-13"</span><span class="p">,</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="p">)</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="n">item</span><span class="o">.</span><span class="n">markdown</span><span class="p">,</span> <span class="n">item</span><span class="o">.</span><span class="n">links</span><span class="p">,</span> <span class="n">item</span><span class="o">.</span><span class="n">title</span><span class="p">,</span> <span class="n">item</span><span class="o">.</span><span class="n">stripped</span><span class="p">,</span> <span class="n">item</span><span class="o">.</span><span class="n">diagnostics</span><span class="p">,</span> <span class="n">item</span><span class="o">.</span><span class="n">warnings</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="n">item</span> <span class="o">=</span> <span class="n">convert_plain_text</span><span class="p">(</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="s2">"A captured observation, kept as untrusted data."</span><span class="p">,</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span class="n">source</span><span class="o">=</span><span class="s2">"capture:example"</span><span class="p">,</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    <span class="n">source_kind</span><span class="o">=</span><span class="s2">"operator-browser-post"</span><span class="p">,</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>    <span class="n">attribution</span><span class="o">=</span><span class="s2">"@example"</span><span class="p">,</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>    <span class="n">source_time</span><span class="o">=</span><span class="s2">"2026-10-27T03:00:00Z"</span><span class="p">,</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>    <span class="n">pandoc_path</span><span class="o">=</span><span class="s2">"/absolute/path/to/pandoc"</span><span class="p">,</span>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>    <span class="n">expected_pandoc_sha256</span><span class="o">=</span><span class="n">pinned_sha256</span><span class="p">,</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="p">)</span>
+</code></pre></div>
+<p>The attribution and time are caller claims. They establish no authenticated
+sender, publication date, permission or rights. No email headers or
+<code>DecodedMessage</code> are invented, so missing From/Date warnings do not apply;
+all genuine cleaner/Pandoc warnings and refusals remain. Email APIs retain their
+existing header warnings.</p>
+<p>Only <code>operator-browser-post</code> is supported. Another kind requires a minor release
+with its own tests and documentation. Source and attribution follow the existing
+nonempty single-line metadata bounds (2000 and 500 characters). Time must be a
+timezone-aware datetime or RFC 3339 string with an explicit offset, and is
+returned in UTC with <code>Z</code>. Naive/date-only/invalid times refuse.</p>
+<p>Plain text is HTML-escaped and wrapped as paragraphs <strong>inside the converter</strong>,
+using its existing literal-text adaptation. This prepared renderer document is
+not an HTML original. <code>content_sha256</code> hashes the exact original UTF-8 text;
+<code>render_input_sha256</code> hashes the prepared input. The original RAW capture hash
+must still be retained separately by the caller. Original and prepared inputs
+must each fit <code>max_bytes</code>; escaping can make the prepared input larger.
+Malformed Unicode and unsupported controls refuse without echoing text.
+The existing cleaner, provenance/counters, verified Pandoc sandbox and one
+deadline remain. The result has source/attribution/time fields, with no email
+authentication or verified-sender fields. It is converted data, not admission
+or a privacy verdict.</p>
+<h2 id="convert-html-to-markdown">Convert HTML to Markdown<a class="headerlink" href="#convert-html-to-markdown" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">zeo_core.integrations.pandoc.newsletter</span><span class="w"> </span><span class="kn">import</span> <span class="n">convert_newsletter</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">item</span> <span class="o">=</span> <span class="n">convert_newsletter</span><span class="p">(</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="n">html</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="s2">"gmail:abc"</span><span class="p">,</span> <span class="n">sender</span><span class="o">=</span><span class="s2">"News &lt;news@example.org&gt;"</span><span class="p">,</span> <span class="n">date</span><span class="o">=</span><span class="s2">"2026-10-13"</span><span class="p">,</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="p">)</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="n">item</span><span class="o">.</span><span class="n">markdown</span><span class="p">,</span> <span class="n">item</span><span class="o">.</span><span class="n">links</span><span class="p">,</span> <span class="n">item</span><span class="o">.</span><span class="n">title</span><span class="p">,</span> <span class="n">item</span><span class="o">.</span><span class="n">stripped</span><span class="p">,</span> <span class="n">item</span><span class="o">.</span><span class="n">diagnostics</span><span class="p">,</span> <span class="n">item</span><span class="o">.</span><span class="n">warnings</span>
 </code></pre></div>
 <p>or <code>convert_decoded_message(decoded, source=...)</code>, which uses the HTML (or wraps the
 plain text as paragraphs) and passes the authentication verdict through.</p>
@@ -2772,13 +2843,13 @@ application's preprocessing (zeonewsroom): a message with non-zero diagnostics h
 text the converter could not show to be visible or hidden. Visible text can still
 carry instructions; trust is a separate question and stays with the application.</p>
 <h2 id="render-an-issues-markdown-to-html">Render an issue's Markdown to HTML<a class="headerlink" href="#render-an-issues-markdown-to-html" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">zeo_core.integrations.pandoc.render</span><span class="w"> </span><span class="kn">import</span> <span class="n">render_email_html</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">rendered</span> <span class="o">=</span> <span class="n">render_email_html</span><span class="p">(</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="n">markdown</span><span class="p">,</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>    <span class="n">image_sizes</span><span class="o">=</span><span class="p">{</span><span class="s2">"https://example.org/i.png"</span><span class="p">:</span> <span class="p">(</span><span class="mi">600</span><span class="p">,</span> <span class="mi">300</span><span class="p">)},</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="p">)</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="n">rendered</span><span class="o">.</span><span class="n">html</span><span class="p">,</span> <span class="n">rendered</span><span class="o">.</span><span class="n">sha256</span><span class="p">,</span> <span class="n">rendered</span><span class="o">.</span><span class="n">renderer</span><span class="p">,</span> <span class="n">rendered</span><span class="o">.</span><span class="n">renderer_digest</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">zeo_core.integrations.pandoc.render</span><span class="w"> </span><span class="kn">import</span> <span class="n">render_email_html</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="n">rendered</span> <span class="o">=</span> <span class="n">render_email_html</span><span class="p">(</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    <span class="n">markdown</span><span class="p">,</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>    <span class="n">image_sizes</span><span class="o">=</span><span class="p">{</span><span class="s2">"https://example.org/i.png"</span><span class="p">:</span> <span class="p">(</span><span class="mi">600</span><span class="p">,</span> <span class="mi">300</span><span class="p">)},</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="p">)</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="n">rendered</span><span class="o">.</span><span class="n">html</span><span class="p">,</span> <span class="n">rendered</span><span class="o">.</span><span class="n">sha256</span><span class="p">,</span> <span class="n">rendered</span><span class="o">.</span><span class="n">renderer</span><span class="p">,</span> <span class="n">rendered</span><span class="o">.</span><span class="n">renderer_digest</span>
 </code></pre></div>
 <p>The output is the email subset: <code>h2 h3 p br hr ul ol li blockquote strong em code</code>, <code>a</code>
 (https or mailto, link text required) and <code>img</code> (https, <code>alt</code>, <code>width</code> and <code>height</code>).
