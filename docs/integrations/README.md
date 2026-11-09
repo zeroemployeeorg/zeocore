@@ -52,3 +52,23 @@ For runtime-admitted meeting actions, use the
 Trusted notebook execution is a separate [optional local API](notebook-execution.md).
 
 Run the [complete authoring reference](authoring-reference.md) for a staged, independently checked release.
+
+## Two packages, one integration name
+
+An integration registers under a name in the `zeo_core.integrations` entry-point
+group. Since 0.24.0, two installed distributions that register the same name are an
+error, never "the last one wins": loading that name fails and the message names each
+distribution and its version, for example `Integration 'ffmpeg' is registered by more
+than one distribution (zeo-integration-ffmpeg 0.1.0; zeocore 0.24.0); uninstall all
+but one.` In non-strict loading the name is skipped and the others load; in strict
+loading the load stops with the error.
+
+`list_available_entry_points()` lists one row per registration with the keys
+`integration_id`, `value`, `module`, `distribution` (`name version`) and `ambiguous`
+(`"true"` or `"false"`). The load report also has `id_mismatches`: a list of
+`name -> actual` for an integration whose own `integration_id` differs from the name it
+registered under. It is information only; nothing is renamed or refused.
+
+The check sees what `importlib.metadata` reports. It cannot tell apart two installs of
+one distribution name. To fix an ambiguous name, uninstall one of the two packages.
+
