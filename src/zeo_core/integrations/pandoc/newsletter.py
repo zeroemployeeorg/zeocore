@@ -34,8 +34,8 @@ import hashlib
 import html
 import re
 from dataclasses import dataclass, field
-from datetime import datetime
-from typing import Any, Final
+from datetime import UTC, datetime
+from typing import Any, Final, Literal
 
 from zeo_core.integrations.pandoc import _cleaning, _hidden, _noise
 from zeo_core.integrations.pandoc._cleaning import ConvertedLink
@@ -54,10 +54,12 @@ __all__ = [
     "MAX_MIME_PARTS",
     "RAW_MAX_BYTES",
     "ConvertedItem",
+    "ConvertedTextItem",
     "ConvertedLink",
     "DecodedMessage",
     "convert_decoded_message",
     "convert_newsletter",
+    "convert_plain_text",
     "decode_raw_message",
     "noise_data_version",
 ]
@@ -114,6 +116,27 @@ class ConvertedItem:
     converter: dict[str, object] = field(default_factory=dict)
     sender_verified: bool = False
     authentication: dict[str, str] = field(default_factory=dict)
+
+
+@dataclass(frozen=True, repr=False)
+class ConvertedTextItem:
+    """Non-email conversion data; attribution/time are caller claims, not proof."""
+
+    markdown: str
+    links: tuple[ConvertedLink, ...]
+    title: str | None
+    source: str
+    source_kind: Literal["operator-browser-post"]
+    attribution: str
+    source_time: str
+    content_sha256: str
+    render_input_sha256: str
+    stripped: dict[str, int]
+    diagnostics: dict[str, int]
+    warnings: tuple[str, ...]
+    pandoc_version: str
+    noise_data_version: str
+    converter: dict[str, object] = field(default_factory=dict)
 
 
 def noise_data_version() -> str:
@@ -316,4 +339,100 @@ def convert_decoded_message(
         converter=item.converter,
         sender_verified=decoded.sender_verified,
         authentication=dict(decoded.authentication),
+    )
+
+
+def _plain_source_time(value: datetime | str) -> str:
+    text = _metadata(value, 100)
+    if (
+        re.fullmatch(
+            r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}"
+            r"(?:\.\d{1,6})?(?:Z|[+-]\d{2}:\d{2})",
+            text,
+        )
+        is None
+    ):
+        raise refusal("metadata_invalid")
+    try:
+        stamp = datetime.fromisoformat(text.replace("Z", "+00:00"))
+        if stamp.utcoffset() is None:
+            raise ValueError
+        return stamp.astimezone(UTC).isoformat().replace("+00:00", "Z")
+    except (ValueError, OverflowError):
+        pass
+    raise refusal("metadata_invalid")
+
+
+def convert_plain_text(
+    text: str,
+    *,
+    source: str,
+    source_kind: Literal["operator-browser-post"],
+    attribution: str,
+    source_time: datetime | str,
+    max_bytes: int = DEFAULT_MAX_BYTES,
+    timeout_s: float = DEFAULT_TIMEOUT_S,
+    pandoc_path: str | None = None,
+    expected_pandoc_sha256: str | None = None,
+) -> ConvertedTextItem:
+    """Convert explicit non-email text using the existing bounded Pandoc engine.
+
+    No email headers or authentication are invented. Metadata is an untrusted
+    caller claim. Only operator-browser-post is supported; another source kind is
+    an additive minor API change. An aware datetime or RFC3339 time with offset
+    is normalized to UTC; it does not establish a publication date.
+
+    Literal text is escaped into paragraphs internally, as for the existing
+    plaintext path. That is renderer preparation, never an HTML original.
+    content_sha256 hashes the exact original UTF8, while render_input_sha256
+    identifies the internally prepared document. Both original and prepared
+    inputs must fit max_bytes. The same cleaner, warnings, sandbox, binary pin
+    and ONE deadline remain in effect. Caller watchdogs remain necessary.
+    """
+    deadline = Deadline(timeout_s)
+    if type(source) is not str or type(attribution) is not str:
+        raise refusal("metadata_invalid")
+    source_text = _metadata(source, 2000)
+    author = _metadata(attribution, 500)
+    stamp = _plain_source_time(source_time)
+    if type(source_kind) is not str or source_kind != "operator-browser-post":
+        raise refusal("metadata_invalid")
+    if type(text) is not str:
+        raise refusal("text_invalid")
+    try:
+        data = text.encode("utf-8", errors="strict")
+    except UnicodeEncodeError:
+        data = None
+    if data is None or any(ord(c) < 32 and ord(c) not in (9, 10, 13) for c in text):
+        raise refusal("text_invalid")
+    if len(data) > max_bytes:
+        raise refusal("input_too_large")
+    if not text.strip():
+        raise refusal("text_empty")
+    item = convert_newsletter(
+        _paragraphs(text),
+        source=source_text,
+        sender=author,
+        date=stamp,
+        max_bytes=max_bytes,
+        timeout_s=deadline.remaining(),
+        pandoc_path=pandoc_path,
+        expected_pandoc_sha256=expected_pandoc_sha256,
+    )
+    return ConvertedTextItem(
+        markdown=item.markdown,
+        links=item.links,
+        title=item.title,
+        source=source_text,
+        source_kind="operator-browser-post",
+        attribution=author,
+        source_time=stamp,
+        content_sha256=hashlib.sha256(data).hexdigest(),
+        render_input_sha256=item.content_sha256,
+        stripped=item.stripped,
+        diagnostics=item.diagnostics,
+        warnings=item.warnings,
+        pandoc_version=item.pandoc_version,
+        noise_data_version=item.noise_data_version,
+        converter=item.converter,
     )

@@ -16,6 +16,11 @@ from zeo_core.core.errors.integration import ZeoIntegrationError
 
 REFUSALS: Final[dict[str, str]] = {
     # input and limits
+    "text_empty": "the text is empty; give a non-empty plain-text source",
+    "text_invalid": (
+        "the text must be valid Unicode without unsupported control characters; "
+        "fix the text and call again"
+    ),
     "input_too_large": (
         "the message is larger than max_bytes; skip it, or raise max_bytes"
     ),

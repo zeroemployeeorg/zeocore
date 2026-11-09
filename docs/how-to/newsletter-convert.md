@@ -65,6 +65,52 @@ not: a message has one per signing domain); a `dmarc` clause with any property b
 result with exactly one `header.from`.
 `list_unsubscribe` is kept as text for the record and is never an action.
 
+## Convert a non-email plain-text source
+
+The public API also exposes an explicit source entry:
+
+| Entry | Input and result |
+| --- | --- |
+| `convert_plain_text` | Literal non-email text plus source kind, attribution and time; returns `ConvertedTextItem` |
+
+```python
+from zeo_core.integrations.pandoc import convert_plain_text
+
+item = convert_plain_text(
+    "A captured observation, kept as untrusted data.",
+    source="capture:example",
+    source_kind="operator-browser-post",
+    attribution="@example",
+    source_time="2026-10-27T03:00:00Z",
+    pandoc_path="/absolute/path/to/pandoc",
+    expected_pandoc_sha256=pinned_sha256,
+)
+```
+
+The attribution and time are caller claims. They establish no authenticated
+sender, publication date, permission or rights. No email headers or
+`DecodedMessage` are invented, so missing From/Date warnings do not apply;
+all genuine cleaner/Pandoc warnings and refusals remain. Email APIs retain their
+existing header warnings.
+
+Only `operator-browser-post` is supported. Another kind requires a minor release
+with its own tests and documentation. Source and attribution follow the existing
+nonempty single-line metadata bounds (2000 and 500 characters). Time must be a
+timezone-aware datetime or RFC 3339 string with an explicit offset, and is
+returned in UTC with `Z`. Naive/date-only/invalid times refuse.
+
+Plain text is HTML-escaped and wrapped as paragraphs **inside the converter**,
+using its existing literal-text adaptation. This prepared renderer document is
+not an HTML original. `content_sha256` hashes the exact original UTF-8 text;
+`render_input_sha256` hashes the prepared input. The original RAW capture hash
+must still be retained separately by the caller. Original and prepared inputs
+must each fit `max_bytes`; escaping can make the prepared input larger.
+Malformed Unicode and unsupported controls refuse without echoing text.
+The existing cleaner, provenance/counters, verified Pandoc sandbox and one
+deadline remain. The result has source/attribution/time fields, with no email
+authentication or verified-sender fields. It is converted data, not admission
+or a privacy verdict.
+
 ## Convert HTML to Markdown
 
 ```python
