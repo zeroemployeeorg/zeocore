@@ -521,6 +521,8 @@ def test_a_boundary_written_as_an_rfc_2231_continuation_is_refused_before_parsin
         b"a boundary * b, and a boundary*1 c\r\n",
         b"Example; boundary*0=ab\r\n",
         b"Example; boundary*=utf-8''ab, and more.\r\n",
+        b"Content-Type: text/plain; boundary*0=ab\r\n",
+        b"Content-Type: text/plain;\r\n boundary*0=ab\r\n",
     ],
     ids=[
         "star-prose",
@@ -528,6 +530,8 @@ def test_a_boundary_written_as_an_rfc_2231_continuation_is_refused_before_parsin
         "spaced-star",
         "semicolon-prose",
         "semicolon-encoded-prose",
+        "header-shaped-body-line",
+        "folded-header-shaped-body-lines",
     ],
 )
 def test_prose_with_a_boundary_star_is_not_an_extended_boundary_parameter(

@@ -363,6 +363,23 @@ def _bound(raw: bytes, max_bytes: int) -> None:
     _bound_boundary_lines(raw)
 
 
+def _in_header_section(raw: bytes, position: int) -> bool:
+    """
+    Whether ``position`` lies in a header section, not in a part or message body.
+
+    A header section starts at the top of the message or on the line after a line that
+    starts ``--`` (a boundary line) and ends at the first blank line. So the field is
+    in a header section when no blank line lies between the last such line (or the top)
+    and the field. A body line that merely looks like a header is therefore not one.
+    """
+    head = raw[:position]
+    blank = max(head.rfind(b"\n\n"), head.rfind(b"\n\r\n"))
+    delimiter = head.rfind(b"\n--")
+    if delimiter < 0 and head.startswith(b"--"):
+        delimiter = 0
+    return blank < delimiter if delimiter >= 0 else blank < 0
+
+
 def _bound_boundary_lines(raw: bytes) -> None:
     """
     Refuse a message whose declared boundaries are delimited too many times.
@@ -373,7 +390,10 @@ def _bound_boundary_lines(raw: bytes) -> None:
     that count, so such a message is refused.
     """
     for fields, found in enumerate(_CONTENT_TYPE_FIELD.finditer(raw), 1):
-        if fields > 2 * MAX_MIME_PARTS or _BOUNDARY_EXTENDED.search(found.group()):
+        if fields > 2 * MAX_MIME_PARTS or (
+            _BOUNDARY_EXTENDED.search(found.group())
+            and _in_header_section(raw, found.start())
+        ):
             raise refusal("message_too_complex")
     boundaries: set[bytes] = set()
     for mentions, found in enumerate(_BOUNDARY.finditer(raw), 1):
