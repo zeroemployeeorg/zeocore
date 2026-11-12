@@ -844,3 +844,25 @@ def test_a_quoted_boundary_may_hold_punctuation(parameter: bytes) -> None:
         + b"--\r\n"
     )
     _mime._bound(raw, _mime.RAW_MAX_BYTES)  # no refusal
+
+
+@pytest.mark.parametrize(
+    "field",
+    [
+        b"Content-Type: multipart/mixed; boundary\r\n",
+        b"Content-Type: multipart/mixed; boundary;\r\n",
+        b"Content-Type: multipart/mixed; boundary (c)\r\n",
+        b"Content-Type: multipart/mixed;\r\n boundary\r\n",
+        b'Content-Type: multipart/mixed; boundary; charset="x"\r\n',
+    ],
+    ids=[
+        "bare",
+        "bare-semicolon",
+        "bare-comment",
+        "bare-folded",
+        "bare-then-parameter",
+    ],
+)
+def test_a_bare_boundary_attribute_is_refused_before_parsing(field: bytes) -> None:
+    parts = b"--\r\n\r\nx\r\n" * (2 * MAX_MIME_PARTS + 5)
+    _refused(b"From: n@example.org\r\n" + field + b"\r\n" + parts + b"----\r\n")
