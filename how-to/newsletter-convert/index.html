@@ -2647,6 +2647,15 @@ parts or nested deeper than 8 levels is refused, and so is anything the email pa
 cannot read. The header lines and the <code>Content-Type</code> headers are counted <strong>before</strong> the
 message is parsed, and the parser is fed 64 KiB at a time with the deadline
 (<code>timeout_s</code>, 30 s) checked between pieces.</p>
+<p><strong>A boundary written as an RFC 2231 continuation is refused.</strong> A multipart <code>boundary</code>
+given as <code>boundary*0=...</code>, <code>boundary*1=...</code> or <code>boundary*=utf-8''...</code> is honoured by the
+email package, but the pre-scan that counts boundary lines cannot see through it, so the
+message is refused (<code>message_too_complex</code>) before it is parsed. Real newsletters write
+the boundary in one piece.</p>
+<p><strong>An indented <code>3.</code> is refused too.</strong> The ordered-list check matches a list item at any
+indentation, so an indented code line that begins <code>3.</code> (a list start that is not 1) is
+refused (<code>ordered_list_start</code>) even though it is not a list. That is harmless: start the
+number at 1 or write it another way.</p>
 <p><strong>Time is bounded in-process, not absolutely.</strong> The email package cannot be interrupted
 inside one 64 KiB piece, and BeautifulSoup cannot be interrupted while it parses. For
 mail from a source you do not trust, call these functions under your own watchdog (a
