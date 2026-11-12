@@ -117,6 +117,14 @@ def test_a_missing_header_is_an_empty_string() -> None:
     assert decoded.message_id == ""
 
 
+def test_a_message_with_bare_cr_line_ends_is_bounded_like_any_other() -> None:
+    # email ends a line at a bare CR, so header lines and the blank line are counted so
+    many = b"From: n@example.org\r" + b"X-A: v\r" * (4 * _mime.MAX_HEADERS + 5) + b"\r"
+    with pytest.raises(NewsletterRefusalError) as caught:
+        _mime._bound(many + b"body", _mime.RAW_MAX_BYTES)
+    assert caught.value.code == "message_too_complex"
+
+
 def test_headers_are_single_line_and_bounded() -> None:
     message = _alternative()
     del message["Subject"]

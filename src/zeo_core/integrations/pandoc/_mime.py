@@ -347,15 +347,21 @@ def _authentication(
 
 
 def _bound(raw: bytes, max_bytes: int) -> None:
-    """Refuse an oversized message before the email package sees a byte of it."""
+    """
+    Refuse an oversized message before the email package sees a byte of it.
+
+    The ``email`` package ends a line at CR LF, LF or a bare CR, so every count below
+    reads the message with every line ending turned into LF: a bare CR cannot hide a
+    header line, a blank line or a boundary line from it.
+    """
     if not raw:
         raise refusal("message_empty")
     if len(raw) > max_bytes:
         raise refusal("message_too_large")
-    split = min(
-        (i for i in (raw.find(b"\r\n\r\n"), raw.find(b"\n\n")) if i >= 0),
-        default=len(raw),
-    )
+    raw = _LINE_END.sub(b"\n", raw)
+    split = raw.find(b"\n\n")
+    if split < 0:
+        split = len(raw)
     if split > MAX_HEADER_BYTES or raw.count(b"\n", 0, split) > 4 * MAX_HEADERS:
         raise refusal("message_too_complex")
     for count, _ in enumerate(_PART_HEADER.finditer(raw), 1):
@@ -391,13 +397,9 @@ def _bound_boundary_lines(raw: bytes) -> None:
     A part with no headers has no ``Content-Type`` to count, but it still costs one
     boundary line, so the lines starting ``--<boundary>`` are counted before parsing.
     A boundary written as an RFC 2231 continuation (``boundary*0=``) cannot be seen by
-    that count, so such a message is refused.
-
-    The ``email`` package ends a line at CR LF, LF or a bare CR, so the scan reads the
-    message with every line ending turned into LF: a bare CR cannot hide a boundary
-    line, a blank line or a header from it.
+    that count, so such a message is refused. ``raw`` has every line ending turned into
+    LF already (see ``_bound``).
     """
-    raw = _LINE_END.sub(b"\n", raw)
     boundaries: set[bytes] = set()
     for mentions, found in enumerate(_BOUNDARY.finditer(raw), 1):
         if mentions > _MAX_BOUNDARY_MENTIONS:
