@@ -59,11 +59,27 @@ _BOUNDARY: Final = re.compile(
 #: An RFC 2231 parameter continuation or encoding of the boundary (``boundary*0=``,
 #: ``boundary*=utf-8''...``). The ``email`` package honours it, but the pattern above
 #: cannot see through it, so the boundary lines could not be counted: refused.
-#: Only a header parameter counts (a ``;`` before it, ``=`` after it, folding allowed):
-#: prose that merely contains ``boundary*`` is not a declaration.
+#: Only a header parameter counts (a ``;`` before it, ``=`` after it, folding allowed)
+#: and only inside a ``Content-Type`` field (the line and its folded lines):
+#: body prose that merely contains ``; boundary*0=`` is not a declaration.
 _BOUNDARY_EXTENDED: Final = re.compile(
     rb";\s*boundary\s*\*\s*(?:\d+\s*\*?\s*)?=", re.IGNORECASE
 )
+_LINE_END: Final = re.compile(rb"\r\n|\r")
+_CONTENT_TYPE_FIELD: Final = re.compile(
+    rb"^content-type[ \t]*:[^\r\n]*(?:\r?\n[ \t][^\r\n]*)*",
+    re.IGNORECASE | re.MULTILINE,
+)
+#: A ``Content-Type`` field of a multipart type: only such a field declares a boundary
+#: that delimits parts (a ``boundary`` parameter on ``text/plain`` delimits nothing).
+_MULTIPART_FIELD: Final = re.compile(
+    rb"content-type[ \t]*:\s*multipart/", re.IGNORECASE
+)
+#: What may follow ``--<boundary>`` on a boundary line: an optional closing ``--``, then
+#: spaces or tabs, then the line end. Anything else is a longer word, not a delimiter.
+_DELIMITER_END: Final = re.compile(rb"(?:--)?[ \t]*(?:\n|\Z)")
+#: How many lines that only look like a boundary line are examined before refusing.
+_LOOKALIKES: Final = 64
 _MAX_BOUNDARIES: Final = 2 * MAX_MIME_DEPTH + 8
 _MAX_BOUNDARY_MENTIONS: Final = 4 * MAX_MIME_PARTS
 
@@ -341,21 +357,75 @@ def _authentication(
 
 
 def _bound(raw: bytes, max_bytes: int) -> None:
-    """Refuse an oversized message before the email package sees a byte of it."""
+    """
+    Refuse an oversized message before the email package sees a byte of it.
+
+    The ``email`` package ends a line at CR LF, LF or a bare CR, so every count below
+    reads the message with every line ending turned into LF: a bare CR cannot hide a
+    header line, a blank line or a boundary line from it.
+    """
     if not raw:
         raise refusal("message_empty")
     if len(raw) > max_bytes:
         raise refusal("message_too_large")
-    split = min(
-        (i for i in (raw.find(b"\r\n\r\n"), raw.find(b"\n\n")) if i >= 0),
-        default=len(raw),
-    )
+    raw = _LINE_END.sub(b"\n", raw)
+    split = raw.find(b"\n\n")
+    if split < 0:
+        split = len(raw)
     if split > MAX_HEADER_BYTES or raw.count(b"\n", 0, split) > 4 * MAX_HEADERS:
         raise refusal("message_too_complex")
     for count, _ in enumerate(_PART_HEADER.finditer(raw), 1):
         if count > 2 * MAX_MIME_PARTS:
             raise refusal("message_too_complex")
     _bound_boundary_lines(raw)
+
+
+def _boundary_line_before(raw: bytes, low: int, position: int, boundary: bytes) -> int:
+    """
+    Where the last line before ``position`` that is exactly a boundary line starts.
+
+    A boundary line is ``--<boundary>`` or ``--<boundary>--``, then only spaces or tabs
+    up to the line end. A line that merely starts with the same characters (a longer
+    boundary, prose) is not one. Returns the index of the LF before the line (0 at
+    the top of the message), or -1 when there is none from ``low`` on. More than
+    ``_LOOKALIKES`` lookalike lines are refused as too complex.
+    """
+    needle = b"\n--" + boundary
+    end = position
+    for _ in range(_LOOKALIKES):
+        found = raw.rfind(needle, low, end)
+        if found < 0:
+            break
+        if _DELIMITER_END.match(raw, found + len(needle)):
+            return found
+        end = found
+    else:
+        raise refusal("message_too_complex")
+    top = b"--" + boundary
+    if low == 0 and raw.startswith(top) and _DELIMITER_END.match(raw, len(top)):
+        return 0
+    return -1
+
+
+def _in_header_section(raw: bytes, position: int, declared: set[bytes]) -> bool:
+    """
+    Whether ``position`` lies in a header section, not in a part or message body.
+
+    A header section starts at the top of the message or on the line after a boundary
+    line of a boundary ``declared`` in an earlier header section, and ends at the first
+    blank line. So the field is in a header section when no blank line lies between the
+    last such line (or the top) and the field. A body line that merely looks like a
+    header, a ``--`` signature line and a boundary only mentioned in prose are not one.
+    A field farther than ``MAX_HEADER_BYTES`` from both is taken to be in one: refused.
+    """
+    low = max(0, position - MAX_HEADER_BYTES)
+    blank = raw.rfind(b"\n\n", low, position)
+    delimiter = -1
+    for boundary in declared:
+        delimiter = max(delimiter, _boundary_line_before(raw, low, position, boundary))
+    if delimiter < 0 and blank < 0:
+        return True
+    return blank < delimiter if delimiter >= 0 else False
 
 
 def _bound_boundary_lines(raw: bytes) -> None:
@@ -365,10 +435,9 @@ def _bound_boundary_lines(raw: bytes) -> None:
     A part with no headers has no ``Content-Type`` to count, but it still costs one
     boundary line, so the lines starting ``--<boundary>`` are counted before parsing.
     A boundary written as an RFC 2231 continuation (``boundary*0=``) cannot be seen by
-    that count, so such a message is refused.
+    that count, so such a message is refused. ``raw`` has every line ending turned into
+    LF already (see ``_bound``).
     """
-    if _BOUNDARY_EXTENDED.search(raw):
-        raise refusal("message_too_complex")
     boundaries: set[bytes] = set()
     for mentions, found in enumerate(_BOUNDARY.finditer(raw), 1):
         if mentions > _MAX_BOUNDARY_MENTIONS:
@@ -376,6 +445,19 @@ def _bound_boundary_lines(raw: bytes) -> None:
         boundaries.add(found.group(1) or found.group(2))
     if len(boundaries) > _MAX_BOUNDARIES:
         raise refusal("message_too_complex")
+    declared: set[bytes] = set()
+    for fields, found in enumerate(_CONTENT_TYPE_FIELD.finditer(raw), 1):
+        if fields > 2 * MAX_MIME_PARTS or len(declared) > _MAX_BOUNDARIES:
+            raise refusal("message_too_complex")
+        if not _in_header_section(raw, found.start(), declared):
+            continue
+        if _BOUNDARY_EXTENDED.search(found.group()):
+            raise refusal("message_too_complex")
+        if _MULTIPART_FIELD.match(found.group()):
+            declared.update(
+                declaration.group(1) or declaration.group(2)
+                for declaration in _BOUNDARY.finditer(found.group())
+            )
     lines = sum(raw.count(b"\n--" + boundary) for boundary in boundaries)
     if lines > 2 * MAX_MIME_PARTS + len(boundaries):
         raise refusal("message_too_complex")

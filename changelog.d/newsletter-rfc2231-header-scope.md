@@ -1,0 +1,2 @@
+bump: patch
+Newsletter decode: the refusal of an RFC 2231 boundary continuation now reads only real header sections of the message: a boundary counts when a multipart Content-Type header declares it, and a boundary line is exactly "--boundary" or "--boundary--". A "--" signature line, a boundary only mentioned in body prose, a longer word that starts like the boundary and a body line that looks like a Content-Type header no longer cause a refusal. Every line ending (CR LF, LF, bare CR) is read as one line end. Follow-up to #217.
