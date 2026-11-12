@@ -558,8 +558,12 @@ def test_prose_with_a_boundary_star_is_not_an_extended_boundary_parameter(
         b"From: n@example.org\r\n"
         b'Content-Type: multipart/mixed; boundary="b"\r\n\r\n'
         b"--b\r\nContent-Type: multipart/mixed;\r\n\tboundary*0=xy\r\n\r\n",
+        b"From: n@example.org\r\n"
+        b'Content-Type: multipart/mixed; boundary="b"\r\n\r\n'
+        b"--b\r\nContent-Type: text/plain\r\n\r\nbody\r\n\r\nx\r--b\r"
+        b"Content-Type: multipart/mixed; boundary*0=xy\r\n\r\n",
     ],
-    ids=["folded-top-level", "nested-encoded", "nested-folded"],
+    ids=["folded-top-level", "nested-encoded", "nested-folded", "bare-cr-delimiter"],
 )
 def test_an_extended_boundary_in_a_content_type_field_is_refused_wherever_it_sits(
     message: bytes,

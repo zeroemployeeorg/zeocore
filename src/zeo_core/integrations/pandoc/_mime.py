@@ -65,6 +65,7 @@ _BOUNDARY: Final = re.compile(
 _BOUNDARY_EXTENDED: Final = re.compile(
     rb";\s*boundary\s*\*\s*(?:\d+\s*\*?\s*)?=", re.IGNORECASE
 )
+_LINE_END: Final = re.compile(rb"\r\n|\r")
 _CONTENT_TYPE_FIELD: Final = re.compile(
     rb"^content-type[ \t]*:[^\r\n]*(?:\r?\n[ \t][^\r\n]*)*",
     re.IGNORECASE | re.MULTILINE,
@@ -373,7 +374,7 @@ def _in_header_section(raw: bytes, position: int) -> bool:
     and the field. A body line that merely looks like a header is therefore not one.
     """
     head = raw[:position]
-    blank = max(head.rfind(b"\n\n"), head.rfind(b"\n\r\n"))
+    blank = head.rfind(b"\n\n")
     delimiter = head.rfind(b"\n--")
     if delimiter < 0 and head.startswith(b"--"):
         delimiter = 0
@@ -388,7 +389,12 @@ def _bound_boundary_lines(raw: bytes) -> None:
     boundary line, so the lines starting ``--<boundary>`` are counted before parsing.
     A boundary written as an RFC 2231 continuation (``boundary*0=``) cannot be seen by
     that count, so such a message is refused.
+
+    The ``email`` package ends a line at CR LF, LF or a bare CR, so the scan reads the
+    message with every line ending turned into LF: a bare CR cannot hide a boundary
+    line, a blank line or a header from it.
     """
+    raw = _LINE_END.sub(b"\n", raw)
     for fields, found in enumerate(_CONTENT_TYPE_FIELD.finditer(raw), 1):
         if fields > 2 * MAX_MIME_PARTS or (
             _BOUNDARY_EXTENDED.search(found.group())
