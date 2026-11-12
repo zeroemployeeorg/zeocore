@@ -364,20 +364,23 @@ def _bound(raw: bytes, max_bytes: int) -> None:
     _bound_boundary_lines(raw)
 
 
-def _in_header_section(raw: bytes, position: int) -> bool:
+def _in_header_section(raw: bytes, position: int, boundaries: set[bytes]) -> bool:
     """
     Whether ``position`` lies in a header section, not in a part or message body.
 
-    A header section starts at the top of the message or on the line after a line that
-    starts ``--`` (a boundary line) and ends at the first blank line. So the field is
-    in a header section when no blank line lies between the last such line (or the top)
-    and the field. A body line that merely looks like a header is therefore not one.
+    A header section starts at the top of the message or on the line after a boundary
+    line (a line starting ``--`` and one of the declared ``boundaries``) and ends at the
+    first blank line. So the field is in a header section when no blank line lies
+    between the last such line (or the top) and the field. A body line that merely looks
+    like a header, or a ``--`` signature line that is no declared boundary, is not one.
     """
     head = raw[:position]
     blank = head.rfind(b"\n\n")
-    delimiter = head.rfind(b"\n--")
-    if delimiter < 0 and head.startswith(b"--"):
-        delimiter = 0
+    delimiter = -1
+    for boundary in boundaries:
+        delimiter = max(delimiter, head.rfind(b"\n--" + boundary))
+        if head.startswith(b"--" + boundary):
+            delimiter = max(delimiter, 0)
     return blank < delimiter if delimiter >= 0 else blank < 0
 
 
@@ -395,12 +398,6 @@ def _bound_boundary_lines(raw: bytes) -> None:
     line, a blank line or a header from it.
     """
     raw = _LINE_END.sub(b"\n", raw)
-    for fields, found in enumerate(_CONTENT_TYPE_FIELD.finditer(raw), 1):
-        if fields > 2 * MAX_MIME_PARTS or (
-            _BOUNDARY_EXTENDED.search(found.group())
-            and _in_header_section(raw, found.start())
-        ):
-            raise refusal("message_too_complex")
     boundaries: set[bytes] = set()
     for mentions, found in enumerate(_BOUNDARY.finditer(raw), 1):
         if mentions > _MAX_BOUNDARY_MENTIONS:
@@ -408,6 +405,12 @@ def _bound_boundary_lines(raw: bytes) -> None:
         boundaries.add(found.group(1) or found.group(2))
     if len(boundaries) > _MAX_BOUNDARIES:
         raise refusal("message_too_complex")
+    for fields, found in enumerate(_CONTENT_TYPE_FIELD.finditer(raw), 1):
+        if fields > 2 * MAX_MIME_PARTS or (
+            _BOUNDARY_EXTENDED.search(found.group())
+            and _in_header_section(raw, found.start(), boundaries)
+        ):
+            raise refusal("message_too_complex")
     lines = sum(raw.count(b"\n--" + boundary) for boundary in boundaries)
     if lines > 2 * MAX_MIME_PARTS + len(boundaries):
         raise refusal("message_too_complex")
