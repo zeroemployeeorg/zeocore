@@ -59,10 +59,15 @@ _BOUNDARY: Final = re.compile(
 #: An RFC 2231 parameter continuation or encoding of the boundary (``boundary*0=``,
 #: ``boundary*=utf-8''...``). The ``email`` package honours it, but the pattern above
 #: cannot see through it, so the boundary lines could not be counted: refused.
-#: Only a header parameter counts (a ``;`` before it, ``=`` after it, folding allowed):
-#: prose that merely contains ``boundary*`` is not a declaration.
+#: Only a header parameter counts (a ``;`` before it, ``=`` after it, folding allowed)
+#: and only inside a ``Content-Type`` field (the line and its folded lines):
+#: body prose that merely contains ``; boundary*0=`` is not a declaration.
 _BOUNDARY_EXTENDED: Final = re.compile(
     rb";\s*boundary\s*\*\s*(?:\d+\s*\*?\s*)?=", re.IGNORECASE
+)
+_CONTENT_TYPE_FIELD: Final = re.compile(
+    rb"^content-type[ \t]*:[^\r\n]*(?:\r?\n[ \t][^\r\n]*)*",
+    re.IGNORECASE | re.MULTILINE,
 )
 _MAX_BOUNDARIES: Final = 2 * MAX_MIME_DEPTH + 8
 _MAX_BOUNDARY_MENTIONS: Final = 4 * MAX_MIME_PARTS
@@ -367,8 +372,9 @@ def _bound_boundary_lines(raw: bytes) -> None:
     A boundary written as an RFC 2231 continuation (``boundary*0=``) cannot be seen by
     that count, so such a message is refused.
     """
-    if _BOUNDARY_EXTENDED.search(raw):
-        raise refusal("message_too_complex")
+    for fields, found in enumerate(_CONTENT_TYPE_FIELD.finditer(raw), 1):
+        if fields > 2 * MAX_MIME_PARTS or _BOUNDARY_EXTENDED.search(found.group()):
+            raise refusal("message_too_complex")
     boundaries: set[bytes] = set()
     for mentions, found in enumerate(_BOUNDARY.finditer(raw), 1):
         if mentions > _MAX_BOUNDARY_MENTIONS:

@@ -519,8 +519,16 @@ def test_a_boundary_written_as_an_rfc_2231_continuation_is_refused_before_parsin
         b"The regex boundary* is literal.\r\n",
         b"boundary*0=ab and boundary*=utf-8''ab are written about here.\r\n",
         b"a boundary * b, and a boundary*1 c\r\n",
+        b"Example; boundary*0=ab\r\n",
+        b"Example; boundary*=utf-8''ab, and more.\r\n",
     ],
-    ids=["star-prose", "parameter-shaped-prose", "spaced-star"],
+    ids=[
+        "star-prose",
+        "parameter-shaped-prose",
+        "spaced-star",
+        "semicolon-prose",
+        "semicolon-encoded-prose",
+    ],
 )
 def test_prose_with_a_boundary_star_is_not_an_extended_boundary_parameter(
     body: bytes,
@@ -533,6 +541,28 @@ def test_prose_with_a_boundary_star_is_not_an_extended_boundary_parameter(
         b"--b\r\nContent-Type: text/plain\r\n\r\n" + body + b"--b--\r\n"
     )
     _mime._bound(leaf, _mime.RAW_MAX_BYTES)  # no refusal
+
+
+@pytest.mark.parametrize(
+    "message",
+    [
+        b"From: n@example.org\r\n"
+        b"Content-Type: multipart/mixed;\r\n boundary*0=ab;\r\n boundary*1=cd\r\n\r\n",
+        b"From: n@example.org\r\n"
+        b'Content-Type: multipart/mixed; boundary="b"\r\n\r\n'
+        b"--b\r\nContent-Type: multipart/mixed; boundary*=utf-8''xy\r\n\r\n",
+        b"From: n@example.org\r\n"
+        b'Content-Type: multipart/mixed; boundary="b"\r\n\r\n'
+        b"--b\r\nContent-Type: multipart/mixed;\r\n\tboundary*0=xy\r\n\r\n",
+    ],
+    ids=["folded-top-level", "nested-encoded", "nested-folded"],
+)
+def test_an_extended_boundary_in_a_content_type_field_is_refused_wherever_it_sits(
+    message: bytes,
+) -> None:
+    with pytest.raises(NewsletterRefusalError) as caught:
+        _mime._bound(message, _mime.RAW_MAX_BYTES)
+    assert caught.value.code == "message_too_complex"
 
 
 def test_a_plain_boundary_with_no_star_is_still_counted_not_refused_for_a_star() -> (
