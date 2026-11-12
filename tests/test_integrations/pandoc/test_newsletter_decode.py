@@ -712,3 +712,59 @@ def test_too_many_real_part_lines_are_still_refused() -> None:
     with pytest.raises(NewsletterRefusalError) as caught:
         _mime._bound(_TOP + parts + b"--b--\r\n", _mime.RAW_MAX_BYTES)
     assert caught.value.code == "message_too_complex"
+
+
+_HIDDEN = b"Content-Type: multipart/mixed; boundary*0=xy\r\n\r\n"
+
+
+def _refused(raw: bytes) -> None:
+    with pytest.raises(NewsletterRefusalError) as caught:
+        _mime._bound(raw, _mime.RAW_MAX_BYTES)
+    assert caught.value.code == "message_too_complex"
+
+
+def test_a_line_that_closes_one_boundary_and_opens_another_is_read_as_opening() -> None:
+    # '--b--' closes 'b' and opens 'b--': the header block after it must be read
+    raw = (
+        _TOP
+        + b'--b\r\nContent-Type: multipart/mixed; boundary="b--"\r\n\r\n'
+        + b"--b--\r\n"
+        + _HIDDEN
+    )
+    _refused(raw)
+
+
+@pytest.mark.parametrize("subtype", ["news", "partial", "delivery-status", "rfc822"])
+def test_any_embedded_message_type_has_its_header_block_read(subtype: str) -> None:
+    raw = (
+        _TOP
+        + b"--b\r\nContent-Type: message/"
+        + subtype.encode()
+        + b"\r\n\r\nFrom: m@example.org\r\n"
+        + _HIDDEN
+    )
+    _refused(raw)
+
+
+@pytest.mark.parametrize(
+    ("top", "delimiter"),
+    [
+        (b'boundary="b "', b"--b"),
+        (b'boundary="a\\"b"', b'--a"b'),
+        (b'boundary="' + b"x" * 80 + b'"', b"--" + b"x" * 80),
+        (b"boundary=b ", b"--b"),
+    ],
+    ids=["trailing-space", "escaped-quote", "over-70-characters", "unquoted-trailing"],
+)
+def test_the_boundary_is_read_the_way_the_email_package_reads_it(
+    top: bytes, delimiter: bytes
+) -> None:
+    raw = (
+        b"From: n@example.org\r\nContent-Type: multipart/mixed; "
+        + top
+        + b"\r\n\r\n"
+        + delimiter
+        + b"\r\n"
+        + _HIDDEN
+    )
+    _refused(raw)

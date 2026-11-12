@@ -53,9 +53,10 @@ _PART_HEADER: Final = re.compile(rb"^content-type:", re.IGNORECASE | re.MULTILIN
 #: A declared multipart boundary. Parts with no headers at all have no Content-Type,
 #: but each still costs a boundary line, so the lines are counted too.
 _BOUNDARY: Final = re.compile(
-    rb"boundary\s*=\s*(?:\"([^\"\r\n]{1,70})\"|([^\s;\"]{1,70}))",
+    rb"boundary\s*=\s*(?:\"((?:[^\"\\\r\n]|\\.)+)\"|([^;\"\r\n]+))",
     re.IGNORECASE,
 )
+_ESCAPE: Final = re.compile(rb"\\(.)")
 #: An RFC 2231 parameter continuation or encoding of the boundary (``boundary*0=``,
 #: ``boundary*=utf-8''...``). The ``email`` package honours it, but the pattern above
 #: cannot see through it, so the boundary lines could not be counted: refused.
@@ -77,9 +78,7 @@ _MULTIPART_FIELD: Final = re.compile(
 )
 #: A ``Content-Type`` field of an embedded message: the part's body is a message whose
 #: own header block follows the part's blank line.
-_EMBEDDED_FIELD: Final = re.compile(
-    rb"content-type[ \t]*:\s*message/(?:rfc822|global)", re.IGNORECASE
-)
+_EMBEDDED_FIELD: Final = re.compile(rb"content-type[ \t]*:\s*message/", re.IGNORECASE)
 #: What may follow ``--<boundary>`` on a boundary line: an optional closing ``--``, then
 #: spaces or tabs, then the line end. Anything else is a longer word, not a delimiter.
 _DELIMITER_END: Final = re.compile(rb"(--)?[ \t]*(?:\n|\Z)")
@@ -461,7 +460,7 @@ def _in_header_section(
     delimiter, closing = -1, False
     for boundary in declared:
         found, is_closing = _boundary_line_before(raw, low, position, boundary)
-        if found > delimiter:
+        if found > delimiter or (found == delimiter and not is_closing):
             delimiter, closing = found, is_closing
     if embedded and embedded[-1] <= position:
         start = embedded[-1]
@@ -475,13 +474,26 @@ def _in_header_section(
     return blank < delimiter
 
 
+def _boundary_value(found: re.Match[bytes]) -> bytes:
+    """
+    The boundary as the ``email`` package reads it: unquoted, unescaped, right-stripped.
+
+    ``get_boundary`` right-strips the value, so ``boundary="b "`` delimits on ``--b``.
+    """
+    quoted = found.group(1)
+    value = _ESCAPE.sub(rb"\1", quoted) if quoted is not None else found.group(2)
+    return value.rstrip()
+
+
 def _mentioned_boundaries(raw: bytes) -> set[bytes]:
     """Every boundary the message mentions anywhere, refusing a flood of them."""
     boundaries: set[bytes] = set()
     for mentions, found in enumerate(_BOUNDARY.finditer(raw), 1):
         if mentions > _MAX_BOUNDARY_MENTIONS:
             raise refusal("message_too_complex")
-        boundaries.add(found.group(1) or found.group(2))
+        boundary = _boundary_value(found)
+        if boundary:
+            boundaries.add(boundary)
     if len(boundaries) > _MAX_BOUNDARIES:
         raise refusal("message_too_complex")
     return boundaries
@@ -500,8 +512,9 @@ def _refuse_extended_boundaries(raw: bytes) -> None:
             raise refusal("message_too_complex")
         if _MULTIPART_FIELD.match(found.group()):
             declared.update(
-                declaration.group(1) or declaration.group(2)
-                for declaration in _BOUNDARY.finditer(found.group())
+                value
+                for value in map(_boundary_value, _BOUNDARY.finditer(found.group()))
+                if value
             )
         elif _EMBEDDED_FIELD.match(found.group()):
             end = raw.find(b"\n\n", found.end())
