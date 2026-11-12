@@ -628,3 +628,87 @@ def test_a_flood_of_boundary_declarations_is_refused_before_parsing() -> None:
     with pytest.raises(NewsletterRefusalError) as caught:
         _mime._bound(raw, _mime.RAW_MAX_BYTES)
     assert caught.value.code == "message_too_complex"
+
+
+_TOP = b'From: n@example.org\r\nContent-Type: multipart/mixed; boundary="b"\r\n\r\n'
+_LEAF = b"--b\r\nContent-Type: text/plain\r\n\r\nhello\r\n"
+
+
+@pytest.mark.parametrize(
+    "epilogue",
+    [
+        b"Content-Type: text/plain; boundary*0=ab\r\n\r\nepilogue\r\n",
+        b"\r\nContent-Type: multipart/mixed;\r\n boundary*0=ab\r\n",
+        b"Content-Type: multipart/mixed; boundary*=utf-8''ab\r\n",
+    ],
+    ids=["header-shaped", "after-blank-line", "multipart-shaped"],
+)
+def test_text_after_a_closing_delimiter_is_an_epilogue_not_a_header_section(
+    epilogue: bytes,
+) -> None:
+    _mime._bound(_TOP + _LEAF + b"--b--\r\n" + epilogue, _mime.RAW_MAX_BYTES)
+
+
+def test_a_part_that_follows_a_closed_nested_multipart_is_still_a_header_section() -> (
+    None
+):
+    inner = (
+        b"--b\r\nContent-Type: multipart/mixed; boundary=i\r\n\r\n"
+        b"--i\r\nContent-Type: text/plain\r\n\r\nx\r\n--i--\r\n"
+    )
+    raw = (
+        _TOP
+        + inner
+        + b"--b\r\nContent-Type: multipart/mixed; boundary*0=xy\r\n\r\n--b--\r\n"
+    )
+    with pytest.raises(NewsletterRefusalError) as caught:
+        _mime._bound(raw, _mime.RAW_MAX_BYTES)
+    assert caught.value.code == "message_too_complex"
+
+
+@pytest.mark.parametrize(
+    "header",
+    [
+        b"Content-Type: multipart/mixed; boundary*0=xy\r\n",
+        b"Content-Type: multipart/mixed;\r\n boundary*=utf-8''xy\r\n",
+    ],
+    ids=["continuation", "folded-encoded"],
+)
+def test_an_extended_boundary_in_an_embedded_message_header_block_is_refused(
+    header: bytes,
+) -> None:
+    raw = (
+        _TOP
+        + b"--b\r\nContent-Type: message/rfc822\r\n\r\n"
+        + b"From: m@example.org\r\n"
+        + header
+        + b"\r\nbody\r\n--b--\r\n"
+    )
+    with pytest.raises(NewsletterRefusalError) as caught:
+        _mime._bound(raw, _mime.RAW_MAX_BYTES)
+    assert caught.value.code == "message_too_complex"
+
+
+def test_a_body_after_an_embedded_message_header_block_is_not_one() -> None:
+    raw = (
+        _TOP
+        + b"--b\r\nContent-Type: message/rfc822\r\n\r\n"
+        + b"From: m@example.org\r\n\r\n"
+        + b"Content-Type: text/plain; boundary*0=ab\r\n--b--\r\n"
+    )
+    _mime._bound(raw, _mime.RAW_MAX_BYTES)  # no refusal
+
+
+def test_lines_that_only_start_like_the_boundary_are_not_counted_as_part_lines() -> (
+    None
+):
+    lookalikes = b"--bcd\r\n" * (2 * MAX_MIME_PARTS + 10)
+    raw = _TOP + _LEAF + lookalikes + b"--b--\r\n"
+    _mime._bound(raw, _mime.RAW_MAX_BYTES)  # no refusal
+
+
+def test_too_many_real_part_lines_are_still_refused() -> None:
+    parts = b"--b\r\n\r\nx\r\n" * (2 * MAX_MIME_PARTS + 5)
+    with pytest.raises(NewsletterRefusalError) as caught:
+        _mime._bound(_TOP + parts + b"--b--\r\n", _mime.RAW_MAX_BYTES)
+    assert caught.value.code == "message_too_complex"
