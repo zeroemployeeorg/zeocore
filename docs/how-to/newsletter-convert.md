@@ -41,6 +41,17 @@ cannot read. The header lines and the `Content-Type` headers are counted **befor
 message is parsed, and the parser is fed 64 KiB at a time with the deadline
 (`timeout_s`, 30 s) checked between pieces.
 
+**A boundary written as an RFC 2231 continuation is refused.** A multipart `boundary`
+given as `boundary*0=...`, `boundary*1=...` or `boundary*=utf-8''...` is honoured by the
+email package, but the pre-scan that counts boundary lines cannot see through it, so the
+message is refused (`message_too_complex`) before it is parsed. Real newsletters write
+the boundary in one piece.
+
+**An indented `3.` is refused too.** The ordered-list check matches a list item at any
+indentation, so an indented code line that begins `3.` (a list start that is not 1) is
+refused (`ordered_list_start`) even though it is not a list. That is harmless: start the
+number at 1 or write it another way.
+
 **Time is bounded in-process, not absolutely.** The email package cannot be interrupted
 inside one 64 KiB piece, and BeautifulSoup cannot be interrupted while it parses. For
 mail from a source you do not trust, call these functions under your own watchdog (a
