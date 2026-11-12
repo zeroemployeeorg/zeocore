@@ -74,7 +74,12 @@ _UNSAFE_BOUNDARY: Final = re.compile(rb"[()<>\\\"]|=\?")
 _UNQUOTED_ENDS: Final = re.compile(rb"[@,:/\[\]?=*']")
 #: A ``boundary`` attribute with no ``=`` after it: the parser reads it as an empty
 #: boundary that delimits on every ``--`` line, which the scan cannot count: refused.
-_BARE_BOUNDARY: Final = re.compile(rb"boundary(?!\s*[=*])", re.IGNORECASE)
+#: Only the word on its own outside quoted strings counts (``"simple boundary"`` and
+#: ``x-boundary-y`` are values and names, not the attribute).
+_BARE_BOUNDARY: Final = re.compile(
+    rb"(?<![\w.\-])boundary(?![\w\-]|\s*[=*])", re.IGNORECASE
+)
+_QUOTED: Final = re.compile(rb'"(?:[^"\\\r\n]|\\.)*"')
 _LINE_END: Final = re.compile(rb"\r\n|\r")
 _CONTENT_TYPE_FIELD: Final = re.compile(
     rb"^content-type[ \t]*:[^\r\n]*(?:\r?\n[ \t][^\r\n]*)*",
@@ -502,7 +507,7 @@ def _declared_boundaries(field: bytes) -> set[bytes]:
     words, so a value with any of them (or an empty one) could delimit on something the
     line scan does not count: refused rather than guessed.
     """
-    if _BARE_BOUNDARY.search(field):
+    if _BARE_BOUNDARY.search(_QUOTED.sub(b'""', field)):
         raise refusal("message_too_complex")
     result: set[bytes] = set()
     for found in _BOUNDARY.finditer(field):

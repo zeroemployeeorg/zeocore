@@ -829,8 +829,15 @@ def test_a_comment_before_an_extended_boundary_does_not_hide_it() -> None:
 
 @pytest.mark.parametrize(
     "parameter",
-    [b'boundary="a/b"', b'boundary="----=_Part_1"', b'boundary="a@b,c:d"'],
-    ids=["slash", "java-mail-part", "punctuation"],
+    [
+        b'boundary="a/b"',
+        b'boundary="----=_Part_1"',
+        b'boundary="a@b,c:d"',
+        b'boundary="simple boundary"',
+        b'boundary="x-boundary-y"',
+        b'boundary="----boundary_abc"',
+    ],
+    ids=["slash", "java-mail-part", "punctuation", "space", "word", "generated"],
 )
 def test_a_quoted_boundary_may_hold_punctuation(parameter: bytes) -> None:
     delimiter = parameter[len(b'boundary="') : -1]
