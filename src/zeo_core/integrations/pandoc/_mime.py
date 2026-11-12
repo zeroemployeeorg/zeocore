@@ -70,6 +70,11 @@ _CONTENT_TYPE_FIELD: Final = re.compile(
     rb"^content-type[ \t]*:[^\r\n]*(?:\r?\n[ \t][^\r\n]*)*",
     re.IGNORECASE | re.MULTILINE,
 )
+#: A ``Content-Type`` field of a multipart type: only such a field declares a boundary
+#: that delimits parts (a ``boundary`` parameter on ``text/plain`` delimits nothing).
+_MULTIPART_FIELD: Final = re.compile(
+    rb"content-type[ \t]*:\s*multipart/", re.IGNORECASE
+)
 #: What may follow ``--<boundary>`` on a boundary line: an optional closing ``--``, then
 #: spaces or tabs, then the line end. Anything else is a longer word, not a delimiter.
 _DELIMITER_END: Final = re.compile(rb"(?:--)?[ \t]*(?:\n|\Z)")
@@ -448,10 +453,11 @@ def _bound_boundary_lines(raw: bytes) -> None:
             continue
         if _BOUNDARY_EXTENDED.search(found.group()):
             raise refusal("message_too_complex")
-        declared.update(
-            declaration.group(1) or declaration.group(2)
-            for declaration in _BOUNDARY.finditer(found.group())
-        )
+        if _MULTIPART_FIELD.match(found.group()):
+            declared.update(
+                declaration.group(1) or declaration.group(2)
+                for declaration in _BOUNDARY.finditer(found.group())
+            )
     lines = sum(raw.count(b"\n--" + boundary) for boundary in boundaries)
     if lines > 2 * MAX_MIME_PARTS + len(boundaries):
         raise refusal("message_too_complex")

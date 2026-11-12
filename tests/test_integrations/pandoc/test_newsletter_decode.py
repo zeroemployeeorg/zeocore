@@ -564,6 +564,15 @@ def test_prose_with_a_boundary_star_is_not_an_extended_boundary_parameter(
     _mime._bound(leaf, _mime.RAW_MAX_BYTES)  # no refusal
 
 
+def test_a_boundary_parameter_on_a_plain_type_delimits_nothing() -> None:
+    plain = (
+        b"From: n@example.org\r\n"
+        b'Content-Type: text/plain; boundary="signature"\r\n\r\n'
+        b"--signature\r\nContent-Type: text/plain; boundary*0=ab\r\n"
+    )
+    _mime._bound(plain, _mime.RAW_MAX_BYTES)  # no refusal
+
+
 @pytest.mark.parametrize(
     "message",
     [
