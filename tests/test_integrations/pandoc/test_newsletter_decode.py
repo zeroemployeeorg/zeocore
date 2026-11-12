@@ -780,6 +780,10 @@ def test_the_boundary_is_read_the_way_the_email_package_reads_it(
         b'boundary=" "',
         b'boundary="=?us-ascii?q?xy?="',
         b'boundary="a\\\\b"',
+        b'boundary="\\"x\\""',
+        b"boundary=a/b",
+        b"boundary=----=_Part_1",
+        b"boundary=a@b",
     ],
     ids=[
         "angle",
@@ -789,6 +793,10 @@ def test_the_boundary_is_read_the_way_the_email_package_reads_it(
         "blank",
         "word",
         "slash",
+        "doubly-quoted",
+        "unquoted-slash",
+        "unquoted-equals",
+        "unquoted-at",
     ],
 )
 def test_a_boundary_the_parser_could_read_differently_is_refused(
@@ -817,3 +825,22 @@ def test_a_comment_before_an_extended_boundary_does_not_hide_it() -> None:
         b"Content-Type: multipart/mixed; (c)boundary*0=xy\r\n\r\n"
     )
     _refused(raw)
+
+
+@pytest.mark.parametrize(
+    "parameter",
+    [b'boundary="a/b"', b'boundary="----=_Part_1"', b'boundary="a@b,c:d"'],
+    ids=["slash", "java-mail-part", "punctuation"],
+)
+def test_a_quoted_boundary_may_hold_punctuation(parameter: bytes) -> None:
+    delimiter = parameter[len(b'boundary="') : -1]
+    raw = (
+        b"From: n@example.org\r\nContent-Type: multipart/mixed; "
+        + parameter
+        + b"\r\n\r\n--"
+        + delimiter
+        + b"\r\nContent-Type: text/plain\r\n\r\nx\r\n--"
+        + delimiter
+        + b"--\r\n"
+    )
+    _mime._bound(raw, _mime.RAW_MAX_BYTES)  # no refusal

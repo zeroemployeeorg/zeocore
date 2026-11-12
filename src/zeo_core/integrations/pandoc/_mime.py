@@ -68,7 +68,10 @@ _BOUNDARY_EXTENDED: Final = re.compile(
 )
 #: A boundary the scan could read differently from the parser (parentheses, angle
 #: brackets, a backslash, an encoded word) is refused as well, and so is an empty one.
-_UNSAFE_BOUNDARY: Final = re.compile(rb"[()<>\\]|=\?")
+_UNSAFE_BOUNDARY: Final = re.compile(rb"[()<>\\\"]|=\?")
+#: An unquoted value ends at the first of these in the parser (``boundary=a/b`` delimits
+#: on ``--a``), so one holding any of them is refused rather than cut the same way.
+_UNQUOTED_ENDS: Final = re.compile(rb"[@,:/\[\]?=*']")
 _LINE_END: Final = re.compile(rb"\r\n|\r")
 _CONTENT_TYPE_FIELD: Final = re.compile(
     rb"^content-type[ \t]*:[^\r\n]*(?:\r?\n[ \t][^\r\n]*)*",
@@ -499,7 +502,8 @@ def _declared_boundaries(field: bytes) -> set[bytes]:
     result: set[bytes] = set()
     for found in _BOUNDARY.finditer(field):
         value = _boundary_value(found)
-        if not value or _UNSAFE_BOUNDARY.search(value):
+        unquoted = found.group(1) is None and _UNQUOTED_ENDS.search(value)
+        if not value or unquoted or _UNSAFE_BOUNDARY.search(value):
             raise refusal("message_too_complex")
         result.add(value)
     return result
