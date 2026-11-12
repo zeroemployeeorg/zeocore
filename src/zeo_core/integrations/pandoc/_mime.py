@@ -53,19 +53,22 @@ _PART_HEADER: Final = re.compile(rb"^content-type:", re.IGNORECASE | re.MULTILIN
 #: A declared multipart boundary. Parts with no headers at all have no Content-Type,
 #: but each still costs a boundary line, so the lines are counted too.
 _BOUNDARY: Final = re.compile(
-    rb"boundary\s*=\s*(?:\"((?:[^\"\\\r\n]|\\.)+)\"|([^;\"\r\n]+))",
+    rb"boundary\s*=\s*(?:\"((?:[^\"\\\r\n]|\\.)*)\"|([^\s;\"]+))",
     re.IGNORECASE,
 )
 _ESCAPE: Final = re.compile(rb"\\(.)")
 #: An RFC 2231 parameter continuation or encoding of the boundary (``boundary*0=``,
 #: ``boundary*=utf-8''...``). The ``email`` package honours it, but the pattern above
 #: cannot see through it, so the boundary lines could not be counted: refused.
-#: Only a header parameter counts (a ``;`` before it, ``=`` after it, folding allowed)
-#: and only inside a ``Content-Type`` field (the line and its folded lines):
-#: body prose that merely contains ``; boundary*0=`` is not a declaration.
+#: It is looked for anywhere in a ``Content-Type`` field of a real header section (the
+#: line and its folded lines), so a comment before it cannot hide it; body prose is
+#: never a header section (see ``_in_header_section``).
 _BOUNDARY_EXTENDED: Final = re.compile(
-    rb";\s*boundary\s*\*\s*(?:\d+\s*\*?\s*)?=", re.IGNORECASE
+    rb"boundary\s*\*\s*(?:\d+\s*\*?\s*)?=", re.IGNORECASE
 )
+#: A boundary the scan could read differently from the parser (parentheses, angle
+#: brackets, a backslash, an encoded word) is refused as well, and so is an empty one.
+_UNSAFE_BOUNDARY: Final = re.compile(rb"[()<>\\]|=\?")
 _LINE_END: Final = re.compile(rb"\r\n|\r")
 _CONTENT_TYPE_FIELD: Final = re.compile(
     rb"^content-type[ \t]*:[^\r\n]*(?:\r?\n[ \t][^\r\n]*)*",
@@ -485,6 +488,23 @@ def _boundary_value(found: re.Match[bytes]) -> bytes:
     return value.rstrip()
 
 
+def _declared_boundaries(field: bytes) -> set[bytes]:
+    """
+    The boundaries a multipart ``Content-Type`` field declares, or a refusal.
+
+    The parser unquotes twice, strips angle brackets, reads comments and decodes encoded
+    words, so a value with any of them (or an empty one) could delimit on something the
+    line scan does not count: refused rather than guessed.
+    """
+    result: set[bytes] = set()
+    for found in _BOUNDARY.finditer(field):
+        value = _boundary_value(found)
+        if not value or _UNSAFE_BOUNDARY.search(value):
+            raise refusal("message_too_complex")
+        result.add(value)
+    return result
+
+
 def _mentioned_boundaries(raw: bytes) -> set[bytes]:
     """Every boundary the message mentions anywhere, refusing a flood of them."""
     boundaries: set[bytes] = set()
@@ -511,11 +531,7 @@ def _refuse_extended_boundaries(raw: bytes) -> None:
         if _BOUNDARY_EXTENDED.search(found.group()):
             raise refusal("message_too_complex")
         if _MULTIPART_FIELD.match(found.group()):
-            declared.update(
-                value
-                for value in map(_boundary_value, _BOUNDARY.finditer(found.group()))
-                if value
-            )
+            declared.update(_declared_boundaries(found.group()))
         elif _EMBEDDED_FIELD.match(found.group()):
             end = raw.find(b"\n\n", found.end())
             if end >= 0:

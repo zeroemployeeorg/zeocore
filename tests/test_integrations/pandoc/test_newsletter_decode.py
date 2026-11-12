@@ -768,3 +768,52 @@ def test_the_boundary_is_read_the_way_the_email_package_reads_it(
         + _HIDDEN
     )
     _refused(raw)
+
+
+@pytest.mark.parametrize(
+    "parameter",
+    [
+        b'boundary="<x>"',
+        b'boundary="b (c)"',
+        b"boundary=b(c)",
+        b'boundary=""',
+        b'boundary=" "',
+        b'boundary="=?us-ascii?q?xy?="',
+        b'boundary="a\\\\b"',
+    ],
+    ids=[
+        "angle",
+        "quoted-comment",
+        "unquoted-comment",
+        "empty",
+        "blank",
+        "word",
+        "slash",
+    ],
+)
+def test_a_boundary_the_parser_could_read_differently_is_refused(
+    parameter: bytes,
+) -> None:
+    raw = (
+        b"From: n@example.org\r\nContent-Type: multipart/mixed; "
+        + parameter
+        + b"\r\n\r\n--x\r\n\r\nbody\r\n--x--\r\n"
+    )
+    _refused(raw)
+
+
+def test_a_comment_after_an_unquoted_boundary_is_not_part_of_it() -> None:
+    raw = (
+        b"From: n@example.org\r\n"
+        b"Content-Type: multipart/mixed; boundary=b (c)\r\n\r\n"
+        b"--b\r\n" + _HIDDEN
+    )
+    _refused(raw)
+
+
+def test_a_comment_before_an_extended_boundary_does_not_hide_it() -> None:
+    raw = (
+        b"From: n@example.org\r\n"
+        b"Content-Type: multipart/mixed; (c)boundary*0=xy\r\n\r\n"
+    )
+    _refused(raw)
