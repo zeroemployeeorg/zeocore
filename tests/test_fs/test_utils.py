@@ -34,7 +34,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-from hypothesis import given
+from hypothesis import example, given
 from hypothesis import strategies as st
 
 from zeo_core.core.fs._internal.checksums import _compute_checksum
@@ -828,6 +828,9 @@ class TestFileUtilities:
         # Test with non-existent file
         assert not _is_file_locked(temp_dir / "nonexistent.txt")
 
+    @example(" .")
+    @example(".")
+    @example("..")
     @given(st.text(min_size=1, max_size=100))
     def test_hypothetical_path_operations(self, text: str) -> None:
         """Test path _ops with hypothesis-generated text.
@@ -867,6 +870,10 @@ class TestFileUtilities:
             )
         else:
             valid_filename = sanitized_text.strip()
+        # A name made only of dots (hypothesis finds " ." -> ".") gives
+        # "..txt" below, whose suffix is empty: not a filename this test is about.
+        if not valid_filename.strip("."):
+            valid_filename = "default"
 
         # Test extension extraction (this should be safe)
         with_extension = f"{valid_filename}.txt"
