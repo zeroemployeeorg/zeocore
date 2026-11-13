@@ -117,6 +117,14 @@ def test_a_missing_header_is_an_empty_string() -> None:
     assert decoded.message_id == ""
 
 
+def test_a_message_with_bare_cr_line_ends_is_bounded_like_any_other() -> None:
+    # email ends a line at a bare CR, so header lines and the blank line are counted so
+    many = b"From: n@example.org\r" + b"X-A: v\r" * (4 * _mime.MAX_HEADERS + 5) + b"\r"
+    with pytest.raises(NewsletterRefusalError) as caught:
+        _mime._bound(many + b"body", _mime.RAW_MAX_BYTES)
+    assert caught.value.code == "message_too_complex"
+
+
 def test_headers_are_single_line_and_bounded() -> None:
     message = _alternative()
     del message["Subject"]
@@ -483,6 +491,125 @@ def test_headerless_parts_are_counted_by_their_boundary_lines() -> None:
     assert caught.value.code == "message_too_complex"
 
 
+@pytest.mark.parametrize(
+    "parameter",
+    [
+        b'boundary*0="ab"; boundary*1="cd"',
+        b"boundary*=utf-8''abcd",
+        b"boundary*0*=utf-8''ab; boundary*1=\"cd\"",
+        b'BOUNDARY *0="abcd"',
+    ],
+    ids=["continuation", "encoded", "encoded-continuation", "case-and-space"],
+)
+def test_a_boundary_written_as_an_rfc_2231_continuation_is_refused_before_parsing(
+    parameter: bytes,
+) -> None:
+    """email honours ``boundary*0=``; the pre-scan could not count such a boundary."""
+    import time
+
+    # ~1.7M header-less parts in under the 10 MiB limit: 6 bytes each
+    parts = b"--abcd\n\n" * 1_300_000
+    raw = (
+        b"From: n@example.org\n"
+        b"Content-Type: multipart/mixed; " + parameter + b"\n\n" + parts
+    )
+    assert len(raw) < _mime.RAW_MAX_BYTES
+    started = time.monotonic()
+    with pytest.raises(NewsletterRefusalError) as caught:
+        decode_raw_message(raw)
+    assert caught.value.code == "message_too_complex"
+    assert time.monotonic() - started < 2.0  # refused by the pre-scan, not parsed
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        b"The regex boundary* is literal.\r\n",
+        b"boundary*0=ab and boundary*=utf-8''ab are written about here.\r\n",
+        b"a boundary * b, and a boundary*1 c\r\n",
+        b"Example; boundary*0=ab\r\n",
+        b"Example; boundary*=utf-8''ab, and more.\r\n",
+        b"Content-Type: text/plain; boundary*0=ab\r\n",
+        b"Content-Type: text/plain;\r\n boundary*0=ab\r\n",
+        b"-- signature\r\nContent-Type: text/plain; boundary*0=ab\r\n",
+        b"-- \r\nContent-Type: text/plain;\r\n boundary*0=ab\r\n",
+        b'Example boundary="signature"\r\n--signature\r\n'
+        b"Content-Type: text/plain; boundary*0=ab\r\n",
+        b"--bcd\r\nContent-Type: text/plain; boundary*0=ab\r\n",
+    ],
+    ids=[
+        "star-prose",
+        "parameter-shaped-prose",
+        "spaced-star",
+        "semicolon-prose",
+        "semicolon-encoded-prose",
+        "header-shaped-body-line",
+        "folded-header-shaped-body-lines",
+        "signature-then-header-shaped-line",
+        "bare-signature-then-folded-header-shaped-lines",
+        "boundary-only-mentioned-in-prose",
+        "line-that-only-starts-like-the-boundary",
+    ],
+)
+def test_prose_with_a_boundary_star_is_not_an_extended_boundary_parameter(
+    body: bytes,
+) -> None:
+    plain = b"From: n@example.org\r\nContent-Type: text/plain\r\n\r\n" + body
+    _mime._bound(plain, _mime.RAW_MAX_BYTES)  # no refusal
+    leaf = (
+        b"From: n@example.org\r\n"
+        b'Content-Type: multipart/mixed; boundary="b"\r\n\r\n'
+        b"--b\r\nContent-Type: text/plain\r\n\r\n" + body + b"--b--\r\n"
+    )
+    _mime._bound(leaf, _mime.RAW_MAX_BYTES)  # no refusal
+
+
+def test_a_boundary_parameter_on_a_plain_type_delimits_nothing() -> None:
+    plain = (
+        b"From: n@example.org\r\n"
+        b'Content-Type: text/plain; boundary="signature"\r\n\r\n'
+        b"--signature\r\nContent-Type: text/plain; boundary*0=ab\r\n"
+    )
+    _mime._bound(plain, _mime.RAW_MAX_BYTES)  # no refusal
+
+
+@pytest.mark.parametrize(
+    "message",
+    [
+        b"From: n@example.org\r\n"
+        b"Content-Type: multipart/mixed;\r\n boundary*0=ab;\r\n boundary*1=cd\r\n\r\n",
+        b"From: n@example.org\r\n"
+        b'Content-Type: multipart/mixed; boundary="b"\r\n\r\n'
+        b"--b\r\nContent-Type: multipart/mixed; boundary*=utf-8''xy\r\n\r\n",
+        b"From: n@example.org\r\n"
+        b'Content-Type: multipart/mixed; boundary="b"\r\n\r\n'
+        b"--b\r\nContent-Type: multipart/mixed;\r\n\tboundary*0=xy\r\n\r\n",
+        b"From: n@example.org\r\n"
+        b'Content-Type: multipart/mixed; boundary="b"\r\n\r\n'
+        b"--b\r\nContent-Type: text/plain\r\n\r\nbody\r\n\r\nx\r--b\r"
+        b"Content-Type: multipart/mixed; boundary*0=xy\r\n\r\n",
+    ],
+    ids=["folded-top-level", "nested-encoded", "nested-folded", "bare-cr-delimiter"],
+)
+def test_an_extended_boundary_in_a_content_type_field_is_refused_wherever_it_sits(
+    message: bytes,
+) -> None:
+    with pytest.raises(NewsletterRefusalError) as caught:
+        _mime._bound(message, _mime.RAW_MAX_BYTES)
+    assert caught.value.code == "message_too_complex"
+
+
+def test_a_plain_boundary_with_no_star_is_still_counted_not_refused_for_a_star() -> (
+    None
+):
+    parts = b"--b\r\nContent-Type: text/plain\r\n\r\nx\r\n" * 3
+    raw = (
+        b"From: n@example.org\r\n"
+        b'Content-Type: multipart/mixed; boundary="b"\r\n\r\n' + parts + b"--b--\r\n"
+    )
+    _mime._bound(raw, _mime.RAW_MAX_BYTES)  # no refusal
+
+
 def test_a_message_with_the_largest_allowed_parts_is_not_refused_by_the_prescan() -> (
     None
 ):
@@ -501,3 +628,248 @@ def test_a_flood_of_boundary_declarations_is_refused_before_parsing() -> None:
     with pytest.raises(NewsletterRefusalError) as caught:
         _mime._bound(raw, _mime.RAW_MAX_BYTES)
     assert caught.value.code == "message_too_complex"
+
+
+_TOP = b'From: n@example.org\r\nContent-Type: multipart/mixed; boundary="b"\r\n\r\n'
+_LEAF = b"--b\r\nContent-Type: text/plain\r\n\r\nhello\r\n"
+
+
+@pytest.mark.parametrize(
+    "epilogue",
+    [
+        b"Content-Type: text/plain; boundary*0=ab\r\n\r\nepilogue\r\n",
+        b"\r\nContent-Type: multipart/mixed;\r\n boundary*0=ab\r\n",
+        b"Content-Type: multipart/mixed; boundary*=utf-8''ab\r\n",
+    ],
+    ids=["header-shaped", "after-blank-line", "multipart-shaped"],
+)
+def test_text_after_a_closing_delimiter_is_an_epilogue_not_a_header_section(
+    epilogue: bytes,
+) -> None:
+    _mime._bound(_TOP + _LEAF + b"--b--\r\n" + epilogue, _mime.RAW_MAX_BYTES)
+
+
+def test_a_part_that_follows_a_closed_nested_multipart_is_still_a_header_section() -> (
+    None
+):
+    inner = (
+        b"--b\r\nContent-Type: multipart/mixed; boundary=i\r\n\r\n"
+        b"--i\r\nContent-Type: text/plain\r\n\r\nx\r\n--i--\r\n"
+    )
+    raw = (
+        _TOP
+        + inner
+        + b"--b\r\nContent-Type: multipart/mixed; boundary*0=xy\r\n\r\n--b--\r\n"
+    )
+    with pytest.raises(NewsletterRefusalError) as caught:
+        _mime._bound(raw, _mime.RAW_MAX_BYTES)
+    assert caught.value.code == "message_too_complex"
+
+
+@pytest.mark.parametrize(
+    "header",
+    [
+        b"Content-Type: multipart/mixed; boundary*0=xy\r\n",
+        b"Content-Type: multipart/mixed;\r\n boundary*=utf-8''xy\r\n",
+    ],
+    ids=["continuation", "folded-encoded"],
+)
+def test_an_extended_boundary_in_an_embedded_message_header_block_is_refused(
+    header: bytes,
+) -> None:
+    raw = (
+        _TOP
+        + b"--b\r\nContent-Type: message/rfc822\r\n\r\n"
+        + b"From: m@example.org\r\n"
+        + header
+        + b"\r\nbody\r\n--b--\r\n"
+    )
+    with pytest.raises(NewsletterRefusalError) as caught:
+        _mime._bound(raw, _mime.RAW_MAX_BYTES)
+    assert caught.value.code == "message_too_complex"
+
+
+def test_a_body_after_an_embedded_message_header_block_is_not_one() -> None:
+    raw = (
+        _TOP
+        + b"--b\r\nContent-Type: message/rfc822\r\n\r\n"
+        + b"From: m@example.org\r\n\r\n"
+        + b"Content-Type: text/plain; boundary*0=ab\r\n--b--\r\n"
+    )
+    _mime._bound(raw, _mime.RAW_MAX_BYTES)  # no refusal
+
+
+def test_lines_that_only_start_like_the_boundary_are_not_counted_as_part_lines() -> (
+    None
+):
+    lookalikes = b"--bcd\r\n" * (2 * MAX_MIME_PARTS + 10)
+    raw = _TOP + _LEAF + lookalikes + b"--b--\r\n"
+    _mime._bound(raw, _mime.RAW_MAX_BYTES)  # no refusal
+
+
+def test_too_many_real_part_lines_are_still_refused() -> None:
+    parts = b"--b\r\n\r\nx\r\n" * (2 * MAX_MIME_PARTS + 5)
+    with pytest.raises(NewsletterRefusalError) as caught:
+        _mime._bound(_TOP + parts + b"--b--\r\n", _mime.RAW_MAX_BYTES)
+    assert caught.value.code == "message_too_complex"
+
+
+_HIDDEN = b"Content-Type: multipart/mixed; boundary*0=xy\r\n\r\n"
+
+
+def _refused(raw: bytes) -> None:
+    with pytest.raises(NewsletterRefusalError) as caught:
+        _mime._bound(raw, _mime.RAW_MAX_BYTES)
+    assert caught.value.code == "message_too_complex"
+
+
+def test_a_line_that_closes_one_boundary_and_opens_another_is_read_as_opening() -> None:
+    # '--b--' closes 'b' and opens 'b--': the header block after it must be read
+    raw = (
+        _TOP
+        + b'--b\r\nContent-Type: multipart/mixed; boundary="b--"\r\n\r\n'
+        + b"--b--\r\n"
+        + _HIDDEN
+    )
+    _refused(raw)
+
+
+@pytest.mark.parametrize("subtype", ["news", "partial", "delivery-status", "rfc822"])
+def test_any_embedded_message_type_has_its_header_block_read(subtype: str) -> None:
+    raw = (
+        _TOP
+        + b"--b\r\nContent-Type: message/"
+        + subtype.encode()
+        + b"\r\n\r\nFrom: m@example.org\r\n"
+        + _HIDDEN
+    )
+    _refused(raw)
+
+
+@pytest.mark.parametrize(
+    ("top", "delimiter"),
+    [
+        (b'boundary="b "', b"--b"),
+        (b'boundary="a\\"b"', b'--a"b'),
+        (b'boundary="' + b"x" * 80 + b'"', b"--" + b"x" * 80),
+        (b"boundary=b ", b"--b"),
+    ],
+    ids=["trailing-space", "escaped-quote", "over-70-characters", "unquoted-trailing"],
+)
+def test_the_boundary_is_read_the_way_the_email_package_reads_it(
+    top: bytes, delimiter: bytes
+) -> None:
+    raw = (
+        b"From: n@example.org\r\nContent-Type: multipart/mixed; "
+        + top
+        + b"\r\n\r\n"
+        + delimiter
+        + b"\r\n"
+        + _HIDDEN
+    )
+    _refused(raw)
+
+
+@pytest.mark.parametrize(
+    "parameter",
+    [
+        b'boundary="<x>"',
+        b'boundary="b (c)"',
+        b"boundary=b(c)",
+        b'boundary=""',
+        b'boundary=" "',
+        b'boundary="=?us-ascii?q?xy?="',
+        b'boundary="a\\\\b"',
+        b'boundary="\\"x\\""',
+        b"boundary=a/b",
+        b"boundary=----=_Part_1",
+        b"boundary=a@b",
+    ],
+    ids=[
+        "angle",
+        "quoted-comment",
+        "unquoted-comment",
+        "empty",
+        "blank",
+        "word",
+        "slash",
+        "doubly-quoted",
+        "unquoted-slash",
+        "unquoted-equals",
+        "unquoted-at",
+    ],
+)
+def test_a_boundary_the_parser_could_read_differently_is_refused(
+    parameter: bytes,
+) -> None:
+    raw = (
+        b"From: n@example.org\r\nContent-Type: multipart/mixed; "
+        + parameter
+        + b"\r\n\r\n--x\r\n\r\nbody\r\n--x--\r\n"
+    )
+    _refused(raw)
+
+
+def test_a_comment_after_an_unquoted_boundary_is_not_part_of_it() -> None:
+    raw = (
+        b"From: n@example.org\r\n"
+        b"Content-Type: multipart/mixed; boundary=b (c)\r\n\r\n"
+        b"--b\r\n" + _HIDDEN
+    )
+    _refused(raw)
+
+
+def test_a_comment_before_an_extended_boundary_does_not_hide_it() -> None:
+    raw = (
+        b"From: n@example.org\r\n"
+        b"Content-Type: multipart/mixed; (c)boundary*0=xy\r\n\r\n"
+    )
+    _refused(raw)
+
+
+@pytest.mark.parametrize(
+    "parameter",
+    [
+        b'boundary="a/b"',
+        b'boundary="----=_Part_1"',
+        b'boundary="a@b,c:d"',
+        b'boundary="simple boundary"',
+        b'boundary="x-boundary-y"',
+        b'boundary="----boundary_abc"',
+    ],
+    ids=["slash", "java-mail-part", "punctuation", "space", "word", "generated"],
+)
+def test_a_quoted_boundary_may_hold_punctuation(parameter: bytes) -> None:
+    delimiter = parameter[len(b'boundary="') : -1]
+    raw = (
+        b"From: n@example.org\r\nContent-Type: multipart/mixed; "
+        + parameter
+        + b"\r\n\r\n--"
+        + delimiter
+        + b"\r\nContent-Type: text/plain\r\n\r\nx\r\n--"
+        + delimiter
+        + b"--\r\n"
+    )
+    _mime._bound(raw, _mime.RAW_MAX_BYTES)  # no refusal
+
+
+@pytest.mark.parametrize(
+    "field",
+    [
+        b"Content-Type: multipart/mixed; boundary\r\n",
+        b"Content-Type: multipart/mixed; boundary;\r\n",
+        b"Content-Type: multipart/mixed; boundary (c)\r\n",
+        b"Content-Type: multipart/mixed;\r\n boundary\r\n",
+        b'Content-Type: multipart/mixed; boundary; charset="x"\r\n',
+    ],
+    ids=[
+        "bare",
+        "bare-semicolon",
+        "bare-comment",
+        "bare-folded",
+        "bare-then-parameter",
+    ],
+)
+def test_a_bare_boundary_attribute_is_refused_before_parsing(field: bytes) -> None:
+    parts = b"--\r\n\r\nx\r\n" * (2 * MAX_MIME_PARTS + 5)
+    _refused(b"From: n@example.org\r\n" + field + b"\r\n" + parts + b"----\r\n")

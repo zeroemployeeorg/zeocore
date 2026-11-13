@@ -1,0 +1,2 @@
+bump: patch
+Newsletter decode: text after a closing boundary line is an epilogue, not a header section, so a Content-Type-shaped line there no longer causes a refusal. An embedded message/rfc822 part now has its own header block read for an RFC 2231 boundary, so one hidden there is refused. Only lines that are exactly a boundary line count towards the part limit; a longer word that starts like the boundary costs nothing. Follow-up to #220.
