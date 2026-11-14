@@ -21,9 +21,11 @@ DEFAULT_ENTRY_GROUP = "zeo_core.integrations"
 def _distribution_of(entry_point: EntryPoint) -> str:
     """``name version`` of the distribution that registered an entry point."""
     dist = getattr(entry_point, "dist", None)
-    if dist is None:
+    name = getattr(dist, "name", None)
+    if not name:
         return "an unknown distribution"
-    return f"{dist.name} {dist.version}"
+    version = getattr(dist, "version", None)
+    return f"{name} {version}" if version else str(name)
 
 
 def _group_by_name(group: str) -> dict[str, list[EntryPoint]]:
