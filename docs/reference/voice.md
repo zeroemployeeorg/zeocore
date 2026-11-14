@@ -45,7 +45,7 @@ asr, tts = VoiceProfile.load("profile.json").engines(factory)
 This package is derived from the Apache-2.0 `voicerouter` pattern of
 `RasaHQ/rasa-community-resources` (commit `9f85e2be`). Other than module names, import
 order and line wrapping, the changes are numbered, and each has its own test in
-`tests/test_voice/test_deviations.py`:
+`tests/test_voice/test_deviations.py` (D1 to D8) and `tests/test_voice/test_providers.py` (D9 to D11):
 
 | | Change |
 |---|---|
@@ -57,6 +57,9 @@ order and line wrapping, the changes are numbered, and each has its own test in
 | D6 | `audioop` is the standard library on Python 3.12 and the `audioop-lts` package on 3.13 and later. |
 | D7 | The contract scanner takes an explicit source root and imports nothing to find one. |
 | D8 | A provider that fails after it connected is closed, bounded to five seconds, before the router stops tracking it. A language the engine refuses before touching its socket leaves the connection open. |
+| D9 | The HTTP transport of the shared TTS base is httpx, not aiohttp, and the caller supplies the API key; Core reads no environment variable. |
+| D10 | The vendor engines in `zeo_core.voice.providers` use the standalone engine types; `websockets` and `faster-whisper` are imported when used and are not Core dependencies. |
+| D11 | Only the Speechmatics ASR class and the three engines the open examples use are carried; the vendor catalogue and the other adapters stay upstream. |
 
 The tests in `tests/test_voice/` are derived from the upstream tests by function. The
 differences (stand-in HTTP and AWS errors, an inline profile, an explicit scanner root)
@@ -68,3 +71,18 @@ The files in `src/zeo_core/voice/` and `tests/test_voice/` that come from the up
 pattern are Apache-2.0 (`src/zeo_core/voice/LICENSE`, `src/zeo_core/voice/NOTICE`,
 `tests/test_voice/NOTICE`); the rest of ZeoCore is MIT. Use of the upstream names is for
 identification of compatibility only and implies no endorsement.
+
+## Vendor engines (`zeo_core.voice.providers`)
+
+| Engine | Kind | Needs |
+|---|---|---|
+| `openai.OpenAITTS` | text to speech, one HTTP request per utterance | an API key (constructor argument) |
+| `speechmatics.SpeechmaticsASR` | realtime speech to text over one websocket | an API key and the `websockets` package |
+| `whisper.FasterWhisperASR` | local speech to text with energy endpointing | the `faster-whisper` package |
+
+Each is a standalone engine: it imports no framework, adds no Core dependency, and takes
+its credential as a constructor argument or `from_config_dict(..., api_key=...)`. An
+engine whose key or package is missing raises an error saying it is "not configured
+here", which the router skips like any provider that is not usable on this machine. A
+framework that needs its own engine types (a voice channel with its own base classes)
+wraps these engines in its own adapter; that adapter is not part of Core.
