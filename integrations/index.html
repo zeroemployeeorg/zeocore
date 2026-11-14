@@ -2359,6 +2359,25 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#two-packages-one-integration-name" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Two packages, one integration name
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -2521,6 +2540,21 @@ selected resources and recipients still determine what the provider can change.<
 <a href="meetings/">meeting adapters</a>.</p>
 <p>Trusted notebook execution is a separate <a href="notebook-execution/">optional local API</a>.</p>
 <p>Run the <a href="authoring-reference/">complete authoring reference</a> for a staged, independently checked release.</p>
+<h2 id="two-packages-one-integration-name">Two packages, one integration name<a class="headerlink" href="#two-packages-one-integration-name" title="Permanent link">&para;</a></h2>
+<p>An integration registers under a name in the <code>zeo_core.integrations</code> entry-point
+group. Since 0.24.0, two installed distributions that register the same name are an
+error, never "the last one wins": loading that name fails and the message names each
+distribution and its version, for example <code>Integration 'ffmpeg' is registered by more
+than one distribution (zeo-integration-ffmpeg 0.1.0; zeocore 0.24.0); uninstall all
+but one.</code> In non-strict loading the name is skipped and the others load; in strict
+loading the load stops with the error.</p>
+<p><code>list_available_entry_points()</code> lists one row per registration with the keys
+<code>integration_id</code>, <code>value</code>, <code>module</code>, <code>distribution</code> (<code>name version</code>) and <code>ambiguous</code>
+(<code>"true"</code> or <code>"false"</code>). The load report also has <code>id_mismatches</code>: a list of
+<code>name -&gt; actual</code> for an integration whose own <code>integration_id</code> differs from the name it
+registered under. It is information only; nothing is renamed or refused.</p>
+<p>The check sees what <code>importlib.metadata</code> reports. It cannot tell apart two installs of
+one distribution name. To fix an ambiguous name, uninstall one of the two packages.</p>
 
 
 
