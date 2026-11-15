@@ -117,6 +117,8 @@ class SheetsAppendTool(BaseZeoTool):
             request.spreadsheet_id,
             request.range_a1,
             [list(row) for row in request.rows],
+            # RAW stores text as typed: a model-supplied "=IMPORTXML(...)" stays text.
+            value_input_option="RAW",
         )
         if not out.success:
             return CapabilityResult.fail(
@@ -132,6 +134,7 @@ class InMemorySheets:
 
     def __init__(self) -> None:
         self.rows: list[list[Any]] = [["asset", "owner"]]
+        self.input_options: list[str] = []
 
     def get_values(
         self, spreadsheet_id: str, range_a1: str
@@ -147,6 +150,7 @@ class InMemorySheets:
         values: list[list[Any]],
         value_input_option: str = "USER_ENTERED",
     ) -> IntegrationResult[dict[str, Any]]:
+        self.input_options.append(value_input_option)
         self.rows.extend(values)
         return IntegrationResult.success_result(
             content={"updates": {"updatedRows": len(values)}}
