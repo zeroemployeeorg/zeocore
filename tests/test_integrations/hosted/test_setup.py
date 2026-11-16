@@ -119,7 +119,7 @@ webbrowser.open = forbidden
 from zeo_core.integrations.hosted.setup_catalog import SETUP_CATALOGUE, setup_manifest
 from zeo_core.integrations.hosted import (
     ServiceResolver, ServiceRequirement, ExecutionProfile)
-assert len(SETUP_CATALOGUE) == 20
+assert len(SETUP_CATALOGUE) == 19
 assert setup_manifest('hubspot.marketing').profiles
 result = ServiceResolver(profile=ExecutionProfile.HOSTED).resolve(
     ServiceRequirement(
