@@ -76,9 +76,7 @@ def test_catalogue_covers_entrypoints_and_nonentry_setup_tracks() -> None:
             if profile.profile != ExecutionProfile.LOCAL
         )
     assert setup_manifest("missing") is None
-    builder = setup_manifest("supabase")
     onboarding = setup_manifest("zeoconnect")
-    assert builder is not None and builder.surface == "builder"
     assert onboarding is not None and onboarding.surface == "onboarding"
 
 

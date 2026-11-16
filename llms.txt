@@ -111,8 +111,7 @@ file under examples/ — every one of them is runnable as printed
   `LLMOptions.tools` for tool-calling and `LLMOptions.cache_system_prompt`
   for Anthropic prompt caching — see GET-STARTED.md for the one known
   gap: tool_use response blocks aren't parsed back into structured
-  output yet). `supabase` is shipped (Database, Auth, Storage, Edge Functions and Realtime);
-  raw SQL and Vault plaintext access are excluded. Do not infer BigQuery or a
+  output yet). Supabase moved to the `zeo-integrations` package (`zeo_integrations.supabase`) and is no longer in Core. Do not infer BigQuery or a
   general SQLite integration from the internal SQLite effect broker.
 - `zeo_core.contract_pack`: `PACK_VERSION` / `PACK_SCHEMA` for ecosystem
   consumption tests; does not import `sovereign_agent`.

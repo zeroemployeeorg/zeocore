@@ -104,10 +104,7 @@ use interactive prompts in CI; missing credentials should fail. Examples:
 
 Apply the same prefix to every variable listed in the provider guides. When both
 namespaces contain the same secret value for a provider variable, launch is refused.
-For selected live Supabase runs, nonempty identical `SUPABASE_URL` values in both
-namespaces are also refused, even when the keys differ: separate keys can address
-the same project. This compares the exact supplied URLs only when both are present;
-it does not resolve custom domains or aliases. Identical Bluesky service URLs are
+Identical Bluesky service URLs are
 allowed because different accounts can share that public service. These checks
 cannot generally detect two different keys for the same production account.
 Check account identity and resource access in the provider UI.
@@ -124,7 +121,7 @@ arguments. The launcher does **not** parse `.env` files or load arbitrary shell 
 ## Configuration and application code
 
 Edit the selected `config/integrations.yaml`; keep credentials out of it. It uses
-the existing provider sections (`notion`, `supabase`, `llm`, `integrations.google`,
+the existing provider sections (`notion`, `llm`, `integrations.google`,
 etc.) shown in the individual guides. Store resource IDs and expected account
 labels separately in a mode-specific file such as `config/scenario.json`, and
 have your application read it explicitly. Resource IDs do not magically change
