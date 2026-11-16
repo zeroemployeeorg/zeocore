@@ -542,8 +542,6 @@
       
         
       
-        
-      
     
     
     
@@ -1016,34 +1014,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/supabase-integration/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Supabase
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../tutorials/calendar-integration/" class="md-nav__link">
         
   
@@ -1141,8 +1111,6 @@
       
         
           
-        
-      
         
       
         
@@ -1546,34 +1514,6 @@
     
   
     Notion
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../supabase/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Supabase
   
 
     
@@ -2708,10 +2648,7 @@ use interactive prompts in CI; missing credentials should fail. Examples:</p>
 </table>
 <p>Apply the same prefix to every variable listed in the provider guides. When both
 namespaces contain the same secret value for a provider variable, launch is refused.
-For selected live Supabase runs, nonempty identical <code>SUPABASE_URL</code> values in both
-namespaces are also refused, even when the keys differ: separate keys can address
-the same project. This compares the exact supplied URLs only when both are present;
-it does not resolve custom domains or aliases. Identical Bluesky service URLs are
+Identical Bluesky service URLs are
 allowed because different accounts can share that public service. These checks
 cannot generally detect two different keys for the same production account.
 Check account identity and resource access in the provider UI.</p>
@@ -2725,7 +2662,7 @@ Other application settings belong in the selected non-secret config or command
 arguments. The launcher does <strong>not</strong> parse <code>.env</code> files or load arbitrary shell files.</p>
 <h2 id="configuration-and-application-code">Configuration and application code<a class="headerlink" href="#configuration-and-application-code" title="Permanent link">&para;</a></h2>
 <p>Edit the selected <code>config/integrations.yaml</code>; keep credentials out of it. It uses
-the existing provider sections (<code>notion</code>, <code>supabase</code>, <code>llm</code>, <code>integrations.google</code>,
+the existing provider sections (<code>notion</code>, <code>llm</code>, <code>integrations.google</code>,
 etc.) shown in the individual guides. Store resource IDs and expected account
 labels separately in a mode-specific file such as <code>config/scenario.json</code>, and
 have your application read it explicitly. Resource IDs do not magically change

@@ -818,17 +818,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#working-with-supabase" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Working with Supabase
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#working-with-jupytext-integration-script-to-notebook-conversion" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1399,8 +1388,6 @@
       
         
       
-        
-      
     
     
     
@@ -1873,34 +1860,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/supabase-integration/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Supabase
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../tutorials/calendar-integration/" class="md-nav__link">
         
   
@@ -1996,8 +1955,6 @@
       
         
           
-        
-      
         
       
         
@@ -2277,34 +2234,6 @@
     
   
     Notion
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../integrations/supabase/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Supabase
   
 
     
@@ -3564,17 +3493,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#working-with-supabase" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Working with Supabase
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#working-with-jupytext-integration-script-to-notebook-conversion" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4156,11 +4074,10 @@ macOS/Linux and Windows.</p>
 </code></pre></div>
 <p>Integrations ship as optional extras, so you install only what you use:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"zeocore[notion]"</span><span class="w">     </span><span class="c1"># a single integration</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"zeocore[supabase]"</span><span class="w">   </span><span class="c1"># database, auth, storage, functions, realtime</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"zeocore[google]"</span><span class="w">     </span><span class="c1"># Drive + Gmail auth plumbing</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"zeocore[http]"</span><span class="w">       </span><span class="c1"># FastAPI adapter, expose tools over REST</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"zeocore[mcp]"</span><span class="w">        </span><span class="c1"># MCP adapter for Claude Code, Cursor, etc.</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"zeocore[all,mcp]"</span><span class="w">    </span><span class="c1"># everything (note: [all] excludes mcp)</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"zeocore[google]"</span><span class="w">     </span><span class="c1"># Drive + Gmail auth plumbing</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"zeocore[http]"</span><span class="w">       </span><span class="c1"># FastAPI adapter, expose tools over REST</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"zeocore[mcp]"</span><span class="w">        </span><span class="c1"># MCP adapter for Claude Code, Cursor, etc.</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"zeocore[all,mcp]"</span><span class="w">    </span><span class="c1"># everything (note: [all] excludes mcp)</span>
 </code></pre></div>
 <p>The full extras table is in the
 <a href="../#optional-integrations">README</a>. Each integration section below
@@ -4178,11 +4095,9 @@ names the extra it needs. Contributors additionally want the <code>dev</code> an
 <h3 id="zeo_coremodules"><code>zeo_core.modules</code><a class="headerlink" href="#zeo_coremodules" title="Permanent link">&para;</a></h3>
 <p>Extensible plugin discovery and explicit-loading registration framework.</p>
 <h3 id="zeo_coreintegrations"><code>zeo_core.integrations</code><a class="headerlink" href="#zeo_coreintegrations" title="Permanent link">&para;</a></h3>
-<p>Interfaces to third-party services (Google Workspace, Supabase, Notion, Pandoc,
+<p>Interfaces to third-party services (Google Workspace, Notion, Pandoc,
 GitHub, jupytext, ffmpeg, Bluesky, and LLM providers) through a clean adapter
-layer. Supabase provides typed Database, Auth, Storage, Edge Functions, and
-async Realtime surfaces. It intentionally provides neither arbitrary SQL nor
-decrypted Vault access.</p>
+layer. Supabase moved to the <code>zeo-integrations</code> package.</p>
 <h3 id="zeo_corecoreerrors"><code>zeo_core.core.errors</code><a class="headerlink" href="#zeo_corecoreerrors" title="Permanent link">&para;</a></h3>
 <p>Structured error handling system with typed exceptions for improved developer experience.</p>
 <h3 id="zeo_coretools"><code>zeo_core.tools</code><a class="headerlink" href="#zeo_coretools" title="Permanent link">&para;</a></h3>
@@ -4562,47 +4477,6 @@ every other integration in this table uses, distinct from the
 ambiguity instead of silently choosing the first source.</p>
 <p>See <a href="https://github.com/zeroemployeeorg/zeocore/blob/main/examples/notion_demo.py"><code>examples/notion_demo.py</code></a>. Its default mode is
 credential-free and simulated; <code>--live-read</code> is explicit and never mutates.</p>
-<h3 id="working-with-supabase">Working with Supabase<a class="headerlink" href="#working-with-supabase" title="Permanent link">&para;</a></h3>
-<p>Requires the <code>supabase</code> extra:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"zeocore[supabase]"</span>
-</code></pre></div>
-<p>Put the project origin and a publishable key in <code>.env</code>, load it once at your
-entrypoint, then initialize the integration:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>SUPABASE_URL=https://your-project.supabase.co
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
-</code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">zeo_core.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv_file</span>
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">zeo_core.integrations.database.supabase</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>    <span class="n">SupabaseFilter</span><span class="p">,</span>
-<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>    <span class="n">SupabaseIntegration</span><span class="p">,</span>
-<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="p">)</span>
-<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>
-<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="n">load_dotenv_file</span><span class="p">()</span>
-<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a><span class="n">supabase</span> <span class="o">=</span> <span class="n">SupabaseIntegration</span><span class="p">()</span>
-<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a><span class="n">initialized</span> <span class="o">=</span> <span class="n">supabase</span><span class="o">.</span><span class="n">initialize</span><span class="p">()</span>
-<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a><span class="k">if</span> <span class="ow">not</span> <span class="n">initialized</span><span class="o">.</span><span class="n">success</span><span class="p">:</span>
-<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a>    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">initialized</span><span class="o">.</span><span class="n">error</span><span class="p">)</span>
-<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a>
-<a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a><span class="n">page</span> <span class="o">=</span> <span class="n">supabase</span><span class="o">.</span><span class="n">select</span><span class="p">(</span>
-<a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a>    <span class="s2">"tasks"</span><span class="p">,</span>
-<a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a>    <span class="n">columns</span><span class="o">=</span><span class="p">(</span><span class="s2">"id"</span><span class="p">,</span> <span class="s2">"title"</span><span class="p">,</span> <span class="s2">"status"</span><span class="p">),</span>
-<a id="__codelineno-13-16" name="__codelineno-13-16" href="#__codelineno-13-16"></a>    <span class="n">filters</span><span class="o">=</span><span class="p">(</span><span class="n">SupabaseFilter</span><span class="p">(</span><span class="n">field</span><span class="o">=</span><span class="s2">"status"</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="s2">"ready"</span><span class="p">),),</span>
-<a id="__codelineno-13-17" name="__codelineno-13-17" href="#__codelineno-13-17"></a>    <span class="n">limit</span><span class="o">=</span><span class="mi">25</span><span class="p">,</span>
-<a id="__codelineno-13-18" name="__codelineno-13-18" href="#__codelineno-13-18"></a><span class="p">)</span>
-</code></pre></div>
-<p>All calls return <code>IntegrationResult</code>. Database operations go through
-PostgREST and the project's Row Level Security; update and delete refuse
-without at least one typed filter. Auth results expose only user identity and
-expiry—not access or refresh tokens. Storage downloads and Function responses
-are bounded. Realtime is explicitly async and requires <code>await close()</code>.</p>
-<p>Server-only keys require both <code>SUPABASE_SECRET_KEY</code> and
-<code>allow_privileged_key: true</code>; that opt-in changes connectivity, not authority.
-Never send such a key to a browser or model. ZeoCore does not expose Supabase
-Vault, <code>vault.decrypted_secrets</code>, arbitrary SQL, signed URLs, or the Management
-API. Project-specific custody belongs behind narrow database roles and broker
-operations.</p>
-<p>See the complete <a href="../../tutorials/supabase-integration/">Supabase tutorial</a>
-and runnable <a href="https://github.com/zeroemployeeorg/zeocore/blob/main/examples/supabase_usage.py"><code>examples/supabase_usage.py</code></a>.</p>
 <h3 id="working-with-jupytext-integration-script-to-notebook-conversion">Working with Jupytext Integration (script to notebook conversion)<a class="headerlink" href="#working-with-jupytext-integration-script-to-notebook-conversion" title="Permanent link">&para;</a></h3>
 <p>Converts between percent-format Python scripts (<code># %%</code>-delimited cells,
 diff-friendly, plain text) and Jupyter notebooks. This is the exact
@@ -4612,22 +4486,22 @@ operation the org's own <code>quackslides</code> app uses for its exercise conte
 external binary and no required config -- <code>initialize()</code> falls back to
 defaults cleanly with zero config file present (unlike ffmpeg
 above/below).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">zeo_core.integrations.jupytext</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_integration</span>
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>
-<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="n">jupytext</span> <span class="o">=</span> <span class="n">create_integration</span><span class="p">()</span>
-<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="n">init_result</span> <span class="o">=</span> <span class="n">jupytext</span><span class="o">.</span><span class="n">initialize</span><span class="p">()</span>
-<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="k">if</span> <span class="ow">not</span> <span class="n">init_result</span><span class="o">.</span><span class="n">success</span><span class="p">:</span>
-<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Failed to initialize: </span><span class="si">{</span><span class="n">init_result</span><span class="o">.</span><span class="n">error</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>
-<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a><span class="c1"># script -&gt; notebook (percent-format .py in, .ipynb out)</span>
-<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a><span class="n">result</span> <span class="o">=</span> <span class="n">jupytext</span><span class="o">.</span><span class="n">script_to_notebook</span><span class="p">(</span><span class="s2">"exercise_01.py"</span><span class="p">)</span>
-<a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a><span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">success</span><span class="p">:</span>
-<a id="__codelineno-14-11" name="__codelineno-14-11" href="#__codelineno-14-11"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Notebook written to: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">content</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-<a id="__codelineno-14-12" name="__codelineno-14-12" href="#__codelineno-14-12"></a>
-<a id="__codelineno-14-13" name="__codelineno-14-13" href="#__codelineno-14-13"></a><span class="c1"># notebook -&gt; script (the natural inverse; percent format by default)</span>
-<a id="__codelineno-14-14" name="__codelineno-14-14" href="#__codelineno-14-14"></a><span class="n">result</span> <span class="o">=</span> <span class="n">jupytext</span><span class="o">.</span><span class="n">notebook_to_script</span><span class="p">(</span><span class="s2">"exercise_01.ipynb"</span><span class="p">)</span>
-<a id="__codelineno-14-15" name="__codelineno-14-15" href="#__codelineno-14-15"></a><span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">success</span><span class="p">:</span>
-<a id="__codelineno-14-16" name="__codelineno-14-16" href="#__codelineno-14-16"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Script written to: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">content</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">zeo_core.integrations.jupytext</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_integration</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="n">jupytext</span> <span class="o">=</span> <span class="n">create_integration</span><span class="p">()</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="n">init_result</span> <span class="o">=</span> <span class="n">jupytext</span><span class="o">.</span><span class="n">initialize</span><span class="p">()</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="k">if</span> <span class="ow">not</span> <span class="n">init_result</span><span class="o">.</span><span class="n">success</span><span class="p">:</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Failed to initialize: </span><span class="si">{</span><span class="n">init_result</span><span class="o">.</span><span class="n">error</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a><span class="c1"># script -&gt; notebook (percent-format .py in, .ipynb out)</span>
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a><span class="n">result</span> <span class="o">=</span> <span class="n">jupytext</span><span class="o">.</span><span class="n">script_to_notebook</span><span class="p">(</span><span class="s2">"exercise_01.py"</span><span class="p">)</span>
+<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a><span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">success</span><span class="p">:</span>
+<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Notebook written to: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">content</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a>
+<a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a><span class="c1"># notebook -&gt; script (the natural inverse; percent format by default)</span>
+<a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a><span class="n">result</span> <span class="o">=</span> <span class="n">jupytext</span><span class="o">.</span><span class="n">notebook_to_script</span><span class="p">(</span><span class="s2">"exercise_01.ipynb"</span><span class="p">)</span>
+<a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a><span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">success</span><span class="p">:</span>
+<a id="__codelineno-11-16" name="__codelineno-11-16" href="#__codelineno-11-16"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Script written to: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">content</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </code></pre></div>
 <p><code>output_path</code> is optional on both methods -- when omitted, it's
 synthesized from <code>input_path</code> (same directory, <code>.ipynb</code>/<code>.py</code> extension
@@ -4645,26 +4519,26 @@ them if configured to) and this integration calls a curated subset of its
 <p>Like Notion, a real config file must exist at a default location (or be
 passed via <code>config_path=</code>) for <code>initialize()</code> to succeed -- an empty
 <code>ffmpeg: {}</code> block is enough.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">zeo_core.integrations.ffmpeg</span><span class="w"> </span><span class="kn">import</span> <span class="n">FFmpegIntegration</span>
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>
-<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="n">ffmpeg</span> <span class="o">=</span> <span class="n">FFmpegIntegration</span><span class="p">(</span><span class="n">config_path</span><span class="o">=</span><span class="s2">"path/to/zeo_config.yaml"</span><span class="p">)</span>
-<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="n">init_result</span> <span class="o">=</span> <span class="n">ffmpeg</span><span class="o">.</span><span class="n">initialize</span><span class="p">()</span>
-<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="k">if</span> <span class="ow">not</span> <span class="n">init_result</span><span class="o">.</span><span class="n">success</span><span class="p">:</span>
-<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Failed to initialize: </span><span class="si">{</span><span class="n">init_result</span><span class="o">.</span><span class="n">error</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a>
-<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a><span class="c1"># Probe: real ffprobe under the hood -- raw ffprobe JSON plus derived</span>
-<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a><span class="c1"># convenience keys (has_video, width, height, video_codec, ...)</span>
-<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a><span class="n">probe_result</span> <span class="o">=</span> <span class="n">ffmpeg</span><span class="o">.</span><span class="n">probe</span><span class="p">(</span><span class="s2">"input.mp4"</span><span class="p">)</span>
-<a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a><span class="k">if</span> <span class="n">probe_result</span><span class="o">.</span><span class="n">success</span><span class="p">:</span>
-<a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a>    <span class="n">info</span> <span class="o">=</span> <span class="n">probe_result</span><span class="o">.</span><span class="n">content</span>
-<a id="__codelineno-15-13" name="__codelineno-15-13" href="#__codelineno-15-13"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">info</span><span class="p">[</span><span class="s1">'width'</span><span class="p">]</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">info</span><span class="p">[</span><span class="s1">'height'</span><span class="p">]</span><span class="si">}</span><span class="s2">, codec=</span><span class="si">{</span><span class="n">info</span><span class="p">[</span><span class="s1">'video_codec'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-<a id="__codelineno-15-14" name="__codelineno-15-14" href="#__codelineno-15-14"></a>
-<a id="__codelineno-15-15" name="__codelineno-15-15" href="#__codelineno-15-15"></a><span class="c1"># Transcode to H.264 at a given quality/preset</span>
-<a id="__codelineno-15-16" name="__codelineno-15-16" href="#__codelineno-15-16"></a><span class="n">transcode_result</span> <span class="o">=</span> <span class="n">ffmpeg</span><span class="o">.</span><span class="n">transcode_h264</span><span class="p">(</span><span class="s2">"input.mp4"</span><span class="p">,</span> <span class="n">crf</span><span class="o">=</span><span class="mi">23</span><span class="p">,</span> <span class="n">preset</span><span class="o">=</span><span class="s2">"medium"</span><span class="p">)</span>
-<a id="__codelineno-15-17" name="__codelineno-15-17" href="#__codelineno-15-17"></a>
-<a id="__codelineno-15-18" name="__codelineno-15-18" href="#__codelineno-15-18"></a><span class="c1"># Extract audio, generate a thumbnail</span>
-<a id="__codelineno-15-19" name="__codelineno-15-19" href="#__codelineno-15-19"></a><span class="n">audio_result</span> <span class="o">=</span> <span class="n">ffmpeg</span><span class="o">.</span><span class="n">extract_audio</span><span class="p">(</span><span class="s2">"input.mp4"</span><span class="p">,</span> <span class="n">codec</span><span class="o">=</span><span class="s2">"copy"</span><span class="p">)</span>
-<a id="__codelineno-15-20" name="__codelineno-15-20" href="#__codelineno-15-20"></a><span class="n">thumb_result</span> <span class="o">=</span> <span class="n">ffmpeg</span><span class="o">.</span><span class="n">thumbnail</span><span class="p">(</span><span class="s2">"input.mp4"</span><span class="p">,</span> <span class="n">time</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">zeo_core.integrations.ffmpeg</span><span class="w"> </span><span class="kn">import</span> <span class="n">FFmpegIntegration</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="n">ffmpeg</span> <span class="o">=</span> <span class="n">FFmpegIntegration</span><span class="p">(</span><span class="n">config_path</span><span class="o">=</span><span class="s2">"path/to/zeo_config.yaml"</span><span class="p">)</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="n">init_result</span> <span class="o">=</span> <span class="n">ffmpeg</span><span class="o">.</span><span class="n">initialize</span><span class="p">()</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="k">if</span> <span class="ow">not</span> <span class="n">init_result</span><span class="o">.</span><span class="n">success</span><span class="p">:</span>
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Failed to initialize: </span><span class="si">{</span><span class="n">init_result</span><span class="o">.</span><span class="n">error</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a><span class="c1"># Probe: real ffprobe under the hood -- raw ffprobe JSON plus derived</span>
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a><span class="c1"># convenience keys (has_video, width, height, video_codec, ...)</span>
+<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a><span class="n">probe_result</span> <span class="o">=</span> <span class="n">ffmpeg</span><span class="o">.</span><span class="n">probe</span><span class="p">(</span><span class="s2">"input.mp4"</span><span class="p">)</span>
+<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a><span class="k">if</span> <span class="n">probe_result</span><span class="o">.</span><span class="n">success</span><span class="p">:</span>
+<a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a>    <span class="n">info</span> <span class="o">=</span> <span class="n">probe_result</span><span class="o">.</span><span class="n">content</span>
+<a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">info</span><span class="p">[</span><span class="s1">'width'</span><span class="p">]</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">info</span><span class="p">[</span><span class="s1">'height'</span><span class="p">]</span><span class="si">}</span><span class="s2">, codec=</span><span class="si">{</span><span class="n">info</span><span class="p">[</span><span class="s1">'video_codec'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<a id="__codelineno-12-14" name="__codelineno-12-14" href="#__codelineno-12-14"></a>
+<a id="__codelineno-12-15" name="__codelineno-12-15" href="#__codelineno-12-15"></a><span class="c1"># Transcode to H.264 at a given quality/preset</span>
+<a id="__codelineno-12-16" name="__codelineno-12-16" href="#__codelineno-12-16"></a><span class="n">transcode_result</span> <span class="o">=</span> <span class="n">ffmpeg</span><span class="o">.</span><span class="n">transcode_h264</span><span class="p">(</span><span class="s2">"input.mp4"</span><span class="p">,</span> <span class="n">crf</span><span class="o">=</span><span class="mi">23</span><span class="p">,</span> <span class="n">preset</span><span class="o">=</span><span class="s2">"medium"</span><span class="p">)</span>
+<a id="__codelineno-12-17" name="__codelineno-12-17" href="#__codelineno-12-17"></a>
+<a id="__codelineno-12-18" name="__codelineno-12-18" href="#__codelineno-12-18"></a><span class="c1"># Extract audio, generate a thumbnail</span>
+<a id="__codelineno-12-19" name="__codelineno-12-19" href="#__codelineno-12-19"></a><span class="n">audio_result</span> <span class="o">=</span> <span class="n">ffmpeg</span><span class="o">.</span><span class="n">extract_audio</span><span class="p">(</span><span class="s2">"input.mp4"</span><span class="p">,</span> <span class="n">codec</span><span class="o">=</span><span class="s2">"copy"</span><span class="p">)</span>
+<a id="__codelineno-12-20" name="__codelineno-12-20" href="#__codelineno-12-20"></a><span class="n">thumb_result</span> <span class="o">=</span> <span class="n">ffmpeg</span><span class="o">.</span><span class="n">thumbnail</span><span class="p">(</span><span class="s2">"input.mp4"</span><span class="p">,</span> <span class="n">time</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
 </code></pre></div>
 <p>All four operation methods return <code>IntegrationResult[str]</code> (<code>.content</code> is
 the output file path); <code>probe()</code> returns <code>IntegrationResult[dict]</code>.
@@ -4679,52 +4553,52 @@ ffmpeg's <code>lavfi</code> source, so it needs no external media file.</p>
 client (<code>anthropic</code>, <code>openai</code>, <code>ollama</code>, plus a <code>mock</code> for tests)
 implements the same <code>LLMProviderProtocol</code> (<code>chat()</code>, <code>count_tokens()</code>,
 <code>.model</code>). Requires the <code>llms</code> extra (<code>uv pip install "zeocore[llms]"</code>).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">zeo_core.integrations.llms.registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_llm_client</span>
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">zeo_core.integrations.llms.models</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>    <span class="n">ChatMessage</span><span class="p">,</span>
-<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>    <span class="n">RoleType</span><span class="p">,</span>
-<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>    <span class="n">LLMOptions</span><span class="p">,</span>
-<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>    <span class="n">ToolDefinition</span><span class="p">,</span>
-<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a>    <span class="n">FunctionDefinition</span><span class="p">,</span>
-<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a><span class="p">)</span>
-<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a>
-<a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a><span class="n">client</span> <span class="o">=</span> <span class="n">get_llm_client</span><span class="p">(</span><span class="n">provider</span><span class="o">=</span><span class="s2">"anthropic"</span><span class="p">)</span>  <span class="c1"># api_key defaults to</span>
-<a id="__codelineno-16-11" name="__codelineno-16-11" href="#__codelineno-16-11"></a>                                                <span class="c1"># ANTHROPIC_API_KEY env var</span>
-<a id="__codelineno-16-12" name="__codelineno-16-12" href="#__codelineno-16-12"></a><span class="nb">print</span><span class="p">(</span><span class="n">client</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>  <span class="c1"># "claude-sonnet-5" -- the current, non-retired default</span>
-<a id="__codelineno-16-13" name="__codelineno-16-13" href="#__codelineno-16-13"></a>
-<a id="__codelineno-16-14" name="__codelineno-16-14" href="#__codelineno-16-14"></a><span class="n">messages</span> <span class="o">=</span> <span class="p">[</span>
-<a id="__codelineno-16-15" name="__codelineno-16-15" href="#__codelineno-16-15"></a>    <span class="n">ChatMessage</span><span class="p">(</span><span class="n">role</span><span class="o">=</span><span class="n">RoleType</span><span class="o">.</span><span class="n">SYSTEM</span><span class="p">,</span> <span class="n">content</span><span class="o">=</span><span class="s2">"You are a helpful assistant."</span><span class="p">),</span>
-<a id="__codelineno-16-16" name="__codelineno-16-16" href="#__codelineno-16-16"></a>    <span class="n">ChatMessage</span><span class="p">(</span><span class="n">role</span><span class="o">=</span><span class="n">RoleType</span><span class="o">.</span><span class="n">USER</span><span class="p">,</span> <span class="n">content</span><span class="o">=</span><span class="s2">"What's the weather in Boston?"</span><span class="p">),</span>
-<a id="__codelineno-16-17" name="__codelineno-16-17" href="#__codelineno-16-17"></a><span class="p">]</span>
-<a id="__codelineno-16-18" name="__codelineno-16-18" href="#__codelineno-16-18"></a>
-<a id="__codelineno-16-19" name="__codelineno-16-19" href="#__codelineno-16-19"></a><span class="n">options</span> <span class="o">=</span> <span class="n">LLMOptions</span><span class="p">(</span>
-<a id="__codelineno-16-20" name="__codelineno-16-20" href="#__codelineno-16-20"></a>    <span class="n">max_tokens</span><span class="o">=</span><span class="mi">1024</span><span class="p">,</span>
-<a id="__codelineno-16-21" name="__codelineno-16-21" href="#__codelineno-16-21"></a>    <span class="c1"># Marks the system prompt cacheable via Anthropic's cache_control:</span>
-<a id="__codelineno-16-22" name="__codelineno-16-22" href="#__codelineno-16-22"></a>    <span class="c1"># ephemeral breakpoints -- a real cost/latency win on repeated calls</span>
-<a id="__codelineno-16-23" name="__codelineno-16-23" href="#__codelineno-16-23"></a>    <span class="c1"># sharing the same system prompt. Provider-agnostic option; a no-op</span>
-<a id="__codelineno-16-24" name="__codelineno-16-24" href="#__codelineno-16-24"></a>    <span class="c1"># on providers without caching support (OpenAI, Ollama).</span>
-<a id="__codelineno-16-25" name="__codelineno-16-25" href="#__codelineno-16-25"></a>    <span class="n">cache_system_prompt</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-<a id="__codelineno-16-26" name="__codelineno-16-26" href="#__codelineno-16-26"></a>    <span class="n">tools</span><span class="o">=</span><span class="p">[</span>
-<a id="__codelineno-16-27" name="__codelineno-16-27" href="#__codelineno-16-27"></a>        <span class="n">ToolDefinition</span><span class="p">(</span>
-<a id="__codelineno-16-28" name="__codelineno-16-28" href="#__codelineno-16-28"></a>            <span class="nb">type</span><span class="o">=</span><span class="s2">"function"</span><span class="p">,</span>
-<a id="__codelineno-16-29" name="__codelineno-16-29" href="#__codelineno-16-29"></a>            <span class="n">function</span><span class="o">=</span><span class="n">FunctionDefinition</span><span class="p">(</span>
-<a id="__codelineno-16-30" name="__codelineno-16-30" href="#__codelineno-16-30"></a>                <span class="n">name</span><span class="o">=</span><span class="s2">"get_weather"</span><span class="p">,</span>
-<a id="__codelineno-16-31" name="__codelineno-16-31" href="#__codelineno-16-31"></a>                <span class="n">description</span><span class="o">=</span><span class="s2">"Get current weather for a location"</span><span class="p">,</span>
-<a id="__codelineno-16-32" name="__codelineno-16-32" href="#__codelineno-16-32"></a>                <span class="n">parameters</span><span class="o">=</span><span class="p">{</span>
-<a id="__codelineno-16-33" name="__codelineno-16-33" href="#__codelineno-16-33"></a>                    <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"object"</span><span class="p">,</span>
-<a id="__codelineno-16-34" name="__codelineno-16-34" href="#__codelineno-16-34"></a>                    <span class="s2">"properties"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"location"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"string"</span><span class="p">}},</span>
-<a id="__codelineno-16-35" name="__codelineno-16-35" href="#__codelineno-16-35"></a>                    <span class="s2">"required"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"location"</span><span class="p">],</span>
-<a id="__codelineno-16-36" name="__codelineno-16-36" href="#__codelineno-16-36"></a>                <span class="p">},</span>
-<a id="__codelineno-16-37" name="__codelineno-16-37" href="#__codelineno-16-37"></a>            <span class="p">),</span>
-<a id="__codelineno-16-38" name="__codelineno-16-38" href="#__codelineno-16-38"></a>        <span class="p">)</span>
-<a id="__codelineno-16-39" name="__codelineno-16-39" href="#__codelineno-16-39"></a>    <span class="p">],</span>
-<a id="__codelineno-16-40" name="__codelineno-16-40" href="#__codelineno-16-40"></a><span class="p">)</span>
-<a id="__codelineno-16-41" name="__codelineno-16-41" href="#__codelineno-16-41"></a>
-<a id="__codelineno-16-42" name="__codelineno-16-42" href="#__codelineno-16-42"></a><span class="n">result</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">chat</span><span class="p">(</span><span class="n">messages</span><span class="p">,</span> <span class="n">options</span><span class="p">)</span>
-<a id="__codelineno-16-43" name="__codelineno-16-43" href="#__codelineno-16-43"></a><span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">success</span><span class="p">:</span>
-<a id="__codelineno-16-44" name="__codelineno-16-44" href="#__codelineno-16-44"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
-<a id="__codelineno-16-45" name="__codelineno-16-45" href="#__codelineno-16-45"></a><span class="k">else</span><span class="p">:</span>
-<a id="__codelineno-16-46" name="__codelineno-16-46" href="#__codelineno-16-46"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">error</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">zeo_core.integrations.llms.registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_llm_client</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">zeo_core.integrations.llms.models</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>    <span class="n">ChatMessage</span><span class="p">,</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>    <span class="n">RoleType</span><span class="p">,</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>    <span class="n">LLMOptions</span><span class="p">,</span>
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>    <span class="n">ToolDefinition</span><span class="p">,</span>
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>    <span class="n">FunctionDefinition</span><span class="p">,</span>
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a><span class="p">)</span>
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a><span class="n">client</span> <span class="o">=</span> <span class="n">get_llm_client</span><span class="p">(</span><span class="n">provider</span><span class="o">=</span><span class="s2">"anthropic"</span><span class="p">)</span>  <span class="c1"># api_key defaults to</span>
+<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a>                                                <span class="c1"># ANTHROPIC_API_KEY env var</span>
+<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a><span class="nb">print</span><span class="p">(</span><span class="n">client</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>  <span class="c1"># "claude-sonnet-5" -- the current, non-retired default</span>
+<a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a>
+<a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a><span class="n">messages</span> <span class="o">=</span> <span class="p">[</span>
+<a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a>    <span class="n">ChatMessage</span><span class="p">(</span><span class="n">role</span><span class="o">=</span><span class="n">RoleType</span><span class="o">.</span><span class="n">SYSTEM</span><span class="p">,</span> <span class="n">content</span><span class="o">=</span><span class="s2">"You are a helpful assistant."</span><span class="p">),</span>
+<a id="__codelineno-13-16" name="__codelineno-13-16" href="#__codelineno-13-16"></a>    <span class="n">ChatMessage</span><span class="p">(</span><span class="n">role</span><span class="o">=</span><span class="n">RoleType</span><span class="o">.</span><span class="n">USER</span><span class="p">,</span> <span class="n">content</span><span class="o">=</span><span class="s2">"What's the weather in Boston?"</span><span class="p">),</span>
+<a id="__codelineno-13-17" name="__codelineno-13-17" href="#__codelineno-13-17"></a><span class="p">]</span>
+<a id="__codelineno-13-18" name="__codelineno-13-18" href="#__codelineno-13-18"></a>
+<a id="__codelineno-13-19" name="__codelineno-13-19" href="#__codelineno-13-19"></a><span class="n">options</span> <span class="o">=</span> <span class="n">LLMOptions</span><span class="p">(</span>
+<a id="__codelineno-13-20" name="__codelineno-13-20" href="#__codelineno-13-20"></a>    <span class="n">max_tokens</span><span class="o">=</span><span class="mi">1024</span><span class="p">,</span>
+<a id="__codelineno-13-21" name="__codelineno-13-21" href="#__codelineno-13-21"></a>    <span class="c1"># Marks the system prompt cacheable via Anthropic's cache_control:</span>
+<a id="__codelineno-13-22" name="__codelineno-13-22" href="#__codelineno-13-22"></a>    <span class="c1"># ephemeral breakpoints -- a real cost/latency win on repeated calls</span>
+<a id="__codelineno-13-23" name="__codelineno-13-23" href="#__codelineno-13-23"></a>    <span class="c1"># sharing the same system prompt. Provider-agnostic option; a no-op</span>
+<a id="__codelineno-13-24" name="__codelineno-13-24" href="#__codelineno-13-24"></a>    <span class="c1"># on providers without caching support (OpenAI, Ollama).</span>
+<a id="__codelineno-13-25" name="__codelineno-13-25" href="#__codelineno-13-25"></a>    <span class="n">cache_system_prompt</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-13-26" name="__codelineno-13-26" href="#__codelineno-13-26"></a>    <span class="n">tools</span><span class="o">=</span><span class="p">[</span>
+<a id="__codelineno-13-27" name="__codelineno-13-27" href="#__codelineno-13-27"></a>        <span class="n">ToolDefinition</span><span class="p">(</span>
+<a id="__codelineno-13-28" name="__codelineno-13-28" href="#__codelineno-13-28"></a>            <span class="nb">type</span><span class="o">=</span><span class="s2">"function"</span><span class="p">,</span>
+<a id="__codelineno-13-29" name="__codelineno-13-29" href="#__codelineno-13-29"></a>            <span class="n">function</span><span class="o">=</span><span class="n">FunctionDefinition</span><span class="p">(</span>
+<a id="__codelineno-13-30" name="__codelineno-13-30" href="#__codelineno-13-30"></a>                <span class="n">name</span><span class="o">=</span><span class="s2">"get_weather"</span><span class="p">,</span>
+<a id="__codelineno-13-31" name="__codelineno-13-31" href="#__codelineno-13-31"></a>                <span class="n">description</span><span class="o">=</span><span class="s2">"Get current weather for a location"</span><span class="p">,</span>
+<a id="__codelineno-13-32" name="__codelineno-13-32" href="#__codelineno-13-32"></a>                <span class="n">parameters</span><span class="o">=</span><span class="p">{</span>
+<a id="__codelineno-13-33" name="__codelineno-13-33" href="#__codelineno-13-33"></a>                    <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"object"</span><span class="p">,</span>
+<a id="__codelineno-13-34" name="__codelineno-13-34" href="#__codelineno-13-34"></a>                    <span class="s2">"properties"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"location"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"string"</span><span class="p">}},</span>
+<a id="__codelineno-13-35" name="__codelineno-13-35" href="#__codelineno-13-35"></a>                    <span class="s2">"required"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"location"</span><span class="p">],</span>
+<a id="__codelineno-13-36" name="__codelineno-13-36" href="#__codelineno-13-36"></a>                <span class="p">},</span>
+<a id="__codelineno-13-37" name="__codelineno-13-37" href="#__codelineno-13-37"></a>            <span class="p">),</span>
+<a id="__codelineno-13-38" name="__codelineno-13-38" href="#__codelineno-13-38"></a>        <span class="p">)</span>
+<a id="__codelineno-13-39" name="__codelineno-13-39" href="#__codelineno-13-39"></a>    <span class="p">],</span>
+<a id="__codelineno-13-40" name="__codelineno-13-40" href="#__codelineno-13-40"></a><span class="p">)</span>
+<a id="__codelineno-13-41" name="__codelineno-13-41" href="#__codelineno-13-41"></a>
+<a id="__codelineno-13-42" name="__codelineno-13-42" href="#__codelineno-13-42"></a><span class="n">result</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">chat</span><span class="p">(</span><span class="n">messages</span><span class="p">,</span> <span class="n">options</span><span class="p">)</span>
+<a id="__codelineno-13-43" name="__codelineno-13-43" href="#__codelineno-13-43"></a><span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">success</span><span class="p">:</span>
+<a id="__codelineno-13-44" name="__codelineno-13-44" href="#__codelineno-13-44"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
+<a id="__codelineno-13-45" name="__codelineno-13-45" href="#__codelineno-13-45"></a><span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-13-46" name="__codelineno-13-46" href="#__codelineno-13-46"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">error</span><span class="p">)</span>
 </code></pre></div>
 <p><code>chat()</code> returns <code>IntegrationResult[str]</code> -- always plain text, never a
 raised exception (retries and error conversion happen internally).</p>
@@ -4751,29 +4625,29 @@ itself</strong>: any ordinary <code>BaseZeoTool</code> becomes an MCP tool by re
 because <code>register_tool()</code> mechanically derives the MCP tool's schema from
 the tool's own <code>run(request: &lt;PydanticModel&gt;, ctx)</code> type hint.</p>
 <p>Requires the <code>mcp</code> extra (<code>uv pip install "zeocore[mcp]"</code>).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">zeo_core.adapters.mcp</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_server</span><span class="p">,</span> <span class="n">register_tool</span>
-<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">zeo_core.contracts</span><span class="w"> </span><span class="kn">import</span> <span class="n">CapabilityResult</span>
-<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">zeo_core.tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseZeoTool</span><span class="p">,</span> <span class="n">ToolContext</span>
-<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span>
-<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>
-<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a>
-<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a><span class="k">class</span><span class="w"> </span><span class="nc">WordCountRequest</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a>    <span class="n">text</span><span class="p">:</span> <span class="nb">str</span>
-<a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a>
-<a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a>
-<a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a><span class="k">class</span><span class="w"> </span><span class="nc">WordCountTool</span><span class="p">(</span><span class="n">BaseZeoTool</span><span class="p">):</span>
-<a id="__codelineno-17-12" name="__codelineno-17-12" href="#__codelineno-17-12"></a>    <span class="n">name</span> <span class="o">=</span> <span class="s2">"word_count"</span>
-<a id="__codelineno-17-13" name="__codelineno-17-13" href="#__codelineno-17-13"></a>
-<a id="__codelineno-17-14" name="__codelineno-17-14" href="#__codelineno-17-14"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">:</span> <span class="n">WordCountRequest</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">ToolContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CapabilityResult</span><span class="p">:</span>
-<a id="__codelineno-17-15" name="__codelineno-17-15" href="#__codelineno-17-15"></a>        <span class="k">return</span> <span class="n">CapabilityResult</span><span class="o">.</span><span class="n">ok</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s2">"word_count"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">())})</span>
-<a id="__codelineno-17-16" name="__codelineno-17-16" href="#__codelineno-17-16"></a>
-<a id="__codelineno-17-17" name="__codelineno-17-17" href="#__codelineno-17-17"></a>
-<a id="__codelineno-17-18" name="__codelineno-17-18" href="#__codelineno-17-18"></a><span class="c1"># Register your tool -- no MCP code in the tool class above.</span>
-<a id="__codelineno-17-19" name="__codelineno-17-19" href="#__codelineno-17-19"></a><span class="n">register_tool</span><span class="p">(</span><span class="n">WordCountTool</span><span class="p">())</span>
-<a id="__codelineno-17-20" name="__codelineno-17-20" href="#__codelineno-17-20"></a>
-<a id="__codelineno-17-21" name="__codelineno-17-21" href="#__codelineno-17-21"></a><span class="c1"># Build the server and run it over stdio (the transport Claude Code,</span>
-<a id="__codelineno-17-22" name="__codelineno-17-22" href="#__codelineno-17-22"></a><span class="c1"># Cursor, and most MCP-native agents speak by default).</span>
-<a id="__codelineno-17-23" name="__codelineno-17-23" href="#__codelineno-17-23"></a><span class="n">server</span> <span class="o">=</span> <span class="n">create_server</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"my-zeocore-app"</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">zeo_core.adapters.mcp</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_server</span><span class="p">,</span> <span class="n">register_tool</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">zeo_core.contracts</span><span class="w"> </span><span class="kn">import</span> <span class="n">CapabilityResult</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">zeo_core.tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseZeoTool</span><span class="p">,</span> <span class="n">ToolContext</span>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a><span class="k">class</span><span class="w"> </span><span class="nc">WordCountRequest</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>    <span class="n">text</span><span class="p">:</span> <span class="nb">str</span>
+<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a>
+<a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a>
+<a id="__codelineno-14-11" name="__codelineno-14-11" href="#__codelineno-14-11"></a><span class="k">class</span><span class="w"> </span><span class="nc">WordCountTool</span><span class="p">(</span><span class="n">BaseZeoTool</span><span class="p">):</span>
+<a id="__codelineno-14-12" name="__codelineno-14-12" href="#__codelineno-14-12"></a>    <span class="n">name</span> <span class="o">=</span> <span class="s2">"word_count"</span>
+<a id="__codelineno-14-13" name="__codelineno-14-13" href="#__codelineno-14-13"></a>
+<a id="__codelineno-14-14" name="__codelineno-14-14" href="#__codelineno-14-14"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">:</span> <span class="n">WordCountRequest</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">ToolContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CapabilityResult</span><span class="p">:</span>
+<a id="__codelineno-14-15" name="__codelineno-14-15" href="#__codelineno-14-15"></a>        <span class="k">return</span> <span class="n">CapabilityResult</span><span class="o">.</span><span class="n">ok</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s2">"word_count"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">())})</span>
+<a id="__codelineno-14-16" name="__codelineno-14-16" href="#__codelineno-14-16"></a>
+<a id="__codelineno-14-17" name="__codelineno-14-17" href="#__codelineno-14-17"></a>
+<a id="__codelineno-14-18" name="__codelineno-14-18" href="#__codelineno-14-18"></a><span class="c1"># Register your tool -- no MCP code in the tool class above.</span>
+<a id="__codelineno-14-19" name="__codelineno-14-19" href="#__codelineno-14-19"></a><span class="n">register_tool</span><span class="p">(</span><span class="n">WordCountTool</span><span class="p">())</span>
+<a id="__codelineno-14-20" name="__codelineno-14-20" href="#__codelineno-14-20"></a>
+<a id="__codelineno-14-21" name="__codelineno-14-21" href="#__codelineno-14-21"></a><span class="c1"># Build the server and run it over stdio (the transport Claude Code,</span>
+<a id="__codelineno-14-22" name="__codelineno-14-22" href="#__codelineno-14-22"></a><span class="c1"># Cursor, and most MCP-native agents speak by default).</span>
+<a id="__codelineno-14-23" name="__codelineno-14-23" href="#__codelineno-14-23"></a><span class="n">server</span> <span class="o">=</span> <span class="n">create_server</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"my-zeocore-app"</span><span class="p">)</span>
 </code></pre></div>
 <p>Save the snippet above (minus the last comment) to a file, e.g.
 <code>mcp_entrypoint.py</code>, and add <code>server.run()</code> at the bottom so running the
@@ -4792,43 +4666,43 @@ with <code>register_capability_operation</code> use that same registry.</p>
 <p>Requires the <code>http</code> extra (<code>uv pip install "zeocore[http]"</code>). Bind a
 capability (or keep using <code>OperationRegistry.register</code> for older
 callables), then <code>create_app</code> / <code>run</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">zeo_core.adapters.http</span><span class="w"> </span><span class="kn">import</span> <span class="n">HttpAdapterConfig</span><span class="p">,</span> <span class="n">create_app</span><span class="p">,</span> <span class="n">run</span>
-<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">zeo_core.core.registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">OperationRegistry</span>
-<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">zeo_core.tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">bound_capability_of</span><span class="p">,</span> <span class="n">register_capability_operation</span>
-<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>
-<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="c1"># greet is a @capability function; make_ctx returns ToolContext</span>
-<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a><span class="n">ops</span> <span class="o">=</span> <span class="n">OperationRegistry</span><span class="p">()</span>
-<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a><span class="n">register_capability_operation</span><span class="p">(</span>
-<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a>    <span class="n">bound_capability_of</span><span class="p">(</span><span class="n">greet</span><span class="p">),</span>
-<a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a>    <span class="n">registry</span><span class="o">=</span><span class="n">ops</span><span class="p">,</span>
-<a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a>    <span class="n">context_factory</span><span class="o">=</span><span class="n">make_ctx</span><span class="p">,</span>
-<a id="__codelineno-18-11" name="__codelineno-18-11" href="#__codelineno-18-11"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">"greet"</span><span class="p">,</span>
-<a id="__codelineno-18-12" name="__codelineno-18-12" href="#__codelineno-18-12"></a><span class="p">)</span>
-<a id="__codelineno-18-13" name="__codelineno-18-13" href="#__codelineno-18-13"></a><span class="c1"># create_app(HttpAdapterConfig(auth_token=None), registry=ops, ...)</span>
-<a id="__codelineno-18-14" name="__codelineno-18-14" href="#__codelineno-18-14"></a><span class="c1"># run(HttpAdapterConfig(host="127.0.0.1", port=8080))</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">zeo_core.adapters.http</span><span class="w"> </span><span class="kn">import</span> <span class="n">HttpAdapterConfig</span><span class="p">,</span> <span class="n">create_app</span><span class="p">,</span> <span class="n">run</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">zeo_core.core.registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">OperationRegistry</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">zeo_core.tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">bound_capability_of</span><span class="p">,</span> <span class="n">register_capability_operation</span>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="c1"># greet is a @capability function; make_ctx returns ToolContext</span>
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="n">ops</span> <span class="o">=</span> <span class="n">OperationRegistry</span><span class="p">()</span>
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="n">register_capability_operation</span><span class="p">(</span>
+<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a>    <span class="n">bound_capability_of</span><span class="p">(</span><span class="n">greet</span><span class="p">),</span>
+<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a>    <span class="n">registry</span><span class="o">=</span><span class="n">ops</span><span class="p">,</span>
+<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a>    <span class="n">context_factory</span><span class="o">=</span><span class="n">make_ctx</span><span class="p">,</span>
+<a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">"greet"</span><span class="p">,</span>
+<a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a><span class="p">)</span>
+<a id="__codelineno-15-13" name="__codelineno-15-13" href="#__codelineno-15-13"></a><span class="c1"># create_app(HttpAdapterConfig(auth_token=None), registry=ops, ...)</span>
+<a id="__codelineno-15-14" name="__codelineno-15-14" href="#__codelineno-15-14"></a><span class="c1"># run(HttpAdapterConfig(host="127.0.0.1", port=8080))</span>
 </code></pre></div>
 <p>The runnable example uses FastAPI's <code>TestClient</code> so
 <code>uv run examples/http_adapter_usage.py</code> returns instead of blocking on
 uvicorn. Auth is off when <code>auth_token</code> is <code>None</code>; otherwise send
 <code>Authorization: Bearer &lt;token&gt;</code>. OpenAPI is at <code>/openapi.json</code>.</p>
 <h3 id="error-handling">Error Handling<a class="headerlink" href="#error-handling" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">zeo_core.core.errors</span><span class="w"> </span><span class="kn">import</span> <span class="n">ZeoError</span><span class="p">,</span> <span class="n">ZeoFileNotFoundError</span><span class="p">,</span> <span class="n">wrap_io_errors</span>
-<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>
-<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>
-<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="c1"># Use decorator for automatic error handling</span>
-<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="nd">@wrap_io_errors</span>
-<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a><span class="k">def</span><span class="w"> </span><span class="nf">read_important_file</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
-<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a>  <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">'r'</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-<a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a>    <span class="k">return</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
-<a id="__codelineno-19-9" name="__codelineno-19-9" href="#__codelineno-19-9"></a>
-<a id="__codelineno-19-10" name="__codelineno-19-10" href="#__codelineno-19-10"></a>
-<a id="__codelineno-19-11" name="__codelineno-19-11" href="#__codelineno-19-11"></a><span class="c1"># Handle specific errors</span>
-<a id="__codelineno-19-12" name="__codelineno-19-12" href="#__codelineno-19-12"></a><span class="k">try</span><span class="p">:</span>
-<a id="__codelineno-19-13" name="__codelineno-19-13" href="#__codelineno-19-13"></a>  <span class="n">content</span> <span class="o">=</span> <span class="n">read_important_file</span><span class="p">(</span><span class="s2">"config.txt"</span><span class="p">)</span>
-<a id="__codelineno-19-14" name="__codelineno-19-14" href="#__codelineno-19-14"></a><span class="k">except</span> <span class="n">ZeoFileNotFoundError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-<a id="__codelineno-19-15" name="__codelineno-19-15" href="#__codelineno-19-15"></a>  <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"File not found: </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-<a id="__codelineno-19-16" name="__codelineno-19-16" href="#__codelineno-19-16"></a><span class="k">except</span> <span class="n">ZeoError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-<a id="__codelineno-19-17" name="__codelineno-19-17" href="#__codelineno-19-17"></a>  <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">zeo_core.core.errors</span><span class="w"> </span><span class="kn">import</span> <span class="n">ZeoError</span><span class="p">,</span> <span class="n">ZeoFileNotFoundError</span><span class="p">,</span> <span class="n">wrap_io_errors</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="c1"># Use decorator for automatic error handling</span>
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="nd">@wrap_io_errors</span>
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a><span class="k">def</span><span class="w"> </span><span class="nf">read_important_file</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a>  <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">'r'</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a>    <span class="k">return</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a>
+<a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a>
+<a id="__codelineno-16-11" name="__codelineno-16-11" href="#__codelineno-16-11"></a><span class="c1"># Handle specific errors</span>
+<a id="__codelineno-16-12" name="__codelineno-16-12" href="#__codelineno-16-12"></a><span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-16-13" name="__codelineno-16-13" href="#__codelineno-16-13"></a>  <span class="n">content</span> <span class="o">=</span> <span class="n">read_important_file</span><span class="p">(</span><span class="s2">"config.txt"</span><span class="p">)</span>
+<a id="__codelineno-16-14" name="__codelineno-16-14" href="#__codelineno-16-14"></a><span class="k">except</span> <span class="n">ZeoFileNotFoundError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+<a id="__codelineno-16-15" name="__codelineno-16-15" href="#__codelineno-16-15"></a>  <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"File not found: </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<a id="__codelineno-16-16" name="__codelineno-16-16" href="#__codelineno-16-16"></a><span class="k">except</span> <span class="n">ZeoError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+<a id="__codelineno-16-17" name="__codelineno-16-17" href="#__codelineno-16-17"></a>  <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </code></pre></div>
 <hr />
 <h2 id="advanced-usage">Advanced Usage<a class="headerlink" href="#advanced-usage" title="Permanent link">&para;</a></h2>
@@ -4836,144 +4710,144 @@ uvicorn. Auth is off when <code>auth_token</code> is <code>None</code>; otherwis
 <p><code>ZeoPluginProtocol</code> is a structural protocol (<code>typing.Protocol</code>, checked via
 <code>isinstance()</code> at runtime) -- a plugin must expose <code>plugin_id</code>, <code>name</code>, and
 <code>get_metadata()</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">zeo_core.modules</span><span class="w"> </span><span class="kn">import</span> <span class="n">registry</span>
-<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">zeo_core.modules.protocols</span><span class="w"> </span><span class="kn">import</span> <span class="n">ZeoPluginMetadata</span><span class="p">,</span> <span class="n">ZeoPluginProtocol</span>
-<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>
-<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a>
-<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a><span class="k">class</span><span class="w"> </span><span class="nc">MyCustomPlugin</span><span class="p">:</span>
-<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a>    <span class="nd">@property</span>
-<a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">plugin_id</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<a id="__codelineno-20-8" name="__codelineno-20-8" href="#__codelineno-20-8"></a>        <span class="k">return</span> <span class="s2">"my_custom_plugin"</span>
-<a id="__codelineno-20-9" name="__codelineno-20-9" href="#__codelineno-20-9"></a>
-<a id="__codelineno-20-10" name="__codelineno-20-10" href="#__codelineno-20-10"></a>    <span class="nd">@property</span>
-<a id="__codelineno-20-11" name="__codelineno-20-11" href="#__codelineno-20-11"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<a id="__codelineno-20-12" name="__codelineno-20-12" href="#__codelineno-20-12"></a>        <span class="k">return</span> <span class="s2">"My Custom Plugin"</span>
-<a id="__codelineno-20-13" name="__codelineno-20-13" href="#__codelineno-20-13"></a>
-<a id="__codelineno-20-14" name="__codelineno-20-14" href="#__codelineno-20-14"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">get_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ZeoPluginMetadata</span><span class="p">:</span>
-<a id="__codelineno-20-15" name="__codelineno-20-15" href="#__codelineno-20-15"></a>        <span class="k">return</span> <span class="n">ZeoPluginMetadata</span><span class="p">(</span>
-<a id="__codelineno-20-16" name="__codelineno-20-16" href="#__codelineno-20-16"></a>            <span class="n">plugin_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">plugin_id</span><span class="p">,</span>
-<a id="__codelineno-20-17" name="__codelineno-20-17" href="#__codelineno-20-17"></a>            <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
-<a id="__codelineno-20-18" name="__codelineno-20-18" href="#__codelineno-20-18"></a>            <span class="n">version</span><span class="o">=</span><span class="s2">"1.0.0"</span><span class="p">,</span>
-<a id="__codelineno-20-19" name="__codelineno-20-19" href="#__codelineno-20-19"></a>            <span class="n">description</span><span class="o">=</span><span class="s2">"An example custom plugin"</span><span class="p">,</span>
-<a id="__codelineno-20-20" name="__codelineno-20-20" href="#__codelineno-20-20"></a>        <span class="p">)</span>
-<a id="__codelineno-20-21" name="__codelineno-20-21" href="#__codelineno-20-21"></a>
-<a id="__codelineno-20-22" name="__codelineno-20-22" href="#__codelineno-20-22"></a>
-<a id="__codelineno-20-23" name="__codelineno-20-23" href="#__codelineno-20-23"></a><span class="n">plugin</span> <span class="o">=</span> <span class="n">MyCustomPlugin</span><span class="p">()</span>
-<a id="__codelineno-20-24" name="__codelineno-20-24" href="#__codelineno-20-24"></a><span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">plugin</span><span class="p">,</span> <span class="n">ZeoPluginProtocol</span><span class="p">)</span>  <span class="c1"># structural check passes</span>
-<a id="__codelineno-20-25" name="__codelineno-20-25" href="#__codelineno-20-25"></a>
-<a id="__codelineno-20-26" name="__codelineno-20-26" href="#__codelineno-20-26"></a><span class="n">registry</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">plugin</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">zeo_core.modules</span><span class="w"> </span><span class="kn">import</span> <span class="n">registry</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">zeo_core.modules.protocols</span><span class="w"> </span><span class="kn">import</span> <span class="n">ZeoPluginMetadata</span><span class="p">,</span> <span class="n">ZeoPluginProtocol</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a><span class="k">class</span><span class="w"> </span><span class="nc">MyCustomPlugin</span><span class="p">:</span>
+<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a>    <span class="nd">@property</span>
+<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">plugin_id</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a>        <span class="k">return</span> <span class="s2">"my_custom_plugin"</span>
+<a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a>
+<a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a>    <span class="nd">@property</span>
+<a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<a id="__codelineno-17-12" name="__codelineno-17-12" href="#__codelineno-17-12"></a>        <span class="k">return</span> <span class="s2">"My Custom Plugin"</span>
+<a id="__codelineno-17-13" name="__codelineno-17-13" href="#__codelineno-17-13"></a>
+<a id="__codelineno-17-14" name="__codelineno-17-14" href="#__codelineno-17-14"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">get_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ZeoPluginMetadata</span><span class="p">:</span>
+<a id="__codelineno-17-15" name="__codelineno-17-15" href="#__codelineno-17-15"></a>        <span class="k">return</span> <span class="n">ZeoPluginMetadata</span><span class="p">(</span>
+<a id="__codelineno-17-16" name="__codelineno-17-16" href="#__codelineno-17-16"></a>            <span class="n">plugin_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">plugin_id</span><span class="p">,</span>
+<a id="__codelineno-17-17" name="__codelineno-17-17" href="#__codelineno-17-17"></a>            <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+<a id="__codelineno-17-18" name="__codelineno-17-18" href="#__codelineno-17-18"></a>            <span class="n">version</span><span class="o">=</span><span class="s2">"1.0.0"</span><span class="p">,</span>
+<a id="__codelineno-17-19" name="__codelineno-17-19" href="#__codelineno-17-19"></a>            <span class="n">description</span><span class="o">=</span><span class="s2">"An example custom plugin"</span><span class="p">,</span>
+<a id="__codelineno-17-20" name="__codelineno-17-20" href="#__codelineno-17-20"></a>        <span class="p">)</span>
+<a id="__codelineno-17-21" name="__codelineno-17-21" href="#__codelineno-17-21"></a>
+<a id="__codelineno-17-22" name="__codelineno-17-22" href="#__codelineno-17-22"></a>
+<a id="__codelineno-17-23" name="__codelineno-17-23" href="#__codelineno-17-23"></a><span class="n">plugin</span> <span class="o">=</span> <span class="n">MyCustomPlugin</span><span class="p">()</span>
+<a id="__codelineno-17-24" name="__codelineno-17-24" href="#__codelineno-17-24"></a><span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">plugin</span><span class="p">,</span> <span class="n">ZeoPluginProtocol</span><span class="p">)</span>  <span class="c1"># structural check passes</span>
+<a id="__codelineno-17-25" name="__codelineno-17-25" href="#__codelineno-17-25"></a>
+<a id="__codelineno-17-26" name="__codelineno-17-26" href="#__codelineno-17-26"></a><span class="n">registry</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">plugin</span><span class="p">)</span>
 </code></pre></div>
 <h3 id="working-with-pandoc-for-document-conversion">Working with Pandoc for Document Conversion<a class="headerlink" href="#working-with-pandoc-for-document-conversion" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">zeo_core.integrations.pandoc</span><span class="w"> </span><span class="kn">import</span> <span class="n">PandocIntegration</span>
-<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>
-<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a><span class="c1"># Initialize the service</span>
-<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a><span class="n">pandoc</span> <span class="o">=</span> <span class="n">PandocIntegration</span><span class="p">()</span>
-<a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a><span class="n">pandoc</span><span class="o">.</span><span class="n">initialize</span><span class="p">()</span>
-<a id="__codelineno-21-7" name="__codelineno-21-7" href="#__codelineno-21-7"></a>
-<a id="__codelineno-21-8" name="__codelineno-21-8" href="#__codelineno-21-8"></a><span class="c1"># Convert HTML to Markdown</span>
-<a id="__codelineno-21-9" name="__codelineno-21-9" href="#__codelineno-21-9"></a><span class="n">result</span> <span class="o">=</span> <span class="n">pandoc</span><span class="o">.</span><span class="n">html_to_markdown</span><span class="p">(</span>
-<a id="__codelineno-21-10" name="__codelineno-21-10" href="#__codelineno-21-10"></a>    <span class="n">Path</span><span class="p">(</span><span class="s2">"document.html"</span><span class="p">),</span> 
-<a id="__codelineno-21-11" name="__codelineno-21-11" href="#__codelineno-21-11"></a>    <span class="n">Path</span><span class="p">(</span><span class="s2">"output.md"</span><span class="p">)</span>
-<a id="__codelineno-21-12" name="__codelineno-21-12" href="#__codelineno-21-12"></a><span class="p">)</span>
-<a id="__codelineno-21-13" name="__codelineno-21-13" href="#__codelineno-21-13"></a>
-<a id="__codelineno-21-14" name="__codelineno-21-14" href="#__codelineno-21-14"></a><span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">success</span><span class="p">:</span>
-<a id="__codelineno-21-15" name="__codelineno-21-15" href="#__codelineno-21-15"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Converted to: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">content</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-<a id="__codelineno-21-16" name="__codelineno-21-16" href="#__codelineno-21-16"></a><span class="k">else</span><span class="p">:</span>
-<a id="__codelineno-21-17" name="__codelineno-21-17" href="#__codelineno-21-17"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Conversion failed: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">error</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-<a id="__codelineno-21-18" name="__codelineno-21-18" href="#__codelineno-21-18"></a>
-<a id="__codelineno-21-19" name="__codelineno-21-19" href="#__codelineno-21-19"></a><span class="c1"># Convert Markdown to DOCX</span>
-<a id="__codelineno-21-20" name="__codelineno-21-20" href="#__codelineno-21-20"></a><span class="n">docx_result</span> <span class="o">=</span> <span class="n">pandoc</span><span class="o">.</span><span class="n">markdown_to_docx</span><span class="p">(</span>
-<a id="__codelineno-21-21" name="__codelineno-21-21" href="#__codelineno-21-21"></a>    <span class="n">Path</span><span class="p">(</span><span class="s2">"document.md"</span><span class="p">),</span>
-<a id="__codelineno-21-22" name="__codelineno-21-22" href="#__codelineno-21-22"></a>    <span class="n">Path</span><span class="p">(</span><span class="s2">"output.docx"</span><span class="p">)</span>
-<a id="__codelineno-21-23" name="__codelineno-21-23" href="#__codelineno-21-23"></a><span class="p">)</span>
-<a id="__codelineno-21-24" name="__codelineno-21-24" href="#__codelineno-21-24"></a>
-<a id="__codelineno-21-25" name="__codelineno-21-25" href="#__codelineno-21-25"></a><span class="c1"># Convert all HTML files in a directory to Markdown</span>
-<a id="__codelineno-21-26" name="__codelineno-21-26" href="#__codelineno-21-26"></a><span class="n">batch_result</span> <span class="o">=</span> <span class="n">pandoc</span><span class="o">.</span><span class="n">convert_directory</span><span class="p">(</span>
-<a id="__codelineno-21-27" name="__codelineno-21-27" href="#__codelineno-21-27"></a>    <span class="n">Path</span><span class="p">(</span><span class="s2">"html_files"</span><span class="p">),</span> 
-<a id="__codelineno-21-28" name="__codelineno-21-28" href="#__codelineno-21-28"></a>    <span class="s2">"markdown"</span><span class="p">,</span>
-<a id="__codelineno-21-29" name="__codelineno-21-29" href="#__codelineno-21-29"></a>    <span class="n">Path</span><span class="p">(</span><span class="s2">"output_dir"</span><span class="p">)</span>
-<a id="__codelineno-21-30" name="__codelineno-21-30" href="#__codelineno-21-30"></a><span class="p">)</span>
-<a id="__codelineno-21-31" name="__codelineno-21-31" href="#__codelineno-21-31"></a><span class="k">if</span> <span class="n">batch_result</span><span class="o">.</span><span class="n">success</span><span class="p">:</span>
-<a id="__codelineno-21-32" name="__codelineno-21-32" href="#__codelineno-21-32"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Converted </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">batch_result</span><span class="o">.</span><span class="n">content</span><span class="p">)</span><span class="si">}</span><span class="s2"> files"</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">zeo_core.integrations.pandoc</span><span class="w"> </span><span class="kn">import</span> <span class="n">PandocIntegration</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="c1"># Initialize the service</span>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="n">pandoc</span> <span class="o">=</span> <span class="n">PandocIntegration</span><span class="p">()</span>
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a><span class="n">pandoc</span><span class="o">.</span><span class="n">initialize</span><span class="p">()</span>
+<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a>
+<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a><span class="c1"># Convert HTML to Markdown</span>
+<a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a><span class="n">result</span> <span class="o">=</span> <span class="n">pandoc</span><span class="o">.</span><span class="n">html_to_markdown</span><span class="p">(</span>
+<a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a>    <span class="n">Path</span><span class="p">(</span><span class="s2">"document.html"</span><span class="p">),</span> 
+<a id="__codelineno-18-11" name="__codelineno-18-11" href="#__codelineno-18-11"></a>    <span class="n">Path</span><span class="p">(</span><span class="s2">"output.md"</span><span class="p">)</span>
+<a id="__codelineno-18-12" name="__codelineno-18-12" href="#__codelineno-18-12"></a><span class="p">)</span>
+<a id="__codelineno-18-13" name="__codelineno-18-13" href="#__codelineno-18-13"></a>
+<a id="__codelineno-18-14" name="__codelineno-18-14" href="#__codelineno-18-14"></a><span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">success</span><span class="p">:</span>
+<a id="__codelineno-18-15" name="__codelineno-18-15" href="#__codelineno-18-15"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Converted to: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">content</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<a id="__codelineno-18-16" name="__codelineno-18-16" href="#__codelineno-18-16"></a><span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-18-17" name="__codelineno-18-17" href="#__codelineno-18-17"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Conversion failed: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">error</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<a id="__codelineno-18-18" name="__codelineno-18-18" href="#__codelineno-18-18"></a>
+<a id="__codelineno-18-19" name="__codelineno-18-19" href="#__codelineno-18-19"></a><span class="c1"># Convert Markdown to DOCX</span>
+<a id="__codelineno-18-20" name="__codelineno-18-20" href="#__codelineno-18-20"></a><span class="n">docx_result</span> <span class="o">=</span> <span class="n">pandoc</span><span class="o">.</span><span class="n">markdown_to_docx</span><span class="p">(</span>
+<a id="__codelineno-18-21" name="__codelineno-18-21" href="#__codelineno-18-21"></a>    <span class="n">Path</span><span class="p">(</span><span class="s2">"document.md"</span><span class="p">),</span>
+<a id="__codelineno-18-22" name="__codelineno-18-22" href="#__codelineno-18-22"></a>    <span class="n">Path</span><span class="p">(</span><span class="s2">"output.docx"</span><span class="p">)</span>
+<a id="__codelineno-18-23" name="__codelineno-18-23" href="#__codelineno-18-23"></a><span class="p">)</span>
+<a id="__codelineno-18-24" name="__codelineno-18-24" href="#__codelineno-18-24"></a>
+<a id="__codelineno-18-25" name="__codelineno-18-25" href="#__codelineno-18-25"></a><span class="c1"># Convert all HTML files in a directory to Markdown</span>
+<a id="__codelineno-18-26" name="__codelineno-18-26" href="#__codelineno-18-26"></a><span class="n">batch_result</span> <span class="o">=</span> <span class="n">pandoc</span><span class="o">.</span><span class="n">convert_directory</span><span class="p">(</span>
+<a id="__codelineno-18-27" name="__codelineno-18-27" href="#__codelineno-18-27"></a>    <span class="n">Path</span><span class="p">(</span><span class="s2">"html_files"</span><span class="p">),</span> 
+<a id="__codelineno-18-28" name="__codelineno-18-28" href="#__codelineno-18-28"></a>    <span class="s2">"markdown"</span><span class="p">,</span>
+<a id="__codelineno-18-29" name="__codelineno-18-29" href="#__codelineno-18-29"></a>    <span class="n">Path</span><span class="p">(</span><span class="s2">"output_dir"</span><span class="p">)</span>
+<a id="__codelineno-18-30" name="__codelineno-18-30" href="#__codelineno-18-30"></a><span class="p">)</span>
+<a id="__codelineno-18-31" name="__codelineno-18-31" href="#__codelineno-18-31"></a><span class="k">if</span> <span class="n">batch_result</span><span class="o">.</span><span class="n">success</span><span class="p">:</span>
+<a id="__codelineno-18-32" name="__codelineno-18-32" href="#__codelineno-18-32"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Converted </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">batch_result</span><span class="o">.</span><span class="n">content</span><span class="p">)</span><span class="si">}</span><span class="s2"> files"</span><span class="p">)</span>
 </code></pre></div>
 <h3 id="creating-custom-configuration">Creating Custom Configuration<a class="headerlink" href="#creating-custom-configuration" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
-<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>
-<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span>
-<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">zeo_core.config.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">ZeoConfig</span>
-<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>
-<a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a><span class="c1"># Define custom configuration model</span>
-<a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a><span class="k">class</span><span class="w"> </span><span class="nc">MyAppConfig</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a>    <span class="n">api_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"API key for external service"</span><span class="p">)</span>
-<a id="__codelineno-22-9" name="__codelineno-22-9" href="#__codelineno-22-9"></a>    <span class="n">endpoint</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="s2">"https://api.example.com"</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"API endpoint"</span><span class="p">)</span>
-<a id="__codelineno-22-10" name="__codelineno-22-10" href="#__codelineno-22-10"></a>    <span class="n">timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Request timeout in seconds"</span><span class="p">)</span>
-<a id="__codelineno-22-11" name="__codelineno-22-11" href="#__codelineno-22-11"></a>
-<a id="__codelineno-22-12" name="__codelineno-22-12" href="#__codelineno-22-12"></a><span class="c1"># Secrets are never constructed inline and never dumped to YAML/JSON --</span>
-<a id="__codelineno-22-13" name="__codelineno-22-13" href="#__codelineno-22-13"></a><span class="c1"># read them from the environment (see .env.example / "Environment</span>
-<a id="__codelineno-22-14" name="__codelineno-22-14" href="#__codelineno-22-14"></a><span class="c1"># Variables" below). Keep the MyAppConfig instance itself out of any</span>
-<a id="__codelineno-22-15" name="__codelineno-22-15" href="#__codelineno-22-15"></a><span class="c1"># model_dump() that gets persisted to disk.</span>
-<a id="__codelineno-22-16" name="__codelineno-22-16" href="#__codelineno-22-16"></a><span class="n">my_app_config</span> <span class="o">=</span> <span class="n">MyAppConfig</span><span class="p">(</span><span class="n">api_key</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"MY_APP_API_KEY"</span><span class="p">])</span>
-<a id="__codelineno-22-17" name="__codelineno-22-17" href="#__codelineno-22-17"></a>
-<a id="__codelineno-22-18" name="__codelineno-22-18" href="#__codelineno-22-18"></a><span class="c1"># Add ONLY non-secret settings to ZeoConfig.custom -- ZeoConfig gets</span>
-<a id="__codelineno-22-19" name="__codelineno-22-19" href="#__codelineno-22-19"></a><span class="c1"># committed as YAML, so a secret placed here is written to a tracked file.</span>
-<a id="__codelineno-22-20" name="__codelineno-22-20" href="#__codelineno-22-20"></a><span class="n">config</span> <span class="o">=</span> <span class="n">ZeoConfig</span><span class="p">()</span>
-<a id="__codelineno-22-21" name="__codelineno-22-21" href="#__codelineno-22-21"></a><span class="n">config</span><span class="o">.</span><span class="n">custom</span><span class="p">[</span><span class="s2">"my_app"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-<a id="__codelineno-22-22" name="__codelineno-22-22" href="#__codelineno-22-22"></a>    <span class="s2">"endpoint"</span><span class="p">:</span> <span class="n">my_app_config</span><span class="o">.</span><span class="n">endpoint</span><span class="p">,</span>
-<a id="__codelineno-22-23" name="__codelineno-22-23" href="#__codelineno-22-23"></a>    <span class="s2">"timeout"</span><span class="p">:</span> <span class="n">my_app_config</span><span class="o">.</span><span class="n">timeout</span><span class="p">,</span>
-<a id="__codelineno-22-24" name="__codelineno-22-24" href="#__codelineno-22-24"></a><span class="p">}</span>
-<a id="__codelineno-22-25" name="__codelineno-22-25" href="#__codelineno-22-25"></a>
-<a id="__codelineno-22-26" name="__codelineno-22-26" href="#__codelineno-22-26"></a><span class="c1"># Save configuration</span>
-<a id="__codelineno-22-27" name="__codelineno-22-27" href="#__codelineno-22-27"></a><span class="kn">from</span><span class="w"> </span><span class="nn">zeo_core.config.loader</span><span class="w"> </span><span class="kn">import</span> <span class="n">merge_configs</span>
-<a id="__codelineno-22-28" name="__codelineno-22-28" href="#__codelineno-22-28"></a><span class="n">merged_config</span> <span class="o">=</span> <span class="n">merge_configs</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="p">{})</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span>
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">zeo_core.config.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">ZeoConfig</span>
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a>
+<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a><span class="c1"># Define custom configuration model</span>
+<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a><span class="k">class</span><span class="w"> </span><span class="nc">MyAppConfig</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a>    <span class="n">api_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"API key for external service"</span><span class="p">)</span>
+<a id="__codelineno-19-9" name="__codelineno-19-9" href="#__codelineno-19-9"></a>    <span class="n">endpoint</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="s2">"https://api.example.com"</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"API endpoint"</span><span class="p">)</span>
+<a id="__codelineno-19-10" name="__codelineno-19-10" href="#__codelineno-19-10"></a>    <span class="n">timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Request timeout in seconds"</span><span class="p">)</span>
+<a id="__codelineno-19-11" name="__codelineno-19-11" href="#__codelineno-19-11"></a>
+<a id="__codelineno-19-12" name="__codelineno-19-12" href="#__codelineno-19-12"></a><span class="c1"># Secrets are never constructed inline and never dumped to YAML/JSON --</span>
+<a id="__codelineno-19-13" name="__codelineno-19-13" href="#__codelineno-19-13"></a><span class="c1"># read them from the environment (see .env.example / "Environment</span>
+<a id="__codelineno-19-14" name="__codelineno-19-14" href="#__codelineno-19-14"></a><span class="c1"># Variables" below). Keep the MyAppConfig instance itself out of any</span>
+<a id="__codelineno-19-15" name="__codelineno-19-15" href="#__codelineno-19-15"></a><span class="c1"># model_dump() that gets persisted to disk.</span>
+<a id="__codelineno-19-16" name="__codelineno-19-16" href="#__codelineno-19-16"></a><span class="n">my_app_config</span> <span class="o">=</span> <span class="n">MyAppConfig</span><span class="p">(</span><span class="n">api_key</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"MY_APP_API_KEY"</span><span class="p">])</span>
+<a id="__codelineno-19-17" name="__codelineno-19-17" href="#__codelineno-19-17"></a>
+<a id="__codelineno-19-18" name="__codelineno-19-18" href="#__codelineno-19-18"></a><span class="c1"># Add ONLY non-secret settings to ZeoConfig.custom -- ZeoConfig gets</span>
+<a id="__codelineno-19-19" name="__codelineno-19-19" href="#__codelineno-19-19"></a><span class="c1"># committed as YAML, so a secret placed here is written to a tracked file.</span>
+<a id="__codelineno-19-20" name="__codelineno-19-20" href="#__codelineno-19-20"></a><span class="n">config</span> <span class="o">=</span> <span class="n">ZeoConfig</span><span class="p">()</span>
+<a id="__codelineno-19-21" name="__codelineno-19-21" href="#__codelineno-19-21"></a><span class="n">config</span><span class="o">.</span><span class="n">custom</span><span class="p">[</span><span class="s2">"my_app"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+<a id="__codelineno-19-22" name="__codelineno-19-22" href="#__codelineno-19-22"></a>    <span class="s2">"endpoint"</span><span class="p">:</span> <span class="n">my_app_config</span><span class="o">.</span><span class="n">endpoint</span><span class="p">,</span>
+<a id="__codelineno-19-23" name="__codelineno-19-23" href="#__codelineno-19-23"></a>    <span class="s2">"timeout"</span><span class="p">:</span> <span class="n">my_app_config</span><span class="o">.</span><span class="n">timeout</span><span class="p">,</span>
+<a id="__codelineno-19-24" name="__codelineno-19-24" href="#__codelineno-19-24"></a><span class="p">}</span>
+<a id="__codelineno-19-25" name="__codelineno-19-25" href="#__codelineno-19-25"></a>
+<a id="__codelineno-19-26" name="__codelineno-19-26" href="#__codelineno-19-26"></a><span class="c1"># Save configuration</span>
+<a id="__codelineno-19-27" name="__codelineno-19-27" href="#__codelineno-19-27"></a><span class="kn">from</span><span class="w"> </span><span class="nn">zeo_core.config.loader</span><span class="w"> </span><span class="kn">import</span> <span class="n">merge_configs</span>
+<a id="__codelineno-19-28" name="__codelineno-19-28" href="#__codelineno-19-28"></a><span class="n">merged_config</span> <span class="o">=</span> <span class="n">merge_configs</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="p">{})</span>
 </code></pre></div>
 <h2 id="configuration-file-format">Configuration File Format<a class="headerlink" href="#configuration-file-format" title="Permanent link">&para;</a></h2>
 <p>ZeoCore uses YAML for configuration files. Here's an example of a basic configuration file:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="nt">general</span><span class="p">:</span>
-<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="w">  </span><span class="nt">project_name</span><span class="p">:</span><span class="w"> </span><span class="s">"MyZeoProject"</span>
-<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a><span class="w">  </span><span class="nt">environment</span><span class="p">:</span><span class="w"> </span><span class="s">"development"</span>
-<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a><span class="w">  </span><span class="nt">debug</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a><span class="w">  </span><span class="nt">verbose</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a>
-<a id="__codelineno-23-7" name="__codelineno-23-7" href="#__codelineno-23-7"></a><span class="nt">paths</span><span class="p">:</span>
-<a id="__codelineno-23-8" name="__codelineno-23-8" href="#__codelineno-23-8"></a><span class="w">  </span><span class="nt">base_dir</span><span class="p">:</span><span class="w"> </span><span class="s">"./project"</span>
-<a id="__codelineno-23-9" name="__codelineno-23-9" href="#__codelineno-23-9"></a><span class="w">  </span><span class="nt">output_dir</span><span class="p">:</span><span class="w"> </span><span class="s">"./project/output"</span>
-<a id="__codelineno-23-10" name="__codelineno-23-10" href="#__codelineno-23-10"></a><span class="w">  </span><span class="nt">assets_dir</span><span class="p">:</span><span class="w"> </span><span class="s">"./project/assets"</span>
-<a id="__codelineno-23-11" name="__codelineno-23-11" href="#__codelineno-23-11"></a><span class="w">  </span><span class="nt">data_dir</span><span class="p">:</span><span class="w"> </span><span class="s">"./project/data"</span>
-<a id="__codelineno-23-12" name="__codelineno-23-12" href="#__codelineno-23-12"></a><span class="w">  </span><span class="nt">temp_dir</span><span class="p">:</span><span class="w"> </span><span class="s">"./project/temp"</span>
-<a id="__codelineno-23-13" name="__codelineno-23-13" href="#__codelineno-23-13"></a>
-<a id="__codelineno-23-14" name="__codelineno-23-14" href="#__codelineno-23-14"></a><span class="nt">logging</span><span class="p">:</span>
-<a id="__codelineno-23-15" name="__codelineno-23-15" href="#__codelineno-23-15"></a><span class="w">  </span><span class="nt">level</span><span class="p">:</span><span class="w"> </span><span class="s">"INFO"</span>
-<a id="__codelineno-23-16" name="__codelineno-23-16" href="#__codelineno-23-16"></a><span class="w">  </span><span class="nt">file</span><span class="p">:</span><span class="w"> </span><span class="s">"logs/app.log"</span>
-<a id="__codelineno-23-17" name="__codelineno-23-17" href="#__codelineno-23-17"></a><span class="w">  </span><span class="nt">console</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<a id="__codelineno-23-18" name="__codelineno-23-18" href="#__codelineno-23-18"></a>
-<a id="__codelineno-23-19" name="__codelineno-23-19" href="#__codelineno-23-19"></a><span class="nt">integrations</span><span class="p">:</span>
-<a id="__codelineno-23-20" name="__codelineno-23-20" href="#__codelineno-23-20"></a><span class="w">  </span><span class="nt">google</span><span class="p">:</span>
-<a id="__codelineno-23-21" name="__codelineno-23-21" href="#__codelineno-23-21"></a><span class="w">    </span><span class="nt">client_secrets_file</span><span class="p">:</span><span class="w"> </span><span class="s">"config/google_client_secret.json"</span>
-<a id="__codelineno-23-22" name="__codelineno-23-22" href="#__codelineno-23-22"></a><span class="w">    </span><span class="nt">credentials_file</span><span class="p">:</span><span class="w"> </span><span class="s">"config/google_credentials.json"</span>
-<a id="__codelineno-23-23" name="__codelineno-23-23" href="#__codelineno-23-23"></a><span class="w">    </span><span class="nt">drive</span><span class="p">:</span>
-<a id="__codelineno-23-24" name="__codelineno-23-24" href="#__codelineno-23-24"></a><span class="w">      </span><span class="nt">shared_folder_id</span><span class="p">:</span><span class="w"> </span><span class="s">"your-folder-id"</span>
-<a id="__codelineno-23-25" name="__codelineno-23-25" href="#__codelineno-23-25"></a><span class="w">    </span><span class="nt">gmail</span><span class="p">:</span>
-<a id="__codelineno-23-26" name="__codelineno-23-26" href="#__codelineno-23-26"></a><span class="w">      </span><span class="nt">gmail_labels</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"INBOX"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"IMPORTANT"</span><span class="p p-Indicator">]</span>
-<a id="__codelineno-23-27" name="__codelineno-23-27" href="#__codelineno-23-27"></a><span class="w">      </span><span class="nt">gmail_days_back</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">7</span>
-<a id="__codelineno-23-28" name="__codelineno-23-28" href="#__codelineno-23-28"></a>
-<a id="__codelineno-23-29" name="__codelineno-23-29" href="#__codelineno-23-29"></a><span class="nt">plugins</span><span class="p">:</span>
-<a id="__codelineno-23-30" name="__codelineno-23-30" href="#__codelineno-23-30"></a><span class="w">  </span><span class="nt">enabled</span><span class="p">:</span>
-<a id="__codelineno-23-31" name="__codelineno-23-31" href="#__codelineno-23-31"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"Pandoc"</span>
-<a id="__codelineno-23-32" name="__codelineno-23-32" href="#__codelineno-23-32"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"GoogleDrive"</span>
-<a id="__codelineno-23-33" name="__codelineno-23-33" href="#__codelineno-23-33"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"GoogleMail"</span>
-<a id="__codelineno-23-34" name="__codelineno-23-34" href="#__codelineno-23-34"></a><span class="w">  </span><span class="nt">paths</span><span class="p">:</span>
-<a id="__codelineno-23-35" name="__codelineno-23-35" href="#__codelineno-23-35"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"./modules"</span>
-<a id="__codelineno-23-36" name="__codelineno-23-36" href="#__codelineno-23-36"></a>
-<a id="__codelineno-23-37" name="__codelineno-23-37" href="#__codelineno-23-37"></a><span class="c1"># Custom application-specific configuration.</span>
-<a id="__codelineno-23-38" name="__codelineno-23-38" href="#__codelineno-23-38"></a><span class="c1"># NOTE: no secrets here. This file is YAML and gets committed by default.</span>
-<a id="__codelineno-23-39" name="__codelineno-23-39" href="#__codelineno-23-39"></a><span class="c1"># Put settings here; put secrets in `.env` (copy `.env.example`, which IS</span>
-<a id="__codelineno-23-40" name="__codelineno-23-40" href="#__codelineno-23-40"></a><span class="c1"># gitignored) and read them from the environment at runtime -- see</span>
-<a id="__codelineno-23-41" name="__codelineno-23-41" href="#__codelineno-23-41"></a><span class="c1"># "Secrets and .env" below.</span>
-<a id="__codelineno-23-42" name="__codelineno-23-42" href="#__codelineno-23-42"></a><span class="nt">custom</span><span class="p">:</span>
-<a id="__codelineno-23-43" name="__codelineno-23-43" href="#__codelineno-23-43"></a><span class="w">  </span><span class="nt">my_app</span><span class="p">:</span>
-<a id="__codelineno-23-44" name="__codelineno-23-44" href="#__codelineno-23-44"></a><span class="w">    </span><span class="nt">endpoint</span><span class="p">:</span><span class="w"> </span><span class="s">"https://api.example.com"</span>
-<a id="__codelineno-23-45" name="__codelineno-23-45" href="#__codelineno-23-45"></a><span class="w">    </span><span class="nt">timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="nt">general</span><span class="p">:</span>
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="w">  </span><span class="nt">project_name</span><span class="p">:</span><span class="w"> </span><span class="s">"MyZeoProject"</span>
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="w">  </span><span class="nt">environment</span><span class="p">:</span><span class="w"> </span><span class="s">"development"</span>
+<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="w">  </span><span class="nt">debug</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a><span class="w">  </span><span class="nt">verbose</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a>
+<a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a><span class="nt">paths</span><span class="p">:</span>
+<a id="__codelineno-20-8" name="__codelineno-20-8" href="#__codelineno-20-8"></a><span class="w">  </span><span class="nt">base_dir</span><span class="p">:</span><span class="w"> </span><span class="s">"./project"</span>
+<a id="__codelineno-20-9" name="__codelineno-20-9" href="#__codelineno-20-9"></a><span class="w">  </span><span class="nt">output_dir</span><span class="p">:</span><span class="w"> </span><span class="s">"./project/output"</span>
+<a id="__codelineno-20-10" name="__codelineno-20-10" href="#__codelineno-20-10"></a><span class="w">  </span><span class="nt">assets_dir</span><span class="p">:</span><span class="w"> </span><span class="s">"./project/assets"</span>
+<a id="__codelineno-20-11" name="__codelineno-20-11" href="#__codelineno-20-11"></a><span class="w">  </span><span class="nt">data_dir</span><span class="p">:</span><span class="w"> </span><span class="s">"./project/data"</span>
+<a id="__codelineno-20-12" name="__codelineno-20-12" href="#__codelineno-20-12"></a><span class="w">  </span><span class="nt">temp_dir</span><span class="p">:</span><span class="w"> </span><span class="s">"./project/temp"</span>
+<a id="__codelineno-20-13" name="__codelineno-20-13" href="#__codelineno-20-13"></a>
+<a id="__codelineno-20-14" name="__codelineno-20-14" href="#__codelineno-20-14"></a><span class="nt">logging</span><span class="p">:</span>
+<a id="__codelineno-20-15" name="__codelineno-20-15" href="#__codelineno-20-15"></a><span class="w">  </span><span class="nt">level</span><span class="p">:</span><span class="w"> </span><span class="s">"INFO"</span>
+<a id="__codelineno-20-16" name="__codelineno-20-16" href="#__codelineno-20-16"></a><span class="w">  </span><span class="nt">file</span><span class="p">:</span><span class="w"> </span><span class="s">"logs/app.log"</span>
+<a id="__codelineno-20-17" name="__codelineno-20-17" href="#__codelineno-20-17"></a><span class="w">  </span><span class="nt">console</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<a id="__codelineno-20-18" name="__codelineno-20-18" href="#__codelineno-20-18"></a>
+<a id="__codelineno-20-19" name="__codelineno-20-19" href="#__codelineno-20-19"></a><span class="nt">integrations</span><span class="p">:</span>
+<a id="__codelineno-20-20" name="__codelineno-20-20" href="#__codelineno-20-20"></a><span class="w">  </span><span class="nt">google</span><span class="p">:</span>
+<a id="__codelineno-20-21" name="__codelineno-20-21" href="#__codelineno-20-21"></a><span class="w">    </span><span class="nt">client_secrets_file</span><span class="p">:</span><span class="w"> </span><span class="s">"config/google_client_secret.json"</span>
+<a id="__codelineno-20-22" name="__codelineno-20-22" href="#__codelineno-20-22"></a><span class="w">    </span><span class="nt">credentials_file</span><span class="p">:</span><span class="w"> </span><span class="s">"config/google_credentials.json"</span>
+<a id="__codelineno-20-23" name="__codelineno-20-23" href="#__codelineno-20-23"></a><span class="w">    </span><span class="nt">drive</span><span class="p">:</span>
+<a id="__codelineno-20-24" name="__codelineno-20-24" href="#__codelineno-20-24"></a><span class="w">      </span><span class="nt">shared_folder_id</span><span class="p">:</span><span class="w"> </span><span class="s">"your-folder-id"</span>
+<a id="__codelineno-20-25" name="__codelineno-20-25" href="#__codelineno-20-25"></a><span class="w">    </span><span class="nt">gmail</span><span class="p">:</span>
+<a id="__codelineno-20-26" name="__codelineno-20-26" href="#__codelineno-20-26"></a><span class="w">      </span><span class="nt">gmail_labels</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"INBOX"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"IMPORTANT"</span><span class="p p-Indicator">]</span>
+<a id="__codelineno-20-27" name="__codelineno-20-27" href="#__codelineno-20-27"></a><span class="w">      </span><span class="nt">gmail_days_back</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">7</span>
+<a id="__codelineno-20-28" name="__codelineno-20-28" href="#__codelineno-20-28"></a>
+<a id="__codelineno-20-29" name="__codelineno-20-29" href="#__codelineno-20-29"></a><span class="nt">plugins</span><span class="p">:</span>
+<a id="__codelineno-20-30" name="__codelineno-20-30" href="#__codelineno-20-30"></a><span class="w">  </span><span class="nt">enabled</span><span class="p">:</span>
+<a id="__codelineno-20-31" name="__codelineno-20-31" href="#__codelineno-20-31"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"Pandoc"</span>
+<a id="__codelineno-20-32" name="__codelineno-20-32" href="#__codelineno-20-32"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"GoogleDrive"</span>
+<a id="__codelineno-20-33" name="__codelineno-20-33" href="#__codelineno-20-33"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"GoogleMail"</span>
+<a id="__codelineno-20-34" name="__codelineno-20-34" href="#__codelineno-20-34"></a><span class="w">  </span><span class="nt">paths</span><span class="p">:</span>
+<a id="__codelineno-20-35" name="__codelineno-20-35" href="#__codelineno-20-35"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"./modules"</span>
+<a id="__codelineno-20-36" name="__codelineno-20-36" href="#__codelineno-20-36"></a>
+<a id="__codelineno-20-37" name="__codelineno-20-37" href="#__codelineno-20-37"></a><span class="c1"># Custom application-specific configuration.</span>
+<a id="__codelineno-20-38" name="__codelineno-20-38" href="#__codelineno-20-38"></a><span class="c1"># NOTE: no secrets here. This file is YAML and gets committed by default.</span>
+<a id="__codelineno-20-39" name="__codelineno-20-39" href="#__codelineno-20-39"></a><span class="c1"># Put settings here; put secrets in `.env` (copy `.env.example`, which IS</span>
+<a id="__codelineno-20-40" name="__codelineno-20-40" href="#__codelineno-20-40"></a><span class="c1"># gitignored) and read them from the environment at runtime -- see</span>
+<a id="__codelineno-20-41" name="__codelineno-20-41" href="#__codelineno-20-41"></a><span class="c1"># "Secrets and .env" below.</span>
+<a id="__codelineno-20-42" name="__codelineno-20-42" href="#__codelineno-20-42"></a><span class="nt">custom</span><span class="p">:</span>
+<a id="__codelineno-20-43" name="__codelineno-20-43" href="#__codelineno-20-43"></a><span class="w">  </span><span class="nt">my_app</span><span class="p">:</span>
+<a id="__codelineno-20-44" name="__codelineno-20-44" href="#__codelineno-20-44"></a><span class="w">    </span><span class="nt">endpoint</span><span class="p">:</span><span class="w"> </span><span class="s">"https://api.example.com"</span>
+<a id="__codelineno-20-45" name="__codelineno-20-45" href="#__codelineno-20-45"></a><span class="w">    </span><span class="nt">timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30</span>
 </code></pre></div>
 <h2 id="environment-variables">Environment Variables<a class="headerlink" href="#environment-variables" title="Permanent link">&para;</a></h2>
 <p>ZeoCore supports configuration through environment variables with the prefix
@@ -4982,13 +4856,13 @@ nesting levels). These are merged onto whatever <code>ZeoConfig</code> field the
 to -- unrecognized sections are silently dropped, since <code>ZeoConfig</code> validates
 strictly against its own fields (<code>general</code>, <code>paths</code>, <code>logging</code>,
 <code>integrations</code>, <code>plugins</code>, <code>custom</code>):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ZEO_GENERAL__DEBUG</span><span class="o">=</span><span class="nb">false</span>
-<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ZEO_LOGGING__LEVEL</span><span class="o">=</span>WARNING
-<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ZEO_PATHS__BASE_DIR</span><span class="o">=</span>/opt/zeocore
-<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a>
-<a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a><span class="c1"># Nested keys under the `integrations` dict field:</span>
-<a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ZEO_INTEGRATIONS__GOOGLE__CLIENT_SECRETS_FILE</span><span class="o">=</span>/etc/zeo/client_secrets.json
-<a id="__codelineno-24-7" name="__codelineno-24-7" href="#__codelineno-24-7"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ZEO_INTEGRATIONS__GOOGLE__CREDENTIALS_FILE</span><span class="o">=</span>/etc/zeo/credentials.json
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ZEO_GENERAL__DEBUG</span><span class="o">=</span><span class="nb">false</span>
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ZEO_LOGGING__LEVEL</span><span class="o">=</span>WARNING
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ZEO_PATHS__BASE_DIR</span><span class="o">=</span>/opt/zeocore
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a>
+<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a><span class="c1"># Nested keys under the `integrations` dict field:</span>
+<a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ZEO_INTEGRATIONS__GOOGLE__CLIENT_SECRETS_FILE</span><span class="o">=</span>/etc/zeo/client_secrets.json
+<a id="__codelineno-21-7" name="__codelineno-21-7" href="#__codelineno-21-7"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ZEO_INTEGRATIONS__GOOGLE__CREDENTIALS_FILE</span><span class="o">=</span>/etc/zeo/credentials.json
 </code></pre></div>
 <p><code>ZEO_ENV</code> is separate: it's read by <code>zeo_core.config.utils.get_env()</code> (not by
 <code>load_config()</code> itself) and defaults to <code>"development"</code>.</p>
@@ -5003,9 +4877,9 @@ integrations, no <code>ZEO_</code> prefix needed.</p>
 <p>ZeoCore does <strong>not</strong> load <code>.env</code> files on import (no implicit I/O on import,
 per <code>zeo_core.config</code>'s own Kernel philosophy) -- but it does provide a real,
 working loader you call explicitly:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">zeo_core.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv_file</span>
-<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>
-<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a><span class="n">load_dotenv_file</span><span class="p">()</span>  <span class="c1"># searches upward from CWD for a `.env` file, once, early</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">zeo_core.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv_file</span>
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a><span class="n">load_dotenv_file</span><span class="p">()</span>  <span class="c1"># searches upward from CWD for a `.env` file, once, early</span>
 </code></pre></div>
 <p>Call it once in your own entrypoint, before anything reads a secret. It
 never overwrites a variable already present in the process environment
@@ -5072,29 +4946,29 @@ authenticates through a Google Cloud project you create yourself.</p>
    is your <code>client_secrets_file</code> -- save it somewhere outside any git
    repository, e.g. <code>~/.zeo/google_client_secret.json</code>.</li>
 </ol>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">zeo_core.integrations.google.auth</span><span class="w"> </span><span class="kn">import</span> <span class="n">GoogleAuthProvider</span>
-<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>
-<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a><span class="n">auth_provider</span> <span class="o">=</span> <span class="n">GoogleAuthProvider</span><span class="p">(</span>
-<a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a>    <span class="n">client_secrets_file</span><span class="o">=</span><span class="s2">"path/to/client_secrets.json"</span><span class="p">,</span>
-<a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a>    <span class="n">credentials_file</span><span class="o">=</span><span class="s2">"path/to/store/credentials.json"</span><span class="p">,</span>
-<a id="__codelineno-26-6" name="__codelineno-26-6" href="#__codelineno-26-6"></a>    <span class="c1"># Drive's own default SCOPES (google/drive/service.py) request</span>
-<a id="__codelineno-26-7" name="__codelineno-26-7" href="#__codelineno-26-7"></a>    <span class="c1"># "auth/drive", "auth/drive.file", and "auth/drive.metadata.readonly"</span>
-<a id="__codelineno-26-8" name="__codelineno-26-8" href="#__codelineno-26-8"></a>    <span class="c1"># together -- pass a narrower list here if your use case only reads.</span>
-<a id="__codelineno-26-9" name="__codelineno-26-9" href="#__codelineno-26-9"></a>    <span class="n">scopes</span><span class="o">=</span><span class="p">[</span><span class="s2">"https://www.googleapis.com/auth/drive.file"</span><span class="p">]</span>
-<a id="__codelineno-26-10" name="__codelineno-26-10" href="#__codelineno-26-10"></a><span class="p">)</span>
-<a id="__codelineno-26-11" name="__codelineno-26-11" href="#__codelineno-26-11"></a>
-<a id="__codelineno-26-12" name="__codelineno-26-12" href="#__codelineno-26-12"></a><span class="c1"># Authenticate (this will open a browser window)</span>
-<a id="__codelineno-26-13" name="__codelineno-26-13" href="#__codelineno-26-13"></a><span class="n">auth_result</span> <span class="o">=</span> <span class="n">auth_provider</span><span class="o">.</span><span class="n">authenticate</span><span class="p">()</span>
-<a id="__codelineno-26-14" name="__codelineno-26-14" href="#__codelineno-26-14"></a><span class="k">if</span> <span class="n">auth_result</span><span class="o">.</span><span class="n">success</span><span class="p">:</span>
-<a id="__codelineno-26-15" name="__codelineno-26-15" href="#__codelineno-26-15"></a>    <span class="nb">print</span><span class="p">(</span><span class="s2">"Authentication successful!"</span><span class="p">)</span>
-<a id="__codelineno-26-16" name="__codelineno-26-16" href="#__codelineno-26-16"></a><span class="k">else</span><span class="p">:</span>
-<a id="__codelineno-26-17" name="__codelineno-26-17" href="#__codelineno-26-17"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Authentication failed: </span><span class="si">{</span><span class="n">auth_result</span><span class="o">.</span><span class="n">error</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">zeo_core.integrations.google.auth</span><span class="w"> </span><span class="kn">import</span> <span class="n">GoogleAuthProvider</span>
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a>
+<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a><span class="n">auth_provider</span> <span class="o">=</span> <span class="n">GoogleAuthProvider</span><span class="p">(</span>
+<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a>    <span class="n">client_secrets_file</span><span class="o">=</span><span class="s2">"path/to/client_secrets.json"</span><span class="p">,</span>
+<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a>    <span class="n">credentials_file</span><span class="o">=</span><span class="s2">"path/to/store/credentials.json"</span><span class="p">,</span>
+<a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a>    <span class="c1"># Drive's own default SCOPES (google/drive/service.py) request</span>
+<a id="__codelineno-23-7" name="__codelineno-23-7" href="#__codelineno-23-7"></a>    <span class="c1"># "auth/drive", "auth/drive.file", and "auth/drive.metadata.readonly"</span>
+<a id="__codelineno-23-8" name="__codelineno-23-8" href="#__codelineno-23-8"></a>    <span class="c1"># together -- pass a narrower list here if your use case only reads.</span>
+<a id="__codelineno-23-9" name="__codelineno-23-9" href="#__codelineno-23-9"></a>    <span class="n">scopes</span><span class="o">=</span><span class="p">[</span><span class="s2">"https://www.googleapis.com/auth/drive.file"</span><span class="p">]</span>
+<a id="__codelineno-23-10" name="__codelineno-23-10" href="#__codelineno-23-10"></a><span class="p">)</span>
+<a id="__codelineno-23-11" name="__codelineno-23-11" href="#__codelineno-23-11"></a>
+<a id="__codelineno-23-12" name="__codelineno-23-12" href="#__codelineno-23-12"></a><span class="c1"># Authenticate (this will open a browser window)</span>
+<a id="__codelineno-23-13" name="__codelineno-23-13" href="#__codelineno-23-13"></a><span class="n">auth_result</span> <span class="o">=</span> <span class="n">auth_provider</span><span class="o">.</span><span class="n">authenticate</span><span class="p">()</span>
+<a id="__codelineno-23-14" name="__codelineno-23-14" href="#__codelineno-23-14"></a><span class="k">if</span> <span class="n">auth_result</span><span class="o">.</span><span class="n">success</span><span class="p">:</span>
+<a id="__codelineno-23-15" name="__codelineno-23-15" href="#__codelineno-23-15"></a>    <span class="nb">print</span><span class="p">(</span><span class="s2">"Authentication successful!"</span><span class="p">)</span>
+<a id="__codelineno-23-16" name="__codelineno-23-16" href="#__codelineno-23-16"></a><span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-23-17" name="__codelineno-23-17" href="#__codelineno-23-17"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Authentication failed: </span><span class="si">{</span><span class="n">auth_result</span><span class="o">.</span><span class="n">error</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </code></pre></div>
 <p>The <code>client_secrets_file</code> and <code>credentials_file</code> paths can also be set via
 <code>.env</code> instead of hardcoded, matching every other platform in this section:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a><span class="c1"># .env</span>
-<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a><span class="nv">GOOGLE_CLIENT_SECRETS_FILE</span><span class="o">=</span>/absolute/path/to/client_secrets.json
-<a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a><span class="nv">GOOGLE_CREDENTIALS_FILE</span><span class="o">=</span>/absolute/path/to/credentials.json
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="c1"># .env</span>
+<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a><span class="nv">GOOGLE_CLIENT_SECRETS_FILE</span><span class="o">=</span>/absolute/path/to/client_secrets.json
+<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a><span class="nv">GOOGLE_CREDENTIALS_FILE</span><span class="o">=</span>/absolute/path/to/credentials.json
 </code></pre></div>
 <p>(these are read via the <code>ZEO_INTEGRATIONS__GOOGLE__CLIENT_SECRETS_FILE</code> /
 <code>ZEO_INTEGRATIONS__GOOGLE__CREDENTIALS_FILE</code> environment variables described
@@ -5139,8 +5013,8 @@ account-level "app password" shortcut the way Bluesky has one.</p>
 <li>Click <strong>Generate token</strong>, then <strong>copy the token immediately</strong> -- GitHub
    shows it exactly once and cannot display it again afterward.</li>
 </ol>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a><span class="c1"># .env</span>
-<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a><span class="nv">GITHUB_TOKEN</span><span class="o">=</span>your-github-token
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="c1"># .env</span>
+<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a><span class="nv">GITHUB_TOKEN</span><span class="o">=</span>your-github-token
 </code></pre></div>
 <h3 id="notion-integration-token">Notion Integration Token<a class="headerlink" href="#notion-integration-token" title="Permanent link">&para;</a></h3>
 <p><strong>A developer app is not needed.</strong> Notion calls this an "internal
@@ -5161,8 +5035,8 @@ integration," and it is a single bearer token, not an OAuth flow.</p>
    empty results -- not an error -- which reads as ZeoCore being broken
    when the real cause is this step being skipped.</li>
 </ol>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a><span class="c1"># .env</span>
-<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a><span class="nv">NOTION_TOKEN</span><span class="o">=</span>your-notion-integration-token
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="c1"># .env</span>
+<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a><span class="nv">NOTION_TOKEN</span><span class="o">=</span>your-notion-integration-token
 </code></pre></div>
 <h3 id="bluesky-app-password">Bluesky App Password<a class="headerlink" href="#bluesky-app-password" title="Permanent link">&para;</a></h3>
 <p><strong>No developer app is needed at all.</strong> This is the one platform in this
@@ -5181,9 +5055,9 @@ settings -- no portal, no project, no review.</p>
    account or migrate it elsewhere, so a leaked app password is a smaller
    loss than a leaked account password.</li>
 </ol>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a><span class="c1"># .env</span>
-<a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a><span class="nv">BLUESKY_IDENTIFIER</span><span class="o">=</span>your-handle.bsky.social
-<a id="__codelineno-30-3" name="__codelineno-30-3" href="#__codelineno-30-3"></a><span class="nv">BLUESKY_APP_PASSWORD</span><span class="o">=</span>xxxx-xxxx-xxxx-xxxx
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a><span class="c1"># .env</span>
+<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a><span class="nv">BLUESKY_IDENTIFIER</span><span class="o">=</span>your-handle.bsky.social
+<a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a><span class="nv">BLUESKY_APP_PASSWORD</span><span class="o">=</span>xxxx-xxxx-xxxx-xxxx
 </code></pre></div>
 <p><code>BLUESKY_IDENTIFIER</code> is the handle you sign in with (or the email tied to
 the account); <code>BLUESKY_APP_PASSWORD</code> is what you just created, never your
@@ -5227,9 +5101,9 @@ usable the same day.</p>
    port) is the conventional placeholder for a desktop-app flow like
    Google's above; confirm the actual value once the connector ships.</li>
 </ol>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a><span class="c1"># .env</span>
-<a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a><span class="nv">LINKEDIN_CLIENT_ID</span><span class="o">=</span>your-linkedin-client-id
-<a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a><span class="nv">LINKEDIN_CLIENT_SECRET</span><span class="o">=</span>your-linkedin-client-secret
+<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a><span class="c1"># .env</span>
+<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a><span class="nv">LINKEDIN_CLIENT_ID</span><span class="o">=</span>your-linkedin-client-id
+<a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a><span class="nv">LINKEDIN_CLIENT_SECRET</span><span class="o">=</span>your-linkedin-client-secret
 </code></pre></div>
 <p><strong>Why the exact product matters.</strong> Requesting <code>w_member_social</code> through
 the Community Management API's application process instead of through
@@ -5267,19 +5141,19 @@ them ship, check the post itself, not just the response.</p>
 <h2 id="best-practices">Best Practices<a class="headerlink" href="#best-practices" title="Permanent link">&para;</a></h2>
 <h3 id="project-structure">Project Structure<a class="headerlink" href="#project-structure" title="Permanent link">&para;</a></h3>
 <p>Follow this recommended project structure when using ZeoCore:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a>my_project/
-<a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a>├── config/
-<a id="__codelineno-32-3" name="__codelineno-32-3" href="#__codelineno-32-3"></a>│   ├── default.yaml       # Default configuration
-<a id="__codelineno-32-4" name="__codelineno-32-4" href="#__codelineno-32-4"></a>│   ├── development.yaml   # Development environment overrides
-<a id="__codelineno-32-5" name="__codelineno-32-5" href="#__codelineno-32-5"></a>│   └── production.yaml    # Production environment overrides
-<a id="__codelineno-32-6" name="__codelineno-32-6" href="#__codelineno-32-6"></a>├── src/
-<a id="__codelineno-32-7" name="__codelineno-32-7" href="#__codelineno-32-7"></a>│   └── my_app/
-<a id="__codelineno-32-8" name="__codelineno-32-8" href="#__codelineno-32-8"></a>│       ├── __init__.py
-<a id="__codelineno-32-9" name="__codelineno-32-9" href="#__codelineno-32-9"></a>│       └── main.py        # Application code
-<a id="__codelineno-32-10" name="__codelineno-32-10" href="#__codelineno-32-10"></a>├── data/                  # Data files
-<a id="__codelineno-32-11" name="__codelineno-32-11" href="#__codelineno-32-11"></a>├── assets/                # Media assets
-<a id="__codelineno-32-12" name="__codelineno-32-12" href="#__codelineno-32-12"></a>├── output/                # Generated output
-<a id="__codelineno-32-13" name="__codelineno-32-13" href="#__codelineno-32-13"></a>└── logs/                  # Log files
+<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>my_project/
+<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a>├── config/
+<a id="__codelineno-29-3" name="__codelineno-29-3" href="#__codelineno-29-3"></a>│   ├── default.yaml       # Default configuration
+<a id="__codelineno-29-4" name="__codelineno-29-4" href="#__codelineno-29-4"></a>│   ├── development.yaml   # Development environment overrides
+<a id="__codelineno-29-5" name="__codelineno-29-5" href="#__codelineno-29-5"></a>│   └── production.yaml    # Production environment overrides
+<a id="__codelineno-29-6" name="__codelineno-29-6" href="#__codelineno-29-6"></a>├── src/
+<a id="__codelineno-29-7" name="__codelineno-29-7" href="#__codelineno-29-7"></a>│   └── my_app/
+<a id="__codelineno-29-8" name="__codelineno-29-8" href="#__codelineno-29-8"></a>│       ├── __init__.py
+<a id="__codelineno-29-9" name="__codelineno-29-9" href="#__codelineno-29-9"></a>│       └── main.py        # Application code
+<a id="__codelineno-29-10" name="__codelineno-29-10" href="#__codelineno-29-10"></a>├── data/                  # Data files
+<a id="__codelineno-29-11" name="__codelineno-29-11" href="#__codelineno-29-11"></a>├── assets/                # Media assets
+<a id="__codelineno-29-12" name="__codelineno-29-12" href="#__codelineno-29-12"></a>├── output/                # Generated output
+<a id="__codelineno-29-13" name="__codelineno-29-13" href="#__codelineno-29-13"></a>└── logs/                  # Log files
 </code></pre></div>
 <h3 id="configuration-management">Configuration Management<a class="headerlink" href="#configuration-management" title="Permanent link">&para;</a></h3>
 <ul>
@@ -5338,16 +5212,16 @@ inactive virtual environment, <code>ModuleNotFoundError: No module named
 issues below are the runtime ones you hit later.</p>
 <h3 id="common-issues">Common Issues<a class="headerlink" href="#common-issues" title="Permanent link">&para;</a></h3>
 <h4 id="configuration-not-found">Configuration Not Found<a class="headerlink" href="#configuration-not-found" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a>ZeoConfigurationError: Configuration file not found: &lt;path&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>ZeoConfigurationError: Configuration file not found: &lt;path&gt;
 </code></pre></div>
 <p>This is raised only when you pass <code>load_config()</code> an <strong>explicit</strong> path
 that doesn't exist -- <code>load_config()</code> called with no argument never
 raises this; it silently falls back to built-in defaults (and any
 environment variables) if none of the default locations have a file.
 If you're seeing this error, you (or a caller) passed a specific path:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">zeo_core.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_config</span>
-<a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a>
-<a id="__codelineno-34-3" name="__codelineno-34-3" href="#__codelineno-34-3"></a><span class="n">config</span> <span class="o">=</span> <span class="n">load_config</span><span class="p">(</span><span class="s2">"path/to/config.yaml"</span><span class="p">)</span>  <span class="c1"># &lt;-- this path must exist</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">zeo_core.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_config</span>
+<a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a>
+<a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a><span class="n">config</span> <span class="o">=</span> <span class="n">load_config</span><span class="p">(</span><span class="s2">"path/to/config.yaml"</span><span class="p">)</span>  <span class="c1"># &lt;-- this path must exist</span>
 </code></pre></div>
 <p><strong>Solution</strong>: Either drop the explicit path and let <code>load_config()</code> use
 its defaults, or create a real configuration file at one of these
@@ -5359,7 +5233,7 @@ locations before passing it:
 behaviors (default lookup, missing explicit path, real explicit path)
 demonstrated end to end.</p>
 <h4 id="authentication-errors-with-google-services">Authentication Errors with Google Services<a class="headerlink" href="#authentication-errors-with-google-services" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a>ZeoAuthenticationError: Failed to authenticate with Google Drive
+<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a>ZeoAuthenticationError: Failed to authenticate with Google Drive
 </code></pre></div>
 <p><strong>Solution</strong>:
 1. Ensure your client secrets file is valid and has the required scopes
@@ -5367,14 +5241,14 @@ demonstrated end to end.</p>
 3. Delete the credentials file and re-authenticate
 4. Verify network connectivity and firewall settings</p>
 <h4 id="plugin-not-found">Plugin Not Found<a class="headerlink" href="#plugin-not-found" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a>ZeoPluginError: No plugin found in module zeo_core.modules.my_plugin
+<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a>ZeoPluginError: No plugin found in module zeo_core.modules.my_plugin
 </code></pre></div>
 <p><strong>Solution</strong>:
 1. Ensure the plugin is properly installed
 2. Check that the plugin follows the required protocol interface
 3. Verify that the plugin is registered correctly</p>
 <h4 id="path-resolution-errors">Path Resolution Errors<a class="headerlink" href="#path-resolution-errors" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a>ZeoFileNotFoundError: Could not find project root directory
+<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a>ZeoFileNotFoundError: Could not find project root directory
 </code></pre></div>
 <p><strong>Solution</strong>:
 1. Ensure you're running from within a valid project directory

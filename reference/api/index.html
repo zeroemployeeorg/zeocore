@@ -542,8 +542,6 @@
       
         
       
-        
-      
     
     
     
@@ -1016,34 +1014,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/supabase-integration/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Supabase
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../tutorials/calendar-integration/" class="md-nav__link">
         
   
@@ -1139,8 +1109,6 @@
       
         
           
-        
-      
         
       
         
@@ -1420,34 +1388,6 @@
     
   
     Notion
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../integrations/supabase/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Supabase
   
 
     
@@ -4443,11 +4383,6 @@ installation; others require the extra shown below. The parent package
 <td><code>MeetingRunner</code>, <code>MeetingAdapters</code>, <code>UnixMeetingRuntime</code>, <code>InvocationAuthorization</code>, <code>InvocationReceipt</code>, <code>request_digest</code></td>
 </tr>
 <tr>
-<td><code>zeo_core.integrations.database.supabase</code></td>
-<td><code>supabase</code></td>
-<td><code>SupabaseIntegration</code>, <code>SupabaseClient</code>, <code>SupabaseRealtimeClient</code>; see <a href="../../integrations/supabase/">Supabase</a></td>
-</tr>
-<tr>
 <td><code>zeo_core.integrations.hubspot</code></td>
 <td>base install</td>
 <td><code>HubSpotIntegration</code>, <code>HubSpotClient</code>; <a href="../../tutorials/hubspot-marketing/">marketing guide</a></td>
@@ -4532,9 +4467,7 @@ fails:</p>
 <li>The <strong>Google</strong> integrations import their Google client libraries eagerly, so <code>import zeo_core.integrations.google.drive</code> raises <code>ImportError</code> without the extra.</li>
 <li><strong>Notion, jupytext, ffmpeg</strong> import cleanly without their extra and fail later, inside <code>initialize()</code>, with a message naming the missing package.</li>
 </ul>
-<p>Supabase is implemented at <code>zeo_core.integrations.database.supabase</code>, covering
-Database, Auth, Storage, Edge Functions and async Realtime. Raw SQL and Vault
-plaintext access are excluded. The <code>bigquery</code> and <code>sqlite</code> packages remain placeholders.</p>
+<p>Supabase moved to the <code>zeo-integrations</code> package (<code>zeo_integrations.supabase</code>) and is no longer part of Core. It was removed from Core in a breaking release; install <code>zeo-integrations</code> instead.</p>
 <p><a id="contract-pack"></a></p>
 <h2 id="zeo_corecontract_pack-ecosystem-pin"><code>zeo_core.contract_pack</code> — ecosystem pin<a class="headerlink" href="#zeo_corecontract_pack-ecosystem-pin" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">zeo_core.contract_pack</span><span class="w"> </span><span class="kn">import</span> <span class="n">PACK_VERSION</span><span class="p">,</span> <span class="n">PACK_SCHEMA</span>   <span class="c1"># "1.0.0", "zeo_core.contract_pack.v1"</span>
@@ -4620,10 +4553,6 @@ the real SDK; use <code>run_native</code>.</p>
 <td>Media probing/transcoding via <code>ffmpeg-zeo</code> (needs an <code>ffmpeg</code> binary too)</td>
 </tr>
 <tr>
-<td><code>supabase</code></td>
-<td>Database, Auth, Storage, Edge Functions and Realtime</td>
-</tr>
-<tr>
 <td><code>notebook</code></td>
 <td>Fresh-kernel notebook execution</td>
 </tr>
@@ -4696,10 +4625,6 @@ client-secrets JSON file instead of a single token.</p>
 <tr>
 <td><code>zeo_core.contracts.capabilities.demo</code> implementations</td>
 <td>Only the demo <em>models</em> (<code>EchoRequest</code>, <code>VideoRefRequest</code>) are exported.</td>
-</tr>
-<tr>
-<td><code>zeo_core.integrations.database.bigquery</code>, <code>zeo_core.integrations.database.sqlite</code></td>
-<td>Placeholder packages. Supabase has a supported public API.</td>
 </tr>
 <tr>
 <td>Anything with a leading underscore</td>

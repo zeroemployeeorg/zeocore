@@ -542,8 +542,6 @@
       
         
       
-        
-      
     
     
     
@@ -1016,34 +1014,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../tutorials/supabase-integration/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Supabase
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../tutorials/calendar-integration/" class="md-nav__link">
         
   
@@ -1141,8 +1111,6 @@
       
         
           
-        
-      
         
       
         
@@ -1422,34 +1390,6 @@
     
   
     Notion
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="supabase/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Supabase
   
 
     
@@ -2473,11 +2413,6 @@ ZeoCore 0.11.0 or newer. Earlier wheels do not include this complete surface.</p
 <td>Test workspace or separately shared test parent</td>
 </tr>
 <tr>
-<td><code>supabase</code></td>
-<td><a href="supabase/">Supabase</a></td>
-<td>Local stack or separate hosted project</td>
-</tr>
-<tr>
 <td><code>social.bluesky</code></td>
 <td><a href="bluesky/">Bluesky</a></td>
 <td>Dedicated account; posts remain public</td>
@@ -2524,12 +2459,11 @@ ZeoCore 0.11.0 or newer. Earlier wheels do not include this complete surface.</p
 </tr>
 </tbody>
 </table>
-<p>The first seventeen rows are package entry points. ZEOconnect, Gemini images and
+<p>The first sixteen rows are package entry points. ZEOconnect, Gemini images and
 notebook execution are additional composition APIs. Their launcher selections
 forward no provider keys: Gemini uses explicitly provisioned host custody and
-notebook execution is local. The <code>database.sqlite</code> and <code>database.bigquery</code> directories
-are placeholders with no implemented service or credential workflow; they are
-not supported integrations. HTTP/MCP are adapters for exposing capabilities,
+notebook execution is local.
+ HTTP/MCP are adapters for exposing capabilities,
 not additional provider accounts. Future integrations must join this inventory
 and provide both tracks before their setup is considered complete.</p>
 <p>Test mode is a ZeoCore environment selection. It does not turn an ordinary
