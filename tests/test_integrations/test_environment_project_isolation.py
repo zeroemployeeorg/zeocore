@@ -27,4 +27,3 @@ def test_shared_bluesky_endpoint_with_distinct_accounts_is_supported(
     assert child["BLUESKY_SERVICE_URL"] == "https://bsky.social"
     assert child["BLUESKY_IDENTIFIER"] == f"{mode}.bsky.social"
     assert child["BLUESKY_APP_PASSWORD"] == f"synthetic-{mode}-password"
-
