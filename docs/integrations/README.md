@@ -20,7 +20,6 @@ ZeoCore 0.11.0 or newer. Earlier wheels do not include this complete surface.
 | `google.slides` | [Slides](google.md#slides) | Dedicated user and disposable presentation |
 | `google.youtube` | [YouTube](youtube.md) | Dedicated test channel; uploads stay private until checked |
 | `notion` | [Notion](notion.md) | Test workspace or separately shared test parent |
-| `supabase` | [Supabase](supabase.md) | Local stack or separate hosted project |
 | `social.bluesky` | [Bluesky](bluesky.md) | Dedicated account; posts remain public |
 | `llms` | [OpenAI, Anthropic, Ollama and mock](llms.md) | Separate provider project/workspace or local model; explicit fixture |
 | `pandoc` | [Pandoc](local-tools.md#pandoc) | Local sample documents and separate output directory |
@@ -31,12 +30,11 @@ ZeoCore 0.11.0 or newer. Earlier wheels do not include this complete surface.
 | `gemini.images` | [Gemini keys and host custody](gemini-images.md) | Offline request/provider fixtures or separate Google project |
 | `notebook` | [Notebook execution](notebook-execution.md) | Local synthetic notebook; no account or key |
 
-The first seventeen rows are package entry points. ZEOconnect, Gemini images and
+The first sixteen rows are package entry points. ZEOconnect, Gemini images and
 notebook execution are additional composition APIs. Their launcher selections
 forward no provider keys: Gemini uses explicitly provisioned host custody and
-notebook execution is local. The `database.sqlite` and `database.bigquery` directories
-are placeholders with no implemented service or credential workflow; they are
-not supported integrations. HTTP/MCP are adapters for exposing capabilities,
+notebook execution is local.
+ HTTP/MCP are adapters for exposing capabilities,
 not additional provider accounts. Future integrations must join this inventory
 and provide both tracks before their setup is considered complete.
 

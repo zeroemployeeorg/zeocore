@@ -28,7 +28,7 @@ Work through these in order. Each step assumes the one before it.
 | 6 | [Context, configuration, and files](tutorials/context-config-files.md) | 20 min | Wire `ToolContext`, `load_config()`, and filesystem access together. |
 | 7 | [Bounded retries and explicit fallback](tutorials/resilient-execution.md) | 15 min | Put one-attempt capabilities behind a total deadline without hidden or multiplied retries. |
 | 8 | [GET-STARTED.md](../GET-STARTED.md) | reference | Use paths, plugins, integrations, and adapters in depth. |
-| 9 | An integration tutorial ([ZEOconnect](tutorials/zeoconnect-hosted-profile.md), [MCP](tutorials/mcp-server-with-claude-code.md), [Supabase](tutorials/supabase-integration.md), [Notion](tutorials/notion-integration.md), [Calendar](tutorials/calendar-integration.md), [Google Docs](tutorials/google-docs-integration.md), or [Bluesky](tutorials/bluesky-integration.md)) | 20 min | Connect your capability to the outside world. |
+| 9 | An integration tutorial ([ZEOconnect](tutorials/zeoconnect-hosted-profile.md), [MCP](tutorials/mcp-server-with-claude-code.md), [Notion](tutorials/notion-integration.md), [Calendar](tutorials/calendar-integration.md), [Google Docs](tutorials/google-docs-integration.md), or [Bluesky](tutorials/bluesky-integration.md)) | 20 min | Connect your capability to the outside world. |
 
 Unfamiliar term along the way? The [glossary](glossary.md) defines them in
 one place.
@@ -75,8 +75,6 @@ Step-by-step guides for people building on ZeoCore.
   — expose your tools to MCP-native coding agents.
 - [Notion integration](tutorials/notion-integration.md) — read and write
   Notion pages and databases.
-- [Supabase integration](tutorials/supabase-integration.md) — Database, Auth,
-  Storage, Edge Functions, Realtime, and the Vault boundary.
 - [Google Calendar integration](tutorials/calendar-integration.md) — OAuth
   setup, reading and creating events.
 - [Google Docs integration](tutorials/google-docs-integration.md) — reading

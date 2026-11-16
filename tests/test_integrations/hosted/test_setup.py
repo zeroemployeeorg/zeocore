@@ -76,9 +76,7 @@ def test_catalogue_covers_entrypoints_and_nonentry_setup_tracks() -> None:
             if profile.profile != ExecutionProfile.LOCAL
         )
     assert setup_manifest("missing") is None
-    builder = setup_manifest("supabase")
     onboarding = setup_manifest("zeoconnect")
-    assert builder is not None and builder.surface == "builder"
     assert onboarding is not None and onboarding.surface == "onboarding"
 
 
@@ -121,7 +119,7 @@ webbrowser.open = forbidden
 from zeo_core.integrations.hosted.setup_catalog import SETUP_CATALOGUE, setup_manifest
 from zeo_core.integrations.hosted import (
     ServiceResolver, ServiceRequirement, ExecutionProfile)
-assert len(SETUP_CATALOGUE) == 20
+assert len(SETUP_CATALOGUE) == 19
 assert setup_manifest('hubspot.marketing').profiles
 result = ServiceResolver(profile=ExecutionProfile.HOSTED).resolve(
     ServiceRequirement(

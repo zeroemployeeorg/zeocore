@@ -120,10 +120,6 @@ SAFE_EXAMPLES = (
         "source cited: True\n"
         "provider called: False\n",
     ),
-    ExampleCase(
-        "supabase_usage.py",
-        "Supabase not configured; set SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY\n",
-    ),
 )
 
 

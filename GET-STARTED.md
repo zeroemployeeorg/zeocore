@@ -122,7 +122,6 @@ Integrations ship as optional extras, so you install only what you use:
 
 ```bash
 uv pip install "zeocore[notion]"     # a single integration
-uv pip install "zeocore[supabase]"   # database, auth, storage, functions, realtime
 uv pip install "zeocore[google]"     # Drive + Gmail auth plumbing
 uv pip install "zeocore[http]"       # FastAPI adapter, expose tools over REST
 uv pip install "zeocore[mcp]"        # MCP adapter for Claude Code, Cursor, etc.
@@ -153,11 +152,9 @@ Safe and consistent filesystem operations with error handling and structured res
 Extensible plugin discovery and explicit-loading registration framework.
 
 ### `zeo_core.integrations`
-Interfaces to third-party services (Google Workspace, Supabase, Notion, Pandoc,
+Interfaces to third-party services (Google Workspace, Notion, Pandoc,
 GitHub, jupytext, ffmpeg, Bluesky, and LLM providers) through a clean adapter
-layer. Supabase provides typed Database, Auth, Storage, Edge Functions, and
-async Realtime surfaces. It intentionally provides neither arbitrary SQL nor
-decrypted Vault access.
+layer. Supabase moved to the `zeo-integrations` package.
 
 ### `zeo_core.core.errors`
 Structured error handling system with typed exceptions for improved developer experience.
@@ -572,59 +569,6 @@ ambiguity instead of silently choosing the first source.
 
 See [`examples/notion_demo.py`](examples/notion_demo.py). Its default mode is
 credential-free and simulated; `--live-read` is explicit and never mutates.
-
-### Working with Supabase
-
-Requires the `supabase` extra:
-
-```bash
-uv pip install "zeocore[supabase]"
-```
-
-Put the project origin and a publishable key in `.env`, load it once at your
-entrypoint, then initialize the integration:
-
-```dotenv
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
-```
-
-```python
-from zeo_core.config import load_dotenv_file
-from zeo_core.integrations.database.supabase import (
-    SupabaseFilter,
-    SupabaseIntegration,
-)
-
-load_dotenv_file()
-supabase = SupabaseIntegration()
-initialized = supabase.initialize()
-if not initialized.success:
-    raise RuntimeError(initialized.error)
-
-page = supabase.select(
-    "tasks",
-    columns=("id", "title", "status"),
-    filters=(SupabaseFilter(field="status", value="ready"),),
-    limit=25,
-)
-```
-
-All calls return `IntegrationResult`. Database operations go through
-PostgREST and the project's Row Level Security; update and delete refuse
-without at least one typed filter. Auth results expose only user identity and
-expiry—not access or refresh tokens. Storage downloads and Function responses
-are bounded. Realtime is explicitly async and requires `await close()`.
-
-Server-only keys require both `SUPABASE_SECRET_KEY` and
-`allow_privileged_key: true`; that opt-in changes connectivity, not authority.
-Never send such a key to a browser or model. ZeoCore does not expose Supabase
-Vault, `vault.decrypted_secrets`, arbitrary SQL, signed URLs, or the Management
-API. Project-specific custody belongs behind narrow database roles and broker
-operations.
-
-See the complete [Supabase tutorial](docs/tutorials/supabase-integration.md)
-and runnable [`examples/supabase_usage.py`](examples/supabase_usage.py).
 
 ### Working with Jupytext Integration (script to notebook conversion)
 

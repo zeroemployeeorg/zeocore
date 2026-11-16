@@ -185,7 +185,6 @@ These base-install examples run offline and need no key:
 | `python examples/zeoconnect_usage.py` | A typed service requirement resolves under the explicit fake profile and downloads exact fixture bytes. |
 | `python examples/gemini_request.py` | Private reference bytes are verified and a Gemini request is constructed; no authorization or generation occurs. |
 | `python examples/notion_governed_upsert.py` | A governed upsert request binds its marker and source without dispatching. |
-| `python examples/supabase_usage.py` | Shows the configuration precondition; follow the [Supabase account guide](../docs/integrations/supabase.md) before live use. |
 
 For conversion, fresh-kernel notebook execution and staging, follow the
 [authoring reference](../docs/integrations/authoring-reference.md). It requires

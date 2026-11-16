@@ -25,7 +25,7 @@ prior knowledge of ZeoCore.
 - **Your own tools**, written once and used from a script, an HTTP service, an
   MCP server or an LLM tool call ([Quickstart](QUICKSTART.md)).
 - **Integrations with real services** — GitHub, Google Workspace, Notion,
-  Supabase, Bluesky, YouTube, HubSpot, Kit, language models and more —
+  Bluesky, YouTube, HubSpot, Kit, language models and more —
   each with a setup guide for credentials and test accounts
   ([integration guides](docs/integrations/README.md)).
 - **A briefing with live cards** — flight, weather, arrival timeline and a
@@ -221,7 +221,6 @@ Optional SDKs ship as extras. Install only what you need:
 | `zeocore[youtube]` | YouTube publishing: resumable transfer, schedule, thumbnail, captions, playlists |
 | `zeocore[bluesky]` | Bluesky posting via an app password — no OAuth, no developer app |
 | `zeocore[notion]` | Notion (read + write) |
-| `zeocore[supabase]` | Supabase Database, Auth, Storage, Edge Functions, and async Realtime |
 | `zeocore[pandoc]` | Document conversion via Pandoc |
 | `zeocore[llms]` | OpenAI / Anthropic / tiktoken clients — chat, tool-calling, prompt caching |
 | `zeocore[jupytext]` | Script ↔ Jupyter notebook conversion |
@@ -247,7 +246,7 @@ yourself. `mcp` is a separate extra: `zeocore[all]` does **not** include it
 | `zeo_core.contracts.ui` | Card and widget contracts: `DataRef`, `WidgetUpsert`, `WidgetBoard`. |
 | `zeo_core.execution` | Bounded execution — one total deadline, explicit retries and fallback, cancellation, sanitized attempt records. |
 | `zeo_core.adapters` | HTTP, MCP and LLM function adapters, the Runtime capability host, and `widget_html` (cards to self-contained HTML). |
-| `zeo_core.integrations` | Adapters for GitHub, Google Workspace, Supabase, LLM providers, Notion, HubSpot, Kit, Gemini images, Pandoc, jupytext, notebooks, ffmpeg, the OpenAI managed Agents API (`agents`) and keyless public briefing sources (`briefing_sources`). |
+| `zeo_core.integrations` | Adapters for GitHub, Google Workspace, LLM providers, Notion, HubSpot, Kit, Gemini images, Pandoc, jupytext, notebooks, ffmpeg, the OpenAI managed Agents API (`agents`) and keyless public briefing sources (`briefing_sources`). |
 | `zeo_core.core` | Filesystem operations, path resolution, a typed error hierarchy, MIME detection, serialization, logging. |
 | `zeo_core.config` | YAML/env-var configuration loading and per-tool config models. |
 | `zeo_core.modules` | Plugin discovery and explicit-loading registry. |

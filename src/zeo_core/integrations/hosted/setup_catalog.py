@@ -351,22 +351,6 @@ SETUP_CATALOGUE: tuple[SetupManifest, ...] = (
         hosted_auth=AuthMethod.GUIDED_SECRET,
     ),
     _manifest(
-        "supabase",
-        "Supabase",
-        purpose="Connect an explicitly selected builder project.",
-        access=(
-            "Project operations constrained by the selected credential and app policy."
-        ),
-        account="Supabase project",
-        selection="Select project and reviewed data operations.",
-        prerequisite=(
-            "Advanced builder setup only; never request ZEO service "
-            "database credentials."
-        ),
-        hosted_auth=AuthMethod.UNSUPPORTED,
-        surface="builder",
-    ),
-    _manifest(
         "llms",
         "Model access",
         purpose="Configure separately approved model processing.",

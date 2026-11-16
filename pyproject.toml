@@ -128,9 +128,6 @@ gmail = [
 notion = [
     "notion-client>=3.1.0",
 ]
-supabase = [
-    "supabase>=2.31.0,<3",
-]
 google = [
     "google-api-python-client>=2.0.0",
     "google-auth-httplib2>=0.1.0",
@@ -204,7 +201,6 @@ all = [
     "google-auth-oauthlib>=0.4.0",
     "platformdirs>=4.0.0",
     "notion-client>=3.1.0",
-    "supabase>=2.31.0,<3",
     "pypandoc",
     "beautifulsoup4",
     "tiktoken",
@@ -276,7 +272,6 @@ pandoc = "zeo_core.integrations.pandoc:create_integration"
 llms = "zeo_core.integrations.llms:create_integration"
 ffmpeg = "zeo_core.integrations.ffmpeg:create_integration"
 notion = "zeo_core.integrations.notion:create_integration"
-supabase = "zeo_core.integrations.database.supabase:create_integration"
 "hubspot.marketing" = "zeo_core.integrations.hubspot:create_integration"
 "kit.marketing" = "zeo_core.integrations.kit:create_integration"
 jupytext = "zeo_core.integrations.jupytext:create_integration"
