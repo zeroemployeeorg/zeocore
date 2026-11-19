@@ -10,7 +10,7 @@ custody; this package reads no environment variable and no .env.
 from __future__ import annotations
 
 from .client import TwilioWhatsAppClient
-from .inbound import WebhookRejected, parse_inbound, parse_status_callback
+from .inbound import WebhookRejectedError, parse_inbound, parse_status_callback
 from .models import (
     ChannelInbound,
     ChannelReceipt,
@@ -29,7 +29,7 @@ __all__ = [
     "TwilioAPIError",
     "TwilioCredentials",
     "TwilioWhatsAppClient",
-    "WebhookRejected",
+    "WebhookRejectedError",
     "compute_signature",
     "from_whatsapp_address",
     "parse_inbound",

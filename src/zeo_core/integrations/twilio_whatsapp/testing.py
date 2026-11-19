@@ -12,7 +12,7 @@ from .models import TwilioCredentials
 from .signature import compute_signature
 
 FAKE_ACCOUNT_SID = "AC" + "0" * 32
-FAKE_AUTH_TOKEN = "fake-auth-token-not-real"
+FAKE_AUTH_TOKEN = "fake-auth-token-not-real"  # noqa: S105 -- fake test value
 
 
 def fake_credentials() -> TwilioCredentials:

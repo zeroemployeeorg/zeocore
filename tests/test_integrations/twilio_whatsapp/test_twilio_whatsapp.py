@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import base64
+
 import pytest
 from pydantic import SecretStr, ValidationError
 
@@ -10,7 +12,7 @@ from zeo_core.integrations.twilio_whatsapp import (
     TwilioAPIError,
     TwilioCredentials,
     TwilioWhatsAppClient,
-    WebhookRejected,
+    WebhookRejectedError,
     parse_inbound,
     parse_status_callback,
     to_whatsapp_address,
@@ -60,7 +62,7 @@ def test_signed_webhook_parses_to_neutral_event() -> None:
 def test_bad_or_missing_signature_is_rejected() -> None:
     params, sig = signed_webhook(URL, PARAMS)
     for bad in (None, "", "AAAA", sig[:-2] + "xx"):
-        with pytest.raises(WebhookRejected):
+        with pytest.raises(WebhookRejectedError):
             parse_inbound(TOKEN, url=URL, params=params, signature=bad)
 
 
@@ -75,11 +77,11 @@ def test_signature_binds_url_and_params() -> None:
 def test_non_whatsapp_and_missing_sid_rejected() -> None:
     sms = {**PARAMS, "From": "+14155550100"}
     params, sig = signed_webhook(URL, sms)
-    with pytest.raises(WebhookRejected):
+    with pytest.raises(WebhookRejectedError):
         parse_inbound(TOKEN, url=URL, params=params, signature=sig)
     nosid = {k: v for k, v in PARAMS.items() if k != "MessageSid"}
     params, sig = signed_webhook(URL, nosid)
-    with pytest.raises(WebhookRejected):
+    with pytest.raises(WebhookRejectedError):
         parse_inbound(TOKEN, url=URL, params=params, signature=sig)
 
 
@@ -206,7 +208,7 @@ def test_status_callback_verified_and_parsed() -> None:
     receipt = parse_status_callback(TOKEN, url=URL, params=params, signature=sig)
     assert receipt.status == "delivered"
     assert receipt.to == "+14155550100"
-    with pytest.raises(WebhookRejected):
+    with pytest.raises(WebhookRejectedError):
         parse_status_callback(TOKEN, url=URL, params=params, signature="bad")
 
 
@@ -221,7 +223,6 @@ def test_api_key_auth_sends_and_webhook_still_needs_auth_token() -> None:
     assert creds.basic_auth()[0] == sk
     fake = FakeTwilio()
     TwilioWhatsAppClient(creds, transport=fake.transport).send(_request())
-    import base64
 
     sent = fake.requests[0].headers["authorization"].split()[1]
     assert base64.b64decode(sent).decode().startswith(sk + ":")

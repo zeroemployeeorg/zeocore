@@ -87,7 +87,8 @@ class TwilioCredentials(_Model):
     def basic_auth(self) -> tuple[str, str]:
         if self.api_key_sid is not None and self.api_key_secret is not None:
             return (self.api_key_sid, self.api_key_secret.get_secret_value())
-        assert self.auth_token is not None
+        if self.auth_token is None:  # unreachable: validated at construction
+            raise ValueError("No credential to send with")
         return (self.account_sid, self.auth_token.get_secret_value())
 
 
