@@ -49,4 +49,5 @@ def parse_inbound(
         media_urls=media,
         button_payload=params.get("ButtonPayload") or None,
         button_text=params.get("ButtonText") or None,
+        reply_to_message_id=params.get("OriginalRepliedMessageSid") or None,
     )

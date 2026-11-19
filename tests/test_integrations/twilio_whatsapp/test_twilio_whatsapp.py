@@ -156,3 +156,37 @@ def test_credentials_validation_and_no_secret_in_repr() -> None:
     creds = fake_credentials()
     assert FAKE_AUTH_TOKEN not in repr(creds)
     assert FAKE_AUTH_TOKEN not in creds.model_dump_json()
+
+
+def test_reply_binding_and_receipt_time() -> None:
+    p = {**PARAMS, "OriginalRepliedMessageSid": "SM" + "b" * 32}
+    params, sig = signed_webhook(URL, p)
+    event = parse_inbound(TOKEN, url=URL, params=params, signature=sig)
+    assert event.reply_to_message_id == "SM" + "b" * 32
+    plain, sig2 = signed_webhook(URL, PARAMS)
+    assert parse_inbound(TOKEN, url=URL, params=plain, signature=sig2).reply_to_message_id is None
+
+    fake = FakeTwilio(
+        body={
+            "sid": "SM" + "c" * 32,
+            "status": "queued",
+            "date_created": "Thu, 19 Nov 2026 05:30:00 +0000",
+        }
+    )
+    receipt = TwilioWhatsAppClient(fake_credentials(), transport=fake.transport).send(
+        _request()
+    )
+    assert receipt.created_at is not None
+    assert receipt.created_at.isoformat() == "2026-11-19T05:30:00+00:00"
+    bare = FakeTwilio()
+    assert (
+        TwilioWhatsAppClient(fake_credentials(), transport=bare.transport)
+        .send(_request())
+        .created_at
+        is None
+    )
+
+
+def test_body_over_twilio_limit_is_refused_not_truncated() -> None:
+    with pytest.raises(ValidationError):
+        _request(body="x" * 1601)

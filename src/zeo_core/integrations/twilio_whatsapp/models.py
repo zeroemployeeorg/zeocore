@@ -16,6 +16,7 @@ Identity rules (written down so a host does not invent them):
 from __future__ import annotations
 
 import re
+from datetime import datetime
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, SecretStr, model_validator
@@ -74,6 +75,12 @@ class ChannelInbound(_Model):
     #: Set when the user tapped a quick-reply/button; the button payload.
     button_payload: str | None = None
     button_text: str | None = None
+    #: MessageSid of the earlier message this one quotes (Twilio
+    #: `OriginalRepliedMessageSid`), when the user used WhatsApp reply. This is
+    #: the only source-supported way to bind a message to a specific earlier
+    #: one. Twilio's webhook carries no send time, and a Sid is not sortable, so
+    #: a host must not infer "after the review" from arrival order alone.
+    reply_to_message_id: str | None = None
 
 
 class ChannelReceipt(_Model):
@@ -84,6 +91,9 @@ class ChannelReceipt(_Model):
     status: str
     to: str
     error_code: int | None = None
+    #: Twilio `date_created` for the outbound message, timezone-aware, when the
+    #: response carried a parseable value; None otherwise (never invented).
+    created_at: datetime | None = None
 
 
 class SendWhatsAppRequest(_Model):

@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from datetime import datetime
+from email.utils import parsedate_to_datetime
+
 import httpx
 
 from .models import (
@@ -11,6 +14,16 @@ from .models import (
     to_whatsapp_address,
 )
 from .transport import TwilioAPIError, TwilioTransport
+
+
+def _created_at(value: object) -> datetime | None:
+    if not isinstance(value, str):
+        return None
+    try:
+        parsed = parsedate_to_datetime(value)
+    except (TypeError, ValueError):
+        return None
+    return parsed if parsed.tzinfo is not None else None
 
 
 class TwilioWhatsAppClient:
@@ -53,4 +66,5 @@ class TwilioWhatsAppClient:
             status=str(payload.get("status") or "unknown"),
             to=request.to,
             error_code=raw_code if isinstance(raw_code, int) else None,
+            created_at=_created_at(payload.get("date_created")),
         )
