@@ -17,9 +17,7 @@ from collections.abc import Mapping
 from pydantic import SecretStr
 
 
-def compute_signature(
-    token: SecretStr, url: str, params: Mapping[str, str]
-) -> str:
+def compute_signature(token: SecretStr, url: str, params: Mapping[str, str]) -> str:
     data = url + "".join(f"{key}{params[key]}" for key in sorted(params))
     digest = hmac.new(
         token.get_secret_value().encode(), data.encode(), hashlib.sha1

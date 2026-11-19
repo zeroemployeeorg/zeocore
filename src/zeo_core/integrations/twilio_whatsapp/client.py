@@ -34,7 +34,9 @@ class TwilioWhatsAppClient:
         transport: httpx.BaseTransport | None = None,
         timeout: float = 30.0,
     ) -> None:
-        self._transport = TwilioTransport(credentials, transport=transport, timeout=timeout)
+        self._transport = TwilioTransport(
+            credentials, transport=transport, timeout=timeout
+        )
 
     def close(self) -> None:
         self._transport.close()
@@ -59,7 +61,9 @@ class TwilioWhatsAppClient:
         payload = self._transport.post_message(form)
         sid = payload.get("sid")
         if not isinstance(sid, str) or not sid:
-            raise TwilioAPIError("invalid_response", "Twilio response had no message sid")
+            raise TwilioAPIError(
+                "invalid_response", "Twilio response had no message sid"
+            )
         raw_code = payload.get("error_code")
         return ChannelReceipt(
             provider_message_id=sid,

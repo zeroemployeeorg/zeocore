@@ -65,14 +65,19 @@ class TwilioCredentials(_Model):
     def _check(self) -> TwilioCredentials:
         if not _ACCOUNT_SID.match(self.account_sid):
             raise ValueError("account_sid must look like AC followed by 32 hex digits")
-        if self.auth_token is not None and not self.auth_token.get_secret_value().strip():
+        if (
+            self.auth_token is not None
+            and not self.auth_token.get_secret_value().strip()
+        ):
             raise ValueError("auth_token must not be blank")
         has_key = self.api_key_sid is not None or self.api_key_secret is not None
         if has_key:
             if self.api_key_sid is None or self.api_key_secret is None:
                 raise ValueError("Set api_key_sid and api_key_secret together")
             if not re.match(r"^SK[0-9a-fA-F]{32}$", self.api_key_sid):
-                raise ValueError("api_key_sid must look like SK followed by 32 hex digits")
+                raise ValueError(
+                    "api_key_sid must look like SK followed by 32 hex digits"
+                )
             if not self.api_key_secret.get_secret_value().strip():
                 raise ValueError("api_key_secret must not be blank")
         elif self.auth_token is None:
@@ -132,7 +137,9 @@ class SendWhatsAppRequest(_Model):
     media_url: tuple[str, ...] = ()
     #: Sender: a `whatsapp:+E164` number, or a messaging service SID (`MG...`).
     from_number: str | None = None
-    messaging_service_sid: str | None = Field(default=None, pattern=r"^MG[0-9a-fA-F]{32}$")
+    messaging_service_sid: str | None = Field(
+        default=None, pattern=r"^MG[0-9a-fA-F]{32}$"
+    )
     status_callback: str | None = None
 
     @model_validator(mode="after")

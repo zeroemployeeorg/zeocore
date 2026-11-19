@@ -165,7 +165,10 @@ def test_reply_binding_and_receipt_time() -> None:
     event = parse_inbound(TOKEN, url=URL, params=params, signature=sig)
     assert event.reply_to_message_id == "SM" + "b" * 32
     plain, sig2 = signed_webhook(URL, PARAMS)
-    assert parse_inbound(TOKEN, url=URL, params=plain, signature=sig2).reply_to_message_id is None
+    assert (
+        parse_inbound(TOKEN, url=URL, params=plain, signature=sig2).reply_to_message_id
+        is None
+    )
 
     fake = FakeTwilio(
         body={

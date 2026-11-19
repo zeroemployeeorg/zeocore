@@ -24,7 +24,9 @@ def fake_credentials() -> TwilioCredentials:
 class FakeTwilio:
     """`httpx.MockTransport` handler recording every send; can inject failures."""
 
-    def __init__(self, *, status: int = 201, body: dict[str, Any] | None = None) -> None:
+    def __init__(
+        self, *, status: int = 201, body: dict[str, Any] | None = None
+    ) -> None:
         self.requests: list[httpx.Request] = []
         self.status = status
         self.body = body
