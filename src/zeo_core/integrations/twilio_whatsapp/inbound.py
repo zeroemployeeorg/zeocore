@@ -6,7 +6,7 @@ from collections.abc import Mapping
 
 from pydantic import SecretStr
 
-from .models import ChannelInbound, from_whatsapp_address
+from .models import ChannelInbound, ChannelReceipt, from_whatsapp_address
 from .signature import verify_signature
 
 
@@ -50,4 +50,36 @@ def parse_inbound(
         button_payload=params.get("ButtonPayload") or None,
         button_text=params.get("ButtonText") or None,
         reply_to_message_id=params.get("OriginalRepliedMessageSid") or None,
+    )
+
+
+def parse_status_callback(
+    token: SecretStr,
+    *,
+    url: str,
+    params: Mapping[str, str],
+    signature: str | None,
+) -> ChannelReceipt:
+    """Verify and parse a delivery status callback (same signature scheme).
+
+    Delivery evidence is `status` of `delivered` or `read`; `sent`/`queued` is
+    not. Callbacks can arrive out of order and more than once: the host keeps
+    the first terminal status per `provider_message_id`.
+    """
+    if not verify_signature(token, url, params, signature):
+        raise WebhookRejected("Twilio signature did not match")
+    sid = params.get("MessageSid") or params.get("SmsSid")
+    status = params.get("MessageStatus") or params.get("SmsStatus")
+    if not sid or not status:
+        raise WebhookRejected("Callback has no MessageSid or status")
+    try:
+        to = from_whatsapp_address(params.get("To", ""))
+    except ValueError:
+        raise WebhookRejected("Callback is not for a WhatsApp message") from None
+    raw = params.get("ErrorCode", "")
+    return ChannelReceipt(
+        provider_message_id=sid,
+        status=status,
+        to=to,
+        error_code=int(raw) if raw.isdigit() else None,
     )

@@ -12,6 +12,7 @@ from zeo_core.integrations.twilio_whatsapp import (
     TwilioWhatsAppClient,
     WebhookRejected,
     parse_inbound,
+    parse_status_callback,
     to_whatsapp_address,
     verify_signature,
 )
@@ -190,3 +191,17 @@ def test_reply_binding_and_receipt_time() -> None:
 def test_body_over_twilio_limit_is_refused_not_truncated() -> None:
     with pytest.raises(ValidationError):
         _request(body="x" * 1601)
+
+
+def test_status_callback_verified_and_parsed() -> None:
+    cb = {
+        "MessageSid": "SM" + "d" * 32,
+        "MessageStatus": "delivered",
+        "To": SENDER,
+    }
+    params, sig = signed_webhook(URL, cb)
+    receipt = parse_status_callback(TOKEN, url=URL, params=params, signature=sig)
+    assert receipt.status == "delivered"
+    assert receipt.to == "+14155550100"
+    with pytest.raises(WebhookRejected):
+        parse_status_callback(TOKEN, url=URL, params=params, signature="bad")
