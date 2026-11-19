@@ -49,7 +49,7 @@ class TwilioTransport:
         self._http = httpx.Client(
             transport=transport,
             timeout=timeout,
-            auth=(credentials.account_sid, credentials.auth_token.get_secret_value()),
+            auth=credentials.basic_auth(),
             trust_env=False,
             follow_redirects=False,
         )

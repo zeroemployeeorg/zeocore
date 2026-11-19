@@ -205,3 +205,28 @@ def test_status_callback_verified_and_parsed() -> None:
     assert receipt.to == "+14155550100"
     with pytest.raises(WebhookRejected):
         parse_status_callback(TOKEN, url=URL, params=params, signature="bad")
+
+
+def test_api_key_auth_sends_and_webhook_still_needs_auth_token() -> None:
+    sk = "SK" + "1" * 32
+    creds = TwilioCredentials(
+        account_sid="AC" + "0" * 32,
+        api_key_sid=sk,
+        api_key_secret=SecretStr("fake-api-secret"),
+    )
+    assert creds.auth_token is None
+    assert creds.basic_auth()[0] == sk
+    fake = FakeTwilio()
+    TwilioWhatsAppClient(creds, transport=fake.transport).send(_request())
+    import base64
+
+    sent = fake.requests[0].headers["authorization"].split()[1]
+    assert base64.b64decode(sent).decode().startswith(sk + ":")
+    assert "AC" + "0" * 32 in str(fake.requests[0].url)
+    # An API key secret cannot stand in for the Auth Token on a webhook.
+    params, sig = signed_webhook(URL, PARAMS)
+    assert not verify_signature(SecretStr("fake-api-secret"), URL, params, sig)
+    with pytest.raises(ValidationError):
+        TwilioCredentials(account_sid="AC" + "0" * 32)
+    with pytest.raises(ValidationError):
+        TwilioCredentials(account_sid="AC" + "0" * 32, api_key_sid=sk)

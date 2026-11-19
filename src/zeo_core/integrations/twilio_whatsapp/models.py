@@ -48,18 +48,42 @@ def from_whatsapp_address(address: str) -> str:
 
 
 class TwilioCredentials(_Model):
-    """Delivered by ZEOconnect custody; never read from a .env by this module."""
+    """Delivered by ZEOconnect custody; never read from a .env by this module.
+
+    Sending needs `auth_token` OR the API key pair (`api_key_sid` +
+    `api_key_secret`); an API key is preferred when both are present. Webhook
+    signature checks need the account `auth_token` and nothing else: Twilio signs
+    with the Auth Token, never with an API key secret.
+    """
 
     account_sid: str
-    auth_token: SecretStr
+    auth_token: SecretStr | None = None
+    api_key_sid: str | None = None
+    api_key_secret: SecretStr | None = None
 
     @model_validator(mode="after")
     def _check(self) -> TwilioCredentials:
         if not _ACCOUNT_SID.match(self.account_sid):
             raise ValueError("account_sid must look like AC followed by 32 hex digits")
-        if not self.auth_token.get_secret_value().strip():
-            raise ValueError("auth_token is required")
+        if self.auth_token is not None and not self.auth_token.get_secret_value().strip():
+            raise ValueError("auth_token must not be blank")
+        has_key = self.api_key_sid is not None or self.api_key_secret is not None
+        if has_key:
+            if self.api_key_sid is None or self.api_key_secret is None:
+                raise ValueError("Set api_key_sid and api_key_secret together")
+            if not re.match(r"^SK[0-9a-fA-F]{32}$", self.api_key_sid):
+                raise ValueError("api_key_sid must look like SK followed by 32 hex digits")
+            if not self.api_key_secret.get_secret_value().strip():
+                raise ValueError("api_key_secret must not be blank")
+        elif self.auth_token is None:
+            raise ValueError("Provide auth_token or an API key pair to send")
         return self
+
+    def basic_auth(self) -> tuple[str, str]:
+        if self.api_key_sid is not None and self.api_key_secret is not None:
+            return (self.api_key_sid, self.api_key_secret.get_secret_value())
+        assert self.auth_token is not None
+        return (self.account_sid, self.auth_token.get_secret_value())
 
 
 class ChannelInbound(_Model):
