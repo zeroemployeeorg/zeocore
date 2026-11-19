@@ -14,6 +14,30 @@ class WebhookRejectedError(ValueError):
     """The webhook is not admitted. The message never echoes the body."""
 
 
+def _media_urls(params: Mapping[str, str]) -> tuple[str, ...]:
+    """Media urls present in the signed form, checked against `NumMedia`.
+
+    No channel limit is assumed: the count is the number of `MediaUrlN` fields
+    actually present, and `NumMedia` must equal it. Nothing iterates over a
+    caller-supplied count.
+    """
+    raw = params.get("NumMedia", "0") or "0"
+    if not raw.isascii() or not raw.isdigit():
+        raise WebhookRejectedError("NumMedia is not a count")
+    indexes = sorted(
+        int(k[8:])
+        for k in params
+        if k.startswith("MediaUrl")
+        and len(k) <= 12
+        and k[8:].isascii()
+        and k[8:].isdigit()
+    )
+    if raw != str(len(indexes)) or indexes != list(range(len(indexes))):
+        raise WebhookRejectedError("NumMedia does not match the media fields")
+    names = [f"MediaUrl{i}" for i in indexes]
+    return tuple(params[k] for k in names)
+
+
 def parse_inbound(
     token: SecretStr,
     *,
@@ -21,6 +45,8 @@ def parse_inbound(
     params: Mapping[str, str],
     signature: str | None,
 ) -> ChannelInbound:
+    """Verify and parse. `params` is single-valued: refuse a repeated field name
+    at the host boundary, it cannot be represented here."""
     if not verify_signature(token, url, params, signature):
         raise WebhookRejectedError("Twilio signature did not match")
     sid = params.get("MessageSid") or params.get("SmsSid")
@@ -31,13 +57,8 @@ def parse_inbound(
         recipient = from_whatsapp_address(params.get("To", ""))
     except ValueError:
         raise WebhookRejectedError("Webhook is not a WhatsApp message") from None
-    try:
-        count = int(params.get("NumMedia", "0") or "0")
-    except ValueError:
-        raise WebhookRejectedError("NumMedia is not a number") from None
-    media = tuple(
-        params[f"MediaUrl{i}"] for i in range(count) if f"MediaUrl{i}" in params
-    )
+    media = _media_urls(params)
+    count = len(media)
     return ChannelInbound(
         event_id=sid,
         sender_id=sender,

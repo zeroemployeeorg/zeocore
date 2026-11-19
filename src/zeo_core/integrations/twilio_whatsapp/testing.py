@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Any
 
 import httpx
 from pydantic import SecretStr
@@ -24,9 +23,7 @@ def fake_credentials() -> TwilioCredentials:
 class FakeTwilio:
     """`httpx.MockTransport` handler recording every send; can inject failures."""
 
-    def __init__(
-        self, *, status: int = 201, body: dict[str, Any] | None = None
-    ) -> None:
+    def __init__(self, *, status: int = 201, body: object = None) -> None:
         self.requests: list[httpx.Request] = []
         self.status = status
         self.body = body

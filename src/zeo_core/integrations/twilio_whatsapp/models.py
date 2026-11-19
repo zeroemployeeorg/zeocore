@@ -154,6 +154,8 @@ class SendWhatsAppRequest(_Model):
             to_whatsapp_address(self.from_number)
         if self.content_variables is not None and self.content_sid is None:
             raise ValueError("content_variables needs content_sid")
+        if len(self.media_url) > 1:
+            raise ValueError("Send one media_url per message; several are refused")
         for url in self.media_url:
             if not url.startswith("https://"):
                 raise ValueError("media_url must start with https://")

@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import base64
+import hashlib
+import hmac as hmac_mod
 
 import pytest
 from pydantic import SecretStr, ValidationError
@@ -234,3 +236,86 @@ def test_api_key_auth_sends_and_webhook_still_needs_auth_token() -> None:
         TwilioCredentials(account_sid="AC" + "0" * 32)
     with pytest.raises(ValidationError):
         TwilioCredentials(account_sid="AC" + "0" * 32, api_key_sid=sk)
+
+
+@pytest.mark.parametrize(
+    ("status", "body", "unknown"),
+    [
+        (201, {"status": "queued"}, True),  # 2xx without a sid
+        (201, ["not", "an", "object"], True),  # 2xx, non-object JSON
+        (200, {"sid": ""}, True),  # 2xx, empty sid
+        (202, {"sid": "SM" + "e" * 32}, True),  # unexpected 2xx status
+        (500, {"code": 20500}, True),  # server error
+        (503, None, True),
+        (302, None, True),  # unexpected status
+        (400, {"code": 63016}, False),  # definite rejections
+        (401, {"code": 20003}, False),
+        (404, {"code": 20404}, False),
+        (429, {"code": 20429}, False),
+        (422, {"code": 21654}, False),  # other 4xx
+    ],
+)
+def test_effect_unknown_only_when_outcome_is_unresolved(
+    status: int, body: object, unknown: bool
+) -> None:
+    fake = FakeTwilio(status=status, body=body)
+    client = TwilioWhatsAppClient(fake_credentials(), transport=fake.transport)
+    with pytest.raises(TwilioAPIError) as info:
+        client.send(_request())
+    assert info.value.effect_unknown is unknown
+    assert len(fake.requests) == 1  # never retried
+
+
+def test_two_media_urls_are_refused_before_any_post() -> None:
+    fake = FakeTwilio()
+    one = _request(media_url=("https://m.example.test/a.jpg",))
+    client = TwilioWhatsAppClient(fake_credentials(), transport=fake.transport)
+    client.send(one)
+    assert (
+        "MediaUrl=https%3A%2F%2Fm.example.test%2Fa.jpg"
+        in fake.requests[0].content.decode()
+    )
+    with pytest.raises(ValidationError):
+        _request(
+            media_url=(
+                "https://m.example.test/a.jpg",
+                "https://m.example.test/b.jpg",
+            )
+        )
+    assert len(fake.requests) == 1
+
+
+def test_non_ascii_signature_is_a_typed_refusal_for_both_parsers() -> None:
+    params, _ = signed_webhook(URL, PARAMS)
+    assert verify_signature(TOKEN, URL, params, "é") is False
+    with pytest.raises(WebhookRejectedError):
+        parse_inbound(TOKEN, url=URL, params=params, signature="é")
+    cb = {"MessageSid": "SM" + "f" * 32, "MessageStatus": "sent", "To": SENDER}
+    with pytest.raises(WebhookRejectedError):
+        parse_status_callback(TOKEN, url=URL, params=cb, signature="é")
+
+
+@pytest.mark.parametrize("num", ["-1", "2", "99999999", "x", "²", "1" * 5000, "01"])
+def test_num_media_must_match_the_media_fields(num: str) -> None:
+    p = {**PARAMS, "NumMedia": num, "MediaUrl0": "https://m.example.test/a.jpg"}
+    params, sig = signed_webhook(URL, p)
+    with pytest.raises(WebhookRejectedError):
+        parse_inbound(TOKEN, url=URL, params=params, signature=sig)
+
+
+def test_num_media_gap_in_media_fields_is_refused() -> None:
+    p = {**PARAMS, "NumMedia": "1", "MediaUrl1": "https://m.example.test/a.jpg"}
+    params, sig = signed_webhook(URL, p)
+    with pytest.raises(WebhookRejectedError):
+        parse_inbound(TOKEN, url=URL, params=params, signature=sig)
+
+
+def test_signature_matches_an_independent_calculation() -> None:
+    # Re-derived here with the standard library only (not an official Twilio
+    # vector): HMAC-SHA1 over url + sorted name+value pairs, base64.
+    params = {"b": "2", "a": "1", "c": ""}
+    data = URL + "a1" + "b2" + "c"
+    expected = base64.b64encode(
+        hmac_mod.new(FAKE_AUTH_TOKEN.encode(), data.encode(), hashlib.sha1).digest()
+    ).decode()
+    assert verify_signature(TOKEN, URL, params, expected)

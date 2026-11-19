@@ -31,7 +31,11 @@ def verify_signature(
     params: Mapping[str, str],
     signature: str | None,
 ) -> bool:
-    """True only for a matching signature; a missing header is False."""
-    if not signature:
+    """True only for a matching signature; a missing or non-ASCII header is False.
+
+    `params` is a single-valued mapping. A form with a repeated field name cannot
+    be represented here, so the host must refuse such a request before calling.
+    """
+    if not signature or not signature.isascii():
         return False
     return hmac.compare_digest(compute_signature(token, url, params), signature)

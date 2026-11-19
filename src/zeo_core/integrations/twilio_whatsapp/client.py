@@ -54,7 +54,7 @@ class TwilioWhatsAppClient:
             form["ContentSid"] = request.content_sid
         if request.content_variables is not None:
             form["ContentVariables"] = request.content_variables
-        if request.media_url:
+        if request.media_url:  # the model admits at most one
             form["MediaUrl"] = request.media_url[0]
         if request.status_callback is not None:
             form["StatusCallback"] = request.status_callback
