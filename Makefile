@@ -118,7 +118,13 @@ help: ## Show this help message
 	@echo '${YELLOW}Inspection:${RESET}'
 	@echo '  ${GREEN}make structure${RESET}        - Project structure + hotspots'
 	@echo ''
-	@echo '${YELLOW}All targets:${RESET}'
+	@echo '${YELLOW}Every target:${RESET}  ${GREEN}make help-all${RESET}'
+	@echo ''
+
+.PHONY: help-all
+help-all: ## List every target with its description
+	@echo ''
+	@echo '${YELLOW}zeocore — all targets${RESET}'
 	@awk 'BEGIN {FS = ":.*## "} /^[a-zA-Z0-9_.-]+:.*## / {printf "  ${YELLOW}%-18s${GREEN}%s${RESET}\n", $$1, $$2}' $(MAKEFILE_LIST)
 	@echo ''
 
