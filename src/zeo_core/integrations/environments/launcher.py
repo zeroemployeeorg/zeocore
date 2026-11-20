@@ -35,7 +35,6 @@ _SECRET_SUFFIXES = (
     "APP_PASSWORD",
     "PUBLISHABLE_KEY",
     "SECRET_KEY",
-    "SUPABASE_KEY",
 )
 
 
@@ -129,14 +128,6 @@ class IntegrationEnvironment:
             ):
                 raise ValueError(
                     f"Test and production must use different credentials for {target}"
-                )
-            if (
-                value
-                and target == "SUPABASE_URL"
-                and value == source.get(other + target)
-            ):
-                raise ValueError(
-                    "Test and production must use different SUPABASE_URL values"
                 )
             result[target] = value
         result.update(

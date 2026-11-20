@@ -26,15 +26,6 @@ CATALOG: dict[str, IntegrationSetup] = {
         for name in ("mail", "drive", "calendar", "docs", "sheets", "slides")
     },
     "notion": IntegrationSetup("notion.md", ("NOTION_TOKEN",)),
-    "supabase": IntegrationSetup(
-        "supabase.md",
-        (
-            "SUPABASE_URL",
-            "SUPABASE_PUBLISHABLE_KEY",
-            "SUPABASE_KEY",
-            "SUPABASE_SECRET_KEY",
-        ),
-    ),
     "hubspot.marketing": IntegrationSetup("hubspot.md", ("HUBSPOT_ACCESS_TOKEN",)),
     "kit.marketing": IntegrationSetup("kit.md", ("KIT_API_KEY", "KIT_ACCESS_TOKEN")),
     "social.bluesky": IntegrationSetup(

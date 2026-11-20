@@ -165,7 +165,7 @@ class HostedConnectionWire(BaseModel):
 
 
 class ZEOconnectHTTPTransport:
-    """Authenticated member-API transport with no Supabase-facing surface."""
+    """Authenticated member-API transport with no database-facing surface."""
 
     def __init__(
         self,

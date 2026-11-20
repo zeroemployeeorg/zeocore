@@ -1015,7 +1015,6 @@ installation; others require the extra shown below. The parent package
 | `zeo_core.integrations.google.mail` | `gmail` / `google` | `GoogleMailService`, `create_integration` |
 | `zeo_core.integrations.google.calendar` | `calendar` / `google` | `GoogleCalendarService`, `Calendar`, `CalendarEvent`, `EventAttendee`, `EventDateTime`, `CalendarIntegrationProtocol`, `create_integration` |
 | `zeo_core.integrations.meetings` | base install, from 0.11.0 | `MeetingRunner`, `MeetingAdapters`, `UnixMeetingRuntime`, `InvocationAuthorization`, `InvocationReceipt`, `request_digest` |
-| `zeo_core.integrations.database.supabase` | `supabase` | `SupabaseIntegration`, `SupabaseClient`, `SupabaseRealtimeClient`; see [Supabase](../integrations/supabase.md) |
 | `zeo_core.integrations.hubspot` | base install | `HubSpotIntegration`, `HubSpotClient`; [marketing guide](../tutorials/hubspot-marketing.md) |
 | `zeo_core.integrations.kit` | base install | `KitIntegration`, `KitClient`; [marketing guide](../tutorials/kit-marketing.md) |
 | `zeo_core.integrations.environments` | base install | `IntegrationEnvironment`; [test and production](../integrations/environments.md) |
@@ -1052,9 +1051,7 @@ fails:
 - The **Google** integrations import their Google client libraries eagerly, so `import zeo_core.integrations.google.drive` raises `ImportError` without the extra.
 - **Notion, jupytext, ffmpeg** import cleanly without their extra and fail later, inside `initialize()`, with a message naming the missing package.
 
-Supabase is implemented at `zeo_core.integrations.database.supabase`, covering
-Database, Auth, Storage, Edge Functions and async Realtime. Raw SQL and Vault
-plaintext access are excluded. The `bigquery` and `sqlite` packages remain placeholders.
+Supabase moved to the `zeo-integrations` package (`zeo_integrations.supabase`) and is no longer part of Core. It was removed from Core in a breaking release; install `zeo-integrations` instead.
 
 <a id="contract-pack"></a>
 
@@ -1099,7 +1096,6 @@ Declared in [`pyproject.toml`](../../pyproject.toml); `uv pip install "zeocore[n
 | `pandoc` | Document conversion |
 | `jupytext` | Script ↔ notebook conversion |
 | `ffmpeg` | Media probing/transcoding via `ffmpeg-zeo` (needs an `ffmpeg` binary too) |
-| `supabase` | Database, Auth, Storage, Edge Functions and Realtime |
 | `notebook` | Fresh-kernel notebook execution |
 | `bluesky` | Bluesky client |
 | `runtime-host` | Supervised host from 0.11.0, JSON Schema validation and RFC 8785 |
@@ -1130,7 +1126,6 @@ Importing any of these couples you to internals that change without notice:
 | `zeo_core.tools.compat.sovereign_style` | **Transitional** adapter for keyword-argument functions. Not the canonical authoring surface. |
 | `zeo_core._dev` | Local development helpers. |
 | `zeo_core.contracts.capabilities.demo` implementations | Only the demo *models* (`EchoRequest`, `VideoRefRequest`) are exported. |
-| `zeo_core.integrations.database.bigquery`, `zeo_core.integrations.database.sqlite` | Placeholder packages. Supabase has a supported public API. |
 | Anything with a leading underscore | Standard Python convention, enforced here. |
 
 The commented-out media contracts in

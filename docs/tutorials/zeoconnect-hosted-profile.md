@@ -156,8 +156,7 @@ display identity, state, operations, and selected resource summaries. It does
 not expose tenant IDs, connector revisions, Supabase identifiers, Vault
 references, or credentials.
 
-ZeoCore's public Supabase integration may be used by your application for its
-own database. The hosted client never connects to ZEOconnect's Supabase project:
+Your application may use its own Supabase database through the `zeo-integrations` package. The hosted client never connects to ZEOconnect's Supabase project:
 
 ```text
 application → ZeoCore hosted client → ZEOconnect Member API → private broker

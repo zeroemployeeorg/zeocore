@@ -96,7 +96,6 @@ nav:
       - Managed profiles: tutorials/zeoconnect-hosted-profile.md
       - MCP server: tutorials/mcp-server-with-claude-code.md
       - Notion: tutorials/notion-integration.md
-      - Supabase: tutorials/supabase-integration.md
       - Google Calendar: tutorials/calendar-integration.md
       - Google Docs: tutorials/google-docs-integration.md
       - Bluesky: tutorials/bluesky-integration.md
@@ -109,7 +108,6 @@ nav:
       - YouTube: integrations/youtube.md
       - GitHub: integrations/github.md
       - Notion: integrations/notion.md
-      - Supabase: integrations/supabase.md
       - Bluesky: integrations/bluesky.md
       - Language models: integrations/llms.md
       - OpenAI managed Agents API: integrations/agents-api.md

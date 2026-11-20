@@ -1,0 +1,2 @@
+bump: minor
+Breaking: Supabase is no longer part of Core. Remove `zeo_core.integrations.database` (Supabase client, auth, storage, functions and realtime), the `supabase` extra and entry point, its setup-catalog rows and the project-URL check that existed only for it, and its example and guides. Use the `zeo-integrations` package (`zeo_integrations.supabase`) instead. The empty sqlite and bigquery placeholder packages are gone too. No compatibility shim is provided.

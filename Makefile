@@ -72,7 +72,7 @@ endif
 PYTHON := $(VENV_DIR)/bin/python
 # The optional integrations a full development environment carries. One list,
 # used by sync (make setup), install-all and verify-env, so they never drift apart.
-SETUP_EXTRAS := gmail,notion,supabase,google,drive,calendar,pandoc,llms,github,bluesky,http,ffmpeg,jupytext,notebook,mcp,mcp-dev,runtime-host,revolut
+SETUP_EXTRAS := gmail,notion,google,drive,calendar,pandoc,llms,github,bluesky,http,ffmpeg,jupytext,notebook,mcp,mcp-dev,runtime-host,revolut
 comma := ,
 SRC := src
 PKG_SRC := src/zeo_core
