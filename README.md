@@ -16,7 +16,7 @@ that same function can then be run by a script, served over HTTP, exposed to
 an MCP-native coding agent like Claude Code or Cursor, or handed to an LLM as
 a callable tool. You don't rewrite it for each destination.
 
-**Working on ZeoCore itself?** `make help` is the first-time guide, `make doctor` checks your machine (it changes nothing), `make verify` is the gate, and `make help-all` lists every target.
+**Working on ZeoCore itself?** `make help` is the first-time guide, `make doctor` checks your machine (it changes nothing), `make hooks` installs the pre-push hook that refuses a push to main, `make verify` is the gate, and `make help-all` lists every target.
 
 **New here? Start with the [Quickstart](QUICKSTART.md).** It takes you from
 an empty folder to a running capability in about ten minutes, and assumes no

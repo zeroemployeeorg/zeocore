@@ -187,7 +187,7 @@ setup: ## Create the development environment from uv.lock (what CI and releases 
 	@echo "${GREEN}Setup complete. Activate: source $(VENV_DIR)/bin/activate${RESET}"
 
 .PHONY: hooks
-hooks: ## Point git at the committed hooks in .githooks, so a push runs make verify first
+hooks: ## Install the pre-push hook: refuses a push to main, runs make verify before any other non-WIP push
 	@if ! git rev-parse --git-dir >/dev/null 2>&1; then \
 	   echo "Not a git checkout, so no git hook was installed."; \
 	 elif [ -z "$$(git config --get core.hooksPath)" ]; then \

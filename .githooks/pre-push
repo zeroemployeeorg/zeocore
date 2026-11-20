@@ -57,6 +57,12 @@ mismatch=
 if [ ! -t 0 ]; then
   while read -r local_ref local_sha remote_ref _remote_sha; do
     seen=1
+    # Nobody pushes to main: work goes on a branch, through a pull request, and the
+    # merger merges. This refusal comes first and has no escape hatch.
+    if [ "$remote_ref" = "refs/heads/main" ]; then
+      echo "pre-push: a push to main is refused, so nothing was pushed; push a branch named for the work instead (a first push as <seat>/wip/<topic>) and open a pull request, then push again." >&2
+      exit 1
+    fi
     case "$local_sha" in
       *[!0]*)
         deleting_only=0

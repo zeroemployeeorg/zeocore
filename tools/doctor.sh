@@ -310,6 +310,103 @@ fi
 echo ""
 
 # ------------------------------------------------------------------
+# 9. Environment variables, by NAME only. A value is never printed, never
+#    logged, never compared: the check is "is it set and non-empty".
+#    All are optional for developing zeocore; each is needed only by the
+#    named integration. Names come from .env.example, the single list.
+# ------------------------------------------------------------------
+echo "  ${BLUE}Environment variables (names only, values are never shown; all optional):${RESET}"
+if [ -f ".env.example" ]; then
+    ENV_NAMES=$(sed -nE 's/^#?[[:space:]]*([A-Z][A-Z0-9_]+)=.*/\1/p' .env.example | sort -u)
+    ENV_SET=0; ENV_TOTAL=0
+    for name in $ENV_NAMES; do
+        ENV_TOTAL=$((ENV_TOTAL + 1))
+        if [ -n "${!name:-}" ]; then
+            ENV_SET=$((ENV_SET + 1))
+            echo "    ${GREEN}✓${RESET} ${name} is set in this shell"
+        else
+            echo "    ${YELLOW}·${RESET} ${name} not set in this shell (fine unless you use that integration; it can also live in .env)"
+        fi
+    done
+    pass "${ENV_SET} of ${ENV_TOTAL} integration variable names set (none are required to run make verify)"
+else
+    warn "environment variable names" "test -f .env.example" "no .env.example to list the names from; restore it with 'git checkout .env.example'."
+fi
+echo ""
+
+# ------------------------------------------------------------------
+# 10. Pinned tools. Python's floor is read from pyproject.toml above; uv
+#     must be new enough for 'uv sync --locked' (the gate's provisioning).
+# ------------------------------------------------------------------
+if command -v uv >/dev/null 2>&1; then
+    UV_NUM=$(uv --version 2>/dev/null | sed -E 's/^uv ([0-9]+\.[0-9]+).*/\1/')
+    UV_MIN="0.4"
+    if [ -n "$UV_NUM" ] && [ "$(printf '%s\n%s\n' "$UV_MIN" "$UV_NUM" | sort -V | head -1)" = "$UV_MIN" ]; then
+        pass "uv ${UV_NUM} meets the ${UV_MIN}+ needed for 'uv sync --locked'"
+    else
+        fail "uv too old for the locked sync" "uv --version -> ${UV_NUM:-unknown}, need ${UV_MIN}+" \
+             "Upgrade uv: 'uv self update' (or reinstall from https://github.com/astral-sh/uv)."
+    fi
+fi
+if command -v git >/dev/null 2>&1; then
+    pass "git is installed ($(git --version 2>/dev/null))"
+else
+    fail "git not found on PATH" "command -v git" "Install git, then re-run 'make doctor'."
+fi
+echo ""
+
+# ------------------------------------------------------------------
+# 11. Work volume. Where the org sets ZEO_WORK_DIR, virtual environments
+#     and caches live there; it must exist and be writable.
+# ------------------------------------------------------------------
+if [ -n "${ZEO_WORK_DIR:-}" ]; then
+    if [ -d "$ZEO_WORK_DIR" ] && [ -w "$ZEO_WORK_DIR" ]; then
+        pass "ZEO_WORK_DIR volume is present and writable"
+    else
+        fail "ZEO_WORK_DIR is set but not usable" "test -d and -w on \$ZEO_WORK_DIR" \
+             "Mount the work volume (or create the directory), or unset ZEO_WORK_DIR to keep everything inside the checkout."
+    fi
+else
+    pass "ZEO_WORK_DIR not set: environments live inside the checkout (the default)"
+fi
+echo ""
+
+# ------------------------------------------------------------------
+# 12. Network reachability: only the two hosts setup needs (package index
+#     and git remote). A read-only HEAD with a short timeout. Offline is a
+#     warning, not a failure: verify itself needs no network.
+# ------------------------------------------------------------------
+if command -v curl >/dev/null 2>&1; then
+    for host in pypi.org github.com; do
+        if curl -sSI --max-time 5 -o /dev/null "https://${host}" 2>/dev/null; then
+            pass "network: ${host} reachable"
+        else
+            warn "network: ${host} not reachable" "curl -sI --max-time 5 https://${host}" \
+                 "Needed to install packages or push; check your connection or proxy. 'make verify' on an existing environment works offline."
+        fi
+    done
+else
+    warn "network checks" "command -v curl" "curl not found, so reachability was not checked."
+fi
+echo ""
+
+# ------------------------------------------------------------------
+# 13. Git hooks: installed, and refusing a push to main.
+# ------------------------------------------------------------------
+if git rev-parse --git-dir >/dev/null 2>&1; then
+    HOOKS_PATH=$(git config --get core.hooksPath 2>/dev/null || true)
+    if [ "$HOOKS_PATH" = ".githooks" ] && [ -x ".githooks/pre-push" ]; then
+        pass "git hooks installed (core.hooksPath = .githooks); a push to main is refused"
+    else
+        fail "git hooks not installed" "git config core.hooksPath -> '${HOOKS_PATH}'" \
+             "Run 'make hooks'. It refuses a push to main and gates every other push."
+    fi
+else
+    warn "git hooks" "git rev-parse --git-dir" "not a git checkout, so hooks were not checked."
+fi
+echo ""
+
+# ------------------------------------------------------------------
 # Summary
 # ------------------------------------------------------------------
 echo "${BLUE}────────────────────────────────────────────${RESET}"
