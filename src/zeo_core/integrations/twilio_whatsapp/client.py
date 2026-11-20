@@ -21,7 +21,7 @@ def _created_at(value: object) -> datetime | None:
         return None
     try:
         parsed = parsedate_to_datetime(value)
-    except (TypeError, ValueError):
+    except (TypeError, ValueError, OverflowError):
         return None
     return parsed if parsed.tzinfo is not None else None
 
