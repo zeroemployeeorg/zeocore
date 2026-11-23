@@ -50,3 +50,27 @@ async def test_append_then_read_through_mcp() -> None:
         )
         block = result.content[0]
         assert isinstance(block, TextContent) and "laptop-7" in block.text
+
+
+@pytest.mark.asyncio
+async def test_append_writes_raw_so_formulas_stay_text() -> None:
+    from mcp import Client
+
+    from zeo_core.adapters.mcp import create_server, register_tool
+
+    example = _load_example()
+    sheets = example.InMemorySheets()
+    registry = OperationRegistry()
+    register_tool(example.SheetsAppendTool(sheets), registry=registry)
+    server = create_server(name="t", registry=registry)
+
+    async with Client(server) as client:
+        await client.call_tool(
+            "sheets_append_rows",
+            {
+                "spreadsheet_id": "s",
+                "range_a1": "A1",
+                "rows": [['=IMPORTXML("http://x","//a")', "ana"]],
+            },
+        )
+    assert sheets.input_options == ["RAW"]
