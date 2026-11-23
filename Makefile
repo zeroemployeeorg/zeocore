@@ -118,7 +118,13 @@ help: ## Show this help message
 	@echo '${YELLOW}Inspection:${RESET}'
 	@echo '  ${GREEN}make structure${RESET}        - Project structure + hotspots'
 	@echo ''
-	@echo '${YELLOW}All targets:${RESET}'
+	@echo '${YELLOW}Every target:${RESET}  ${GREEN}make help-all${RESET}'
+	@echo ''
+
+.PHONY: help-all
+help-all: ## List every target with its description
+	@echo ''
+	@echo '${YELLOW}zeocore — all targets${RESET}'
 	@awk 'BEGIN {FS = ":.*## "} /^[a-zA-Z0-9_.-]+:.*## / {printf "  ${YELLOW}%-18s${GREEN}%s${RESET}\n", $$1, $$2}' $(MAKEFILE_LIST)
 	@echo ''
 
@@ -181,7 +187,7 @@ setup: ## Create the development environment from uv.lock (what CI and releases 
 	@echo "${GREEN}Setup complete. Activate: source $(VENV_DIR)/bin/activate${RESET}"
 
 .PHONY: hooks
-hooks: ## Point git at the committed hooks in .githooks, so a push runs make verify first
+hooks: ## Install the pre-push hook: refuses a push to main, runs make verify before any other non-WIP push
 	@if ! git rev-parse --git-dir >/dev/null 2>&1; then \
 	   echo "Not a git checkout, so no git hook was installed."; \
 	 elif [ -z "$$(git config --get core.hooksPath)" ]; then \
@@ -397,6 +403,35 @@ build: ## Build sdist + wheel (python -m build)
 	@echo "${BLUE}Building sdist + wheel...${RESET}"
 	$(PYTHON) -m build --outdir $(DIST_DIR)
 	@echo "${GREEN}✓ build complete — see $(DIST_DIR)${RESET}"
+
+# ============================================================
+# RELEASE SURFACES (operator-approved 20 Nov 2026)
+# ============================================================
+# Three surfaces are planned (the 20 Nov 2026 release strategy): development
+# (main + branches), release candidate (vX.Y.Z-rc.N, built ONCE on a Linux
+# gate host), release (the candidate's bytes, promoted, never rebuilt).
+#
+# TODAY, for this repository, none of that is wired: every merge to main is
+# rebuilt by CI and published to PyPI by .github/workflows/publish.yml
+# (trusted publishing), and the docs site publishes too. These two targets
+# are not that control. release-candidate only builds and checksums locally
+# and release only explains; neither tags, uploads or publishes.
+.PHONY: release-candidate
+release-candidate: ## Build the wheel and sdist plus SHA256SUMS on a Linux host (never tags or uploads; not what CI publishes today)
+	@if [ "$$(uname -s)" != "Linux" ]; then \
+	   echo "${RED}release-candidate builds on Linux only; this machine is $$(uname -s).${RESET}"; exit 1; \
+	 fi
+	@echo "${YELLOW}Note:${RESET} this checks the OS only. It does not prove the host is an approved gate host."
+	@mkdir -p "$(DIST_DIR)" && cand=$$(mktemp -d "$(DIST_DIR)/candidate.XXXXXX") && \
+	 $(PYTHON) -m build --outdir "$$cand" && \
+	 (cd "$$cand" && sha256sum *.whl *.tar.gz > SHA256SUMS && cat SHA256SUMS) && \
+	 echo "${GREEN}Candidate files and SHA256SUMS written to $$cand.${RESET} Nothing was tagged or uploaded, and these files are not what CI publishes today."
+
+.PHONY: release
+release: ## Explain how releases work today and what is planned (never releases; exits non-zero)
+	@echo "${YELLOW}Not released from here.${RESET} Today every merge to main is built by CI and published to PyPI by publish.yml. Planned (not yet in place): the gated candidate's bytes are promoted after approval, never rebuilt."
+	@echo "Notes: changelog.d/README.md and the GitHub Releases page."
+	@exit 1
 
 # ============================================================
 # HTTP adapter
