@@ -407,24 +407,30 @@ build: ## Build sdist + wheel (python -m build)
 # ============================================================
 # RELEASE SURFACES (operator-approved 20 Nov 2026)
 # ============================================================
-# Three surfaces: development (main + branches), release candidate
-# (vX.Y.Z-rc.N, built ONCE on a Linux gate host), release (the candidate's
-# bytes, promoted, never rebuilt). Maintainers never cut releases: the release process does,
-# after the signature. These two targets therefore build or explain, and
-# never tag, upload or publish.
+# Three surfaces are planned (the 20 Nov 2026 release strategy): development
+# (main + branches), release candidate (vX.Y.Z-rc.N, built ONCE on a Linux
+# gate host), release (the candidate's bytes, promoted, never rebuilt).
+#
+# TODAY, for this repository, none of that is wired: every merge to main is
+# rebuilt by CI and published to PyPI by .github/workflows/publish.yml
+# (trusted publishing), and the docs site publishes too. These two targets
+# are not that control. release-candidate only builds and checksums locally
+# and release only explains; neither tags, uploads or publishes.
 .PHONY: release-candidate
-release-candidate: ## Build the candidate artifacts + checksums (Linux gate host only; never tags or uploads)
+release-candidate: ## Build the wheel and sdist plus SHA256SUMS on a Linux host (never tags or uploads; not what CI publishes today)
 	@if [ "$$(uname -s)" != "Linux" ]; then \
-	   echo "${RED}release-candidate builds on a Linux gate host, never on this machine ($$(uname -s)). Run it on the project's Linux gate host.${RESET}"; exit 1; \
+	   echo "${RED}release-candidate builds on Linux only; this machine is $$(uname -s).${RESET}"; exit 1; \
 	 fi
-	@$(MAKE) --no-print-directory build
-	@cd $(DIST_DIR) && sha256sum * > SHA256SUMS && cat SHA256SUMS
-	@echo "${GREEN}Candidate built. The merger uploads it as a pre-release (gh release create vX.Y.Z-rc.N --prerelease) after the signature; this target did not tag or upload.${RESET}"
+	@echo "${YELLOW}Note:${RESET} this checks the OS only. It does not prove the host is an approved gate host."
+	@mkdir -p "$(DIST_DIR)" && cand=$$(mktemp -d "$(DIST_DIR)/candidate.XXXXXX") && \
+	 $(PYTHON) -m build --outdir "$$cand" && \
+	 (cd "$$cand" && sha256sum *.whl *.tar.gz > SHA256SUMS && cat SHA256SUMS) && \
+	 echo "${GREEN}Candidate files and SHA256SUMS written to $$cand.${RESET} Nothing was tagged or uploaded, and these files are not what CI publishes today."
 
 .PHONY: release
-release: ## Explain how a release is cut (the approved candidate's bytes are promoted; nobody runs this from a checkout)
-	@echo "${YELLOW}Not released from here.${RESET} A release is the approved candidate's bytes promoted after approval and signature; it is never rebuilt, and nothing here tags, uploads or publishes."
-	@echo "Steps: make release-candidate (gate host) -> readers -> signature -> merger promotes vX.Y.Z. Notes: changelog.d/README.md and the GitHub Releases page."
+release: ## Explain how releases work today and what is planned (never releases; exits non-zero)
+	@echo "${YELLOW}Not released from here.${RESET} Today every merge to main is built by CI and published to PyPI by publish.yml. Planned (not yet in place): the gated candidate's bytes are promoted after approval, never rebuilt."
+	@echo "Notes: changelog.d/README.md and the GitHub Releases page."
 	@exit 1
 
 # ============================================================

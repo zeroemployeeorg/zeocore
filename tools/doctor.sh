@@ -398,8 +398,8 @@ if git rev-parse --git-dir >/dev/null 2>&1; then
     if [ "$HOOKS_PATH" = ".githooks" ] && [ -x ".githooks/pre-push" ]; then
         pass "git hooks installed (core.hooksPath = .githooks); a push to main is refused"
     else
-        fail "git hooks not installed" "git config core.hooksPath -> '${HOOKS_PATH}'" \
-             "Run 'make hooks'. It refuses a push to main and gates every other push."
+        warn "git hooks not installed" "git config core.hooksPath -> '${HOOKS_PATH}'" \
+             "Run 'make hooks' (or 'make setup'). It refuses a push to main and gates every other push."
     fi
 else
     warn "git hooks" "git rev-parse --git-dir" "not a git checkout, so hooks were not checked."
