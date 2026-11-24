@@ -21,8 +21,8 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, SecretStr, model_validator
 
-_E164 = re.compile(r"^\+[1-9][0-9]{6,14}$")
-_ACCOUNT_SID = re.compile(r"^AC[0-9a-fA-F]{32}$")
+_E164 = re.compile(r"\+[1-9][0-9]{6,14}")
+_ACCOUNT_SID = re.compile(r"AC[0-9a-fA-F]{32}")
 _WA_PREFIX = "whatsapp:"
 
 
@@ -33,7 +33,7 @@ class _Model(BaseModel):
 def to_whatsapp_address(number: str) -> str:
     """Return `whatsapp:+E164`, accepting the number with or without the prefix."""
     bare = number[len(_WA_PREFIX) :] if number.startswith(_WA_PREFIX) else number
-    if not _E164.match(bare):
+    if not _E164.fullmatch(bare):
         raise ValueError("WhatsApp number must be E.164, for example +14155550100")
     return f"{_WA_PREFIX}{bare}"
 
@@ -42,7 +42,7 @@ def from_whatsapp_address(address: str) -> str:
     if not address.startswith(_WA_PREFIX):
         raise ValueError("Not a WhatsApp address")
     bare = address[len(_WA_PREFIX) :]
-    if not _E164.match(bare):
+    if not _E164.fullmatch(bare):
         raise ValueError("WhatsApp number must be E.164")
     return bare
 
@@ -63,7 +63,7 @@ class TwilioCredentials(_Model):
 
     @model_validator(mode="after")
     def _check(self) -> TwilioCredentials:
-        if not _ACCOUNT_SID.match(self.account_sid):
+        if not _ACCOUNT_SID.fullmatch(self.account_sid):
             raise ValueError("account_sid must look like AC followed by 32 hex digits")
         if (
             self.auth_token is not None
@@ -74,7 +74,7 @@ class TwilioCredentials(_Model):
         if has_key:
             if self.api_key_sid is None or self.api_key_secret is None:
                 raise ValueError("Set api_key_sid and api_key_secret together")
-            if not re.match(r"^SK[0-9a-fA-F]{32}$", self.api_key_sid):
+            if not re.fullmatch(r"SK[0-9a-fA-F]{32}", self.api_key_sid):
                 raise ValueError(
                     "api_key_sid must look like SK followed by 32 hex digits"
                 )

@@ -319,3 +319,78 @@ def test_signature_matches_an_independent_calculation() -> None:
         hmac_mod.new(FAKE_AUTH_TOKEN.encode(), data.encode(), hashlib.sha1).digest()
     ).decode()
     assert verify_signature(TOKEN, URL, params, expected)
+
+
+def test_signature_matches_the_documented_twilio_example() -> None:
+    # The worked example in Twilio's webhook-security documentation and its SDK
+    # tests (token "12345"): a vector produced outside this module.
+    params = {
+        "CallSid": "CA1234567890ABCDE",
+        "Caller": "+14158675310",
+        "Digits": "1234",
+        "From": "+14158675310",
+        "To": "+18005551212",
+    }
+    url = "https://mycompany.com/myapp.php?foo=1&bar=2"
+    assert verify_signature(
+        SecretStr("12345"), url, params, "GvWf1cFY/Q7PnoempGyD5oXAezc="
+    )
+
+
+def test_a_trailing_newline_is_not_a_valid_number_or_sid() -> None:
+    with pytest.raises(ValueError):
+        to_whatsapp_address("+14155550100\n")
+    with pytest.raises(ValidationError):
+        TwilioCredentials(account_sid="AC" + "a" * 32 + "\n", auth_token=SecretStr("t"))
+    with pytest.raises(ValidationError):
+        TwilioCredentials(
+            account_sid="AC" + "a" * 32,
+            api_key_sid="SK" + "b" * 32 + "\n",
+            api_key_secret=SecretStr("s"),
+        )
+
+
+@pytest.mark.parametrize(
+    "stamp",
+    [
+        "Mon, 1 Jan 99999999999999999999 00:00:00 +0000",
+        "Thu, 19 Nov 2026 05:30:00 +99999999",
+    ],
+)
+def test_an_unusable_timestamp_never_loses_the_receipt(stamp: str) -> None:
+    fake = FakeTwilio(
+        body={"sid": "SM" + "d" * 32, "status": "queued", "date_created": stamp}
+    )
+    receipt = TwilioWhatsAppClient(fake_credentials(), transport=fake.transport).send(
+        _request()
+    )
+    assert receipt.provider_message_id == "SM" + "d" * 32
+    assert receipt.created_at is None
+
+
+def test_a_zero_padded_media_key_is_refused_without_a_key_error() -> None:
+    only_padded = {
+        **PARAMS,
+        "NumMedia": "1",
+        "MediaUrl00": "https://m.example.test/a.jpg",
+    }
+    params, sig = signed_webhook(URL, only_padded)
+    with pytest.raises(WebhookRejectedError):
+        parse_inbound(TOKEN, url=URL, params=params, signature=sig)
+    with_real = {**only_padded, "MediaUrl0": "https://m.example.test/b.jpg"}
+    params, sig = signed_webhook(URL, with_real)
+    event = parse_inbound(TOKEN, url=URL, params=params, signature=sig)
+    assert event.media_urls == ("https://m.example.test/b.jpg",)
+
+
+@pytest.mark.parametrize("code", ["²", "٣", "12٣"])
+def test_a_non_ascii_error_code_is_ignored_not_a_crash(code: str) -> None:
+    cb = {
+        "MessageSid": "SM" + "e" * 32,
+        "MessageStatus": "failed",
+        "To": SENDER,
+        "ErrorCode": code,
+    }
+    params, sig = signed_webhook(URL, cb)
+    receipt = parse_status_callback(TOKEN, url=URL, params=params, signature=sig)
+    assert receipt.error_code is None

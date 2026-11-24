@@ -31,6 +31,7 @@ def _media_urls(params: Mapping[str, str]) -> tuple[str, ...]:
         and len(k) <= 12
         and k[8:].isascii()
         and k[8:].isdigit()
+        and (k[8:] == "0" or not k[8:].startswith("0"))
     )
     if raw != str(len(indexes)) or indexes != list(range(len(indexes))):
         raise WebhookRejectedError("NumMedia does not match the media fields")
@@ -102,5 +103,5 @@ def parse_status_callback(
         provider_message_id=sid,
         status=status,
         to=to,
-        error_code=int(raw) if raw.isdigit() else None,
+        error_code=int(raw) if raw.isascii() and raw.isdigit() else None,
     )
