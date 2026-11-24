@@ -153,7 +153,7 @@ class TestTheCommittedFiles:
 
     def test_the_failure_messages_end_with_an_action(self) -> None:
         errors = re.findall(r'echo "(pre-push: [^"]*)" >&2', PRE_PUSH.read_text())
-        assert len(errors) == 6
+        assert len(errors) == 7
         assert all(message.endswith("push again.") for message in errors)
 
 
@@ -283,16 +283,33 @@ class TestThePrePushHook:
     ) -> None:
         stdin = (
             f"refs/heads/x {SHA} refs/heads/zeocore/wip/a {ZEROS}\n"
-            f"refs/heads/main {SHA} refs/heads/main {ZEROS}\n"
+            f"refs/heads/y {SHA} refs/heads/zeocore/topic {ZEROS}\n"
         )
         done, record = self._push(tmp_path, exit_code=3, stdin=stdin)
         assert done.returncode == 1
         assert record.read_text().strip() == "args: verify"
 
+    @pytest.mark.parametrize("wip", [False, True])
+    def test_a_push_to_main_is_refused_without_running_the_gate(
+        self, tmp_path: Path, wip: bool
+    ) -> None:
+        extra = f"refs/heads/x {SHA} refs/heads/zeocore/wip/a {ZEROS}\n" if wip else ""
+        stdin = extra + f"refs/heads/main {SHA} refs/heads/main {ZEROS}\n"
+        done, record = self._push(tmp_path, exit_code=0, stdin=stdin)
+        assert done.returncode == 1
+        assert not record.exists()
+        assert "a push to main is refused" in done.stderr
+        assert done.stderr.strip().endswith("then push again.")
+
+    def test_deleting_main_is_refused_too(self, tmp_path: Path) -> None:
+        stdin = f"(delete) {ZEROS} refs/heads/main {SHA}\n"
+        done, record = self._push(tmp_path, exit_code=0, stdin=stdin)
+        assert done.returncode == 1
+        assert not record.exists()
+
     @pytest.mark.parametrize(
         "remote",
         [
-            "refs/heads/main",
             "refs/heads/zeocore/topic",
             "refs/heads/wip/topic",  # no seat before wip
             "refs/heads/zeocore/wip",  # no topic
