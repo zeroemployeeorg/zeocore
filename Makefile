@@ -407,17 +407,14 @@ build: ## Build sdist + wheel (python -m build)
 # ============================================================
 # RELEASE SURFACES (operator-approved 20 Nov 2026)
 # ============================================================
-# Three surfaces are planned (the 20 Nov 2026 release strategy): development
-# (main + branches), release candidate (vX.Y.Z-rc.N, built ONCE on a Linux
-# gate host), release (the candidate's bytes, promoted, never rebuilt).
-#
-# TODAY, for this repository, none of that is wired: every merge to main is
-# rebuilt by CI and published to PyPI by .github/workflows/publish.yml
-# (trusted publishing), and the docs site publishes too. These two targets
-# are not that control. release-candidate only builds and checksums locally
-# and release only explains; neither tags, uploads or publishes.
+# How zeocore releases (operator ruling, 23 Nov 2026): what is published on
+# PyPI is what is used, and every merged PR is a release. A merge to main is
+# built by CI and published to PyPI by .github/workflows/publish.yml (trusted
+# publishing), and the docs site publishes too. These two targets are not that
+# control: release-candidate only builds and checksums locally, and release
+# only explains; neither tags, uploads or publishes.
 .PHONY: release-candidate
-release-candidate: ## Build the wheel and sdist plus SHA256SUMS on a Linux host (never tags or uploads; not what CI publishes today)
+release-candidate: ## Build the wheel and sdist plus SHA256SUMS on a Linux host (never tags or uploads; not what CI publishes)
 	@if [ "$$(uname -s)" != "Linux" ]; then \
 	   echo "${RED}release-candidate builds on Linux only; this machine is $$(uname -s).${RESET}"; exit 1; \
 	 fi
@@ -425,11 +422,11 @@ release-candidate: ## Build the wheel and sdist plus SHA256SUMS on a Linux host 
 	@mkdir -p "$(DIST_DIR)" && cand=$$(mktemp -d "$(DIST_DIR)/candidate.XXXXXX") && \
 	 $(PYTHON) -m build --outdir "$$cand" && \
 	 (cd "$$cand" && sha256sum *.whl *.tar.gz > SHA256SUMS && cat SHA256SUMS) && \
-	 echo "${GREEN}Candidate files and SHA256SUMS written to $$cand.${RESET} Nothing was tagged or uploaded, and these files are not what CI publishes today."
+	 echo "${GREEN}Candidate files and SHA256SUMS written to $$cand.${RESET} Nothing was tagged or uploaded, and these files are not what CI publishes."
 
 .PHONY: release
-release: ## Explain how releases work today and what is planned (never releases; exits non-zero)
-	@echo "${YELLOW}Not released from here.${RESET} Today every merge to main is built by CI and published to PyPI by publish.yml. Planned (not yet in place): the gated candidate's bytes are promoted after approval, never rebuilt."
+release: ## Explain how zeocore releases (never releases from here; exits non-zero)
+	@echo "${YELLOW}Not released from here.${RESET} Every merged PR is a release: a merge to main is built by CI and published to PyPI by publish.yml."
 	@echo "Notes: changelog.d/README.md and the GitHub Releases page."
 	@exit 1
 
