@@ -182,6 +182,7 @@ jobs:
           uv venv --clear --python "${PYTHON_FLOOR}" /tmp/resolve-probe
           for attempt in $(seq 1 40); do
             if uv pip install --dry-run --no-cache --python /tmp/resolve-probe/bin/python \
+                 --default-index https://pypi.org/simple/ \
                  "zeocore==${EXPECTED_VERSION}" >/tmp/resolve-probe.log 2>&1; then
               echo "the installer resolves zeocore==${EXPECTED_VERSION} (attempt ${attempt})"
               exit 0
@@ -213,7 +214,29 @@ jobs:
           uv venv --python "${PYTHON_FLOOR}" /tmp/smoke-pypi
           # Pinned to the exact version this run published, never
           # unpinned/"latest" -- see EXPECTED_VERSION's comment above.
-          uv pip install --python /tmp/smoke-pypi/bin/python --no-cache "zeocore==${EXPECTED_VERSION}"
+          # One passing probe is not proof: PyPI's CDN edges can disagree between
+          # two calls seconds apart (0.55.3 and 0.55.4 passed the probe, then the
+          # install saw "no version"). So the install retries on the same index-lag
+          # text, at most 10 minutes; any other error fails at once.
+          install_from_pypi() {
+            for attempt in $(seq 1 40); do
+              if uv pip install --python /tmp/smoke-pypi/bin/python --no-cache \
+                   --default-index https://pypi.org/simple/ "$1" >/tmp/smoke-install.log 2>&1; then
+                cat /tmp/smoke-install.log
+                return 0
+              fi
+              if ! grep -q "no version of zeocore==${EXPECTED_VERSION}" /tmp/smoke-install.log; then
+                cat /tmp/smoke-install.log
+                echo "::error::installing $1 failed for a reason other than index lag"
+                return 1
+              fi
+              sleep 15
+            done
+            cat /tmp/smoke-install.log
+            echo "::error::the installer couldn't install $1 within 10 minutes"
+            return 1
+          }
+          install_from_pypi "zeocore==${EXPECTED_VERSION}"
           /tmp/smoke-pypi/bin/python -c "
           import sys
           import zeo_core
@@ -238,8 +261,7 @@ jobs:
           # extra: 0.15.0's crashed at start-up for want of rfc8785 and
           # requests, while the import check above passed.
           /tmp/smoke-pypi/bin/zeocore version
-          uv pip install --python /tmp/smoke-pypi/bin/python --no-cache \
-            --default-index https://pypi.org/simple/ "zeocore[runtime-host]==${EXPECTED_VERSION}"
+          install_from_pypi "zeocore[runtime-host]==${EXPECTED_VERSION}"
           /tmp/smoke-pypi/bin/python examples/runtime_host_catalogue_v1.py
           /tmp/smoke-pypi/bin/python examples/meeting_request_v1.py
           /tmp/smoke-pypi/bin/python -c "

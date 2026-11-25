@@ -62,6 +62,14 @@ jobs:
           expected=$(git ls-remote origin refs/heads/gh-pages | cut -f1)
           test -n "$expected"
           gh api --method POST "repos/${GITHUB_REPOSITORY}/pages/builds"
+          # A Pages build can report "errored" for a commit that builds fine a
+          # moment later (0.55.4's run failed four seconds after the push, and the
+          # site was current afterwards). So an errored build is requested again,
+          # up to three requests in all, before the step fails. Each errored build
+          # is counted once, by its updated_at, because "latest" keeps showing it
+          # until the new build starts.
+          requests=1
+          last_errored=""
           for attempt in $(seq 1 60); do
             gh api "repos/${GITHUB_REPOSITORY}/pages/builds/latest" > /tmp/pages-build.json
             commit=$(jq -r .commit /tmp/pages-build.json)
@@ -69,8 +77,15 @@ jobs:
             if [ "$commit" = "$expected" ]; then
               if [ "$status" = built ]; then exit 0; fi
               if [ "$status" = errored ]; then
-                jq .error /tmp/pages-build.json
-                exit 1
+                stamp=$(jq -r .updated_at /tmp/pages-build.json)
+                if [ "$stamp" != "$last_errored" ]; then
+                  last_errored="$stamp"
+                  jq .error /tmp/pages-build.json
+                  if [ "$requests" -ge 3 ]; then exit 1; fi
+                  requests=$((requests + 1))
+                  sleep 10
+                  gh api --method POST "repos/${GITHUB_REPOSITORY}/pages/builds"
+                fi
               fi
             fi
             sleep 5
