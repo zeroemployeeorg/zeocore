@@ -14,6 +14,7 @@ veto (section 3c). A review must name it as such.
 - `.github/workflows/publish.yml` (zeocore's own caller)
 - `.github/release/plan.py` (the version computation)
 - `.github/release/event.py` (the release event)
+- `.github/release/install_with_retry.sh` (the smoke test's index-lag retry)
 - `release.yaml` (a repository's release file: facts, no version, no commit)
 
 `tests/test_release_metadata.py` fails if one of these is missing or not listed

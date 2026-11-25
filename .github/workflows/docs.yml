@@ -84,6 +84,13 @@ jobs:
                   if [ "$requests" -ge 3 ]; then exit 1; fi
                   requests=$((requests + 1))
                   sleep 10
+                  # A Pages build request names no commit, so check that the
+                  # branch still holds the commit this run published before asking.
+                  tip=$(git ls-remote origin refs/heads/gh-pages | cut -f1)
+                  if [ "$tip" != "$expected" ]; then
+                    echo "::error::gh-pages moved to ${tip} after ${expected}; no build is requested for another commit"
+                    exit 1
+                  fi
                   gh api --method POST "repos/${GITHUB_REPOSITORY}/pages/builds"
                 fi
               fi
