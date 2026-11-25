@@ -5,11 +5,109 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-**From 0.15.2 on, every merge to `main` is a release, and this file no longer
-grows.** Each PR adds a fragment to [`changelog.d/`](changelog.d/README.md), and
+**From 0.15.2 on, every merge to `main` is a release.** The sections from 0.15.2 on
+are summaries by theme, written after the fact. Each PR adds a fragment to [`changelog.d/`](changelog.d/README.md), and
 each version's notes are on its
 [GitHub Release](https://github.com/zeroemployeeorg/zeocore/releases). The
-history below runs up to 0.15.1.
+sections for 0.15.1 and earlier are the original notes.
+
+## Status
+
+- **Latest release:** 0.55.5 (25 November 2026), on [PyPI](https://pypi.org/project/zeocore/)
+  and as a [GitHub Release](https://github.com/zeroemployeeorg/zeocore/releases).
+- **Python:** 3.12 or newer.
+- **License:** MIT, with the voice routing code derived from Apache-2.0 work (see
+  `src/zeo_core/voice/NOTICE` and `src/zeo_core/voice/LICENSE`).
+- **How releases work:** every merged pull request is a release. A merge to `main` is
+  built by CI and published to PyPI (trusted publishing). What is on PyPI is what is used.
+- **Where the notes live:** this file summarizes by meaning. The full text of each version
+  is on its GitHub Release.
+
+## Release history, 0.15.2 to 0.55.5 (12 October to 25 November 2026)
+
+Summarized by theme, newest first. Versions named here are real tags.
+
+### 23 to 25 November 2026 (0.55.1 to 0.55.5)
+
+- **0.55.1** writes Sheets MCP example appends as raw text.
+- **0.55.2** adds `make help-all`, a fuller `make doctor`, and `make release-candidate` and
+  `make release` (which only explains how releases work); the pre-push hook refuses a push
+  to `main`. Developer tooling only.
+- **0.55.3** names Dreamhuggers Pte. Ltd. as the copyright holder in `LICENSE` and updates the
+  Makefile release text. No code change.
+- **0.55.4** hardens the Twilio WhatsApp channel against five edge cases.
+- **0.55.5** makes the release pipeline retry while PyPI's index catches up and while a
+  GitHub Pages build reports an error for a commit that builds fine. No code change.
+
+### 16 to 20 November 2026 (0.53.1 to 0.55.0)
+
+- **0.55.0** adds a Twilio WhatsApp channel: signed inbound webhook parsing, a one-shot
+  outbound send that can report an unknown outcome, and a test double that needs no
+  network or key.
+- **0.54.0 (breaking)** removes Supabase from the core: the `zeo_core.integrations.database`
+  package, the `supabase` extra and its setup entries.
+- **0.53.1 to 0.53.4** tighten newsletter decoding (refusing multipart boundaries written as
+  RFC 2231 continuations) and fix one flaky test.
+
+### 25 October to 9 November 2026 (0.38.0 to 0.53.0)
+
+- **Voice (0.51.0, 0.52.1):** vendor-neutral speech routing for speech-to-text and
+  text-to-speech, with provider health, cool-down and failure handling. It is ported from
+  Apache-2.0 code; notices were added in 0.52.1.
+- **UI cards (0.44.0 to 0.50.0):** a closed `intervention_card` payload for operator
+  situations, a `message` and `approval` kind, optional command blocks on source items, and
+  a larger copy-line limit.
+- **React package (0.47.0, 0.48.0):** `packages/react` renders the cards and a read-only
+  calendar view, validating payloads in the browser against the published schemas.
+- **Release tooling (0.38.0 to 0.43.1):** a proof-report contract, `release verify-event`
+  (including private repositories through a pinned key) and `release check-approval`.
+- **Providers (0.40.0, 0.41.1):** Moonshot (Kimi) is added as an LLM provider.
+- **Libraries (0.42.0):** metadata-only library views and citation access receipts.
+- **Documents (0.53.0):** an explicit plain-text conversion API with truthful metadata.
+
+### 22 to 24 October 2026 (0.29.0 to 0.37.2)
+
+- **Python floor lowered (0.29.0)** from 3.14 to 3.12, the version Google Colab provides.
+- **Briefing widgets (0.30.0 to 0.36.4):** a widget-routing contract, a "not provided" value
+  instead of inventing data, an HTML renderer for traveller-style cards, and keyless public
+  source adapters (weather, flights).
+- **Agents (0.31.0, 0.35.4 to 0.35.6):** a keyless wrapper over managed agent sessions with a
+  spend limit and clear rejection reasons.
+- **Public face (0.35.3, 0.36.5, 0.36.6):** README rewritten for new users; `CONTRIBUTING.md`
+  written for outside contributors.
+- **Release signing (0.37.0, 0.37.1):** a signing manifest can take digests from a reviewed
+  build inventory; a release target moved to a renamed repository.
+- **Pre-push gate (0.37.2):** pushes only to work-in-progress branches skip the full gate so
+  work can be backed up before it is green.
+- **Hygiene (0.36.7 to 0.36.9):** tests pin the release component's shape; `contracts/` holds
+  only zeocore's own schemas; public-source requests are serialized per host.
+
+### 12 to 21 October 2026 (0.15.2 to 0.28.1)
+
+- **Release on merge, hardened (0.15.2 to 0.15.5):** a failed upload can no longer be skipped
+  past; the smoke test waits for the installer rather than a web page; CI installs a pinned,
+  checksummed Pandoc.
+- **Agent-friendly command line (0.17.0 to 0.23.0):** `zeocore help` describes every argument,
+  errors end with the next action, `zeocore doctor` checks a machine, and `invoke --wait`
+  waits for an outcome instead of polling.
+- **Google Drive (0.16.0):** read-only access to review comments and replies.
+- **macOS signing (0.18.0, 0.23.3):** sign an app bundle inside-out; one rule for bundle
+  identifiers.
+- **Development setup (0.22.1, 0.23.1, 0.23.2):** a contributors charter, `ZEO_WORK_DIR` to
+  keep environments and caches out of the checkout, and a committed pre-push gate.
+- **kit (0.23.5 to 0.25.1):** hardening of plan files, protected-path checks and client
+  behavior, plus key custody checks and `rollback --to VERSION`.
+- **Newsletters (0.15.4, 0.25.0 to 0.28.0):** HubSpot drafts accept a reply-to address and need
+  only a name; the converter takes a pinned Pandoc and hides text only where it can prove the
+  text is hidden.
+- **UI result card (0.26.0, 0.33.2):** a data-only `zeo.ui-result/v1` contract and schema.
+- **Integrations seam (0.23.6, 0.24.0):** the GitHub App signer moved to the release component,
+  with the old import path still forwarding.
+- **Test stability (0.24.4, 0.28.1):** flaky tests that kept `main` red were fixed.
+
+Versions 0.5.0 to 0.12.0 and 0.15.0 (23 August to 12 October 2026) have release pages on
+GitHub; their summary will follow in a second pull request, together with a clean-up of the
+older sections below.
 
 ## [0.15.1] - 2026-10-12
 
