@@ -783,6 +783,7 @@ RESERVED = [
     ".github/workflows/publish.yml",
     ".github/release/plan.py",
     ".github/release/event.py",
+    ".github/release/install_with_retry.sh",
     "release.yaml",
 ]
 

@@ -172,6 +172,8 @@ jobs:
             exit 1
           fi
           echo "expecting zeocore==${EXPECTED_VERSION} on Python >=${PYTHON_FLOOR}"
+          # One 10-minute budget for every index-lag retry in this job.
+          echo "RETRY_DEADLINE=$(( $(date +%s) + 600 ))" >> "$GITHUB_ENV"
 
       - name: Wait until the installer can resolve this version (at most 10 minutes)
         run: |
@@ -180,24 +182,8 @@ jobs:
           # files: uv reads the JSON form of the simple index, which PyPI's
           # CDN caches separately and can serve stale for longer.
           uv venv --clear --python "${PYTHON_FLOOR}" /tmp/resolve-probe
-          for attempt in $(seq 1 40); do
-            if uv pip install --dry-run --no-cache --python /tmp/resolve-probe/bin/python \
-                 "zeocore==${EXPECTED_VERSION}" >/tmp/resolve-probe.log 2>&1; then
-              echo "the installer resolves zeocore==${EXPECTED_VERSION} (attempt ${attempt})"
-              exit 0
-            fi
-            # Only "no version of zeocore==X" is index lag worth waiting on;
-            # any other resolution error (a floor or marker mismatch) is real.
-            if ! grep -q "no version of zeocore==${EXPECTED_VERSION}" /tmp/resolve-probe.log; then
-              cat /tmp/resolve-probe.log
-              echo "::error::resolving zeocore==${EXPECTED_VERSION} failed for a reason other than index lag"
-              exit 1
-            fi
-            sleep 15
-          done
-          cat /tmp/resolve-probe.log
-          echo "::error::the installer couldn't resolve zeocore==${EXPECTED_VERSION} within 10 minutes"
-          exit 1
+          .github/release/install_with_retry.sh /tmp/resolve-probe/bin/python \
+            "zeocore==${EXPECTED_VERSION}" --dry-run
 
       - name: Install from PyPI and smoke-test
         run: |
@@ -213,7 +199,12 @@ jobs:
           uv venv --python "${PYTHON_FLOOR}" /tmp/smoke-pypi
           # Pinned to the exact version this run published, never
           # unpinned/"latest" -- see EXPECTED_VERSION's comment above.
-          uv pip install --python /tmp/smoke-pypi/bin/python --no-cache "zeocore==${EXPECTED_VERSION}"
+          # One passing probe is not proof: PyPI's CDN edges can disagree between
+          # two calls seconds apart (0.55.3 and 0.55.4 passed the probe, then the
+          # install saw "no version"). So each install retries on the index-lag
+          # diagnostic only, inside the job's one 10-minute budget.
+          .github/release/install_with_retry.sh /tmp/smoke-pypi/bin/python \
+            "zeocore==${EXPECTED_VERSION}"
           /tmp/smoke-pypi/bin/python -c "
           import sys
           import zeo_core
@@ -238,8 +229,8 @@ jobs:
           # extra: 0.15.0's crashed at start-up for want of rfc8785 and
           # requests, while the import check above passed.
           /tmp/smoke-pypi/bin/zeocore version
-          uv pip install --python /tmp/smoke-pypi/bin/python --no-cache \
-            --default-index https://pypi.org/simple/ "zeocore[runtime-host]==${EXPECTED_VERSION}"
+          .github/release/install_with_retry.sh /tmp/smoke-pypi/bin/python \
+            "zeocore[runtime-host]==${EXPECTED_VERSION}"
           /tmp/smoke-pypi/bin/python examples/runtime_host_catalogue_v1.py
           /tmp/smoke-pypi/bin/python examples/meeting_request_v1.py
           /tmp/smoke-pypi/bin/python -c "
