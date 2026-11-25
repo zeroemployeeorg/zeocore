@@ -8,6 +8,7 @@ elapsed-time budget and a bounded number of calls.
 from __future__ import annotations
 
 import os
+import shutil
 import subprocess
 import time
 from pathlib import Path
@@ -16,6 +17,7 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / ".github" / "release" / "install_with_retry.sh"
+BASH = shutil.which("bash") or "/bin/bash"
 
 FAKE_UV = """#!/usr/bin/env bash
 count=$(cat "$FAKE_UV_COUNT" 2>/dev/null || echo 0)
@@ -68,7 +70,7 @@ def _run(
         "FAKE_UV_DIAGNOSTIC": diagnostic,
     }
     result = subprocess.run(  # noqa: S603 - the repository's own script
-        ["bash", str(SCRIPT), "/tmp/venv/bin/python", spec],
+        [BASH, str(SCRIPT), str(tmp_path / "venv" / "bin" / "python"), spec],
         capture_output=True,
         text=True,
         env=env,
@@ -146,7 +148,12 @@ def test_the_deadline_is_required(tmp_path: Path) -> None:
     env = {k: v for k, v in os.environ.items() if k != "RETRY_DEADLINE"}
     env["UV"] = str(uv)
     result = subprocess.run(  # noqa: S603 - the repository's own script
-        ["bash", str(SCRIPT), "/tmp/venv/bin/python", "zeocore==0.55.4"],
+        [
+            BASH,
+            str(SCRIPT),
+            str(tmp_path / "venv" / "bin" / "python"),
+            "zeocore==0.55.4",
+        ],
         capture_output=True,
         text=True,
         env=env,
