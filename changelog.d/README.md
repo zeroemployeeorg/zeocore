@@ -27,5 +27,6 @@ What changed, for the release notes, in a sentence or a short list.
   compute it again and its upload would fail. If that happens, the tag it left
   stops the following release until a reviewed PR declares a higher bump.
 
-From 0.15.2 on, the GitHub Releases page is the changelog. `CHANGELOG.md` keeps
-the history up to 0.15.1.
+From 0.15.2 on, the GitHub Releases page has the full notes of each version.
+`CHANGELOG.md` keeps the original notes up to 0.15.1 and summarizes later
+releases by theme.

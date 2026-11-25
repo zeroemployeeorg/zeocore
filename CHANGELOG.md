@@ -13,19 +13,29 @@ sections for 0.15.1 and earlier are the original notes.
 
 ## Status
 
-- **Latest release:** 0.55.0 (20 November 2026), on [PyPI](https://pypi.org/project/zeocore/)
+- **Latest release:** 0.55.4 (24 November 2026), on [PyPI](https://pypi.org/project/zeocore/)
   and as a [GitHub Release](https://github.com/zeroemployeeorg/zeocore/releases).
 - **Python:** 3.12 or newer.
 - **License:** MIT, with the voice routing code derived from Apache-2.0 work (see
   `src/zeo_core/voice/NOTICE` and `src/zeo_core/voice/LICENSE`).
-- **How releases work today:** every merge to `main` is a release. A release candidate and
-  promotion flow (`-rc.N` versions) is planned and is not in place yet.
+- **How releases work:** every merged pull request is a release. A merge to `main` is
+  built by CI and published to PyPI (trusted publishing). What is on PyPI is what is used.
 - **Where the notes live:** this file summarizes by meaning. The full text of each version
   is on its GitHub Release.
 
-## Release history, 0.15.2 to 0.55.0 (12 October to 20 November 2026)
+## Release history, 0.15.2 to 0.55.4 (12 October to 24 November 2026)
 
 Summarized by theme, newest first. Versions named here are real tags.
+
+### 23 to 24 November 2026 (0.55.1 to 0.55.4)
+
+- **0.55.1** writes Sheets MCP example appends as raw text.
+- **0.55.2** adds `make help-all`, a fuller `make doctor`, and `make release-candidate` and
+  `make release` (which only explains how releases work); the pre-push hook refuses a push
+  to `main`. Developer tooling only.
+- **0.55.3** names Dreamhuggers Pte. Ltd. as the copyright holder in `LICENSE` and updates the
+  Makefile release text. No code change.
+- **0.55.4** hardens the Twilio WhatsApp channel against five edge cases.
 
 ### 16 to 20 November 2026 (0.53.1 to 0.55.0)
 
